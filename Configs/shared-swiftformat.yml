@@ -1,0 +1,214 @@
+# Shared SwiftFormat configuration for all Synodic projects
+# This file provides consistent formatting rules across all Swift projects
+
+# =============================================================================
+# BASIC CONFIGURATION
+# =============================================================================
+
+# Swift version
+--swiftversion 6.1
+
+# Core formatting options
+--indent 4
+--indentcase false
+--linebreaks lf
+--trimwhitespace always
+--elseposition same-line
+--emptybraces no-space
+--importgrouping testable-bottom
+--semicolons never
+--extensionacl on-extension
+--wraparguments before-first
+--funcattributes prev-line
+--typeattributes prev-line
+--storedvarattrs same-line
+--computedvarattrs same-line
+--complexattrs prev-line
+
+# =============================================================================
+# WHITESPACE & INDENTATION
+# =============================================================================
+
+--rules indent
+--rules trailingSpace
+--rules consecutiveSpaces
+--rules linebreaks
+--rules linebreakAtEndOfFile
+--rules consecutiveBlankLines
+
+# =============================================================================
+# BRACES & PARENTHESES
+# =============================================================================
+
+--rules braces
+--rules elseOnSameLine
+--rules emptyBraces
+--rules spaceAroundBraces
+--rules spaceInsideBraces
+--rules spaceAroundParens
+--rules spaceInsideParens
+--rules spaceAroundBrackets
+--rules spaceInsideBrackets
+
+# =============================================================================
+# IMPORT ORGANIZATION
+# =============================================================================
+
+--rules sortImports
+--rules duplicateImports
+--rules blankLineAfterImports
+
+# =============================================================================
+# CODE SIMPLIFICATION
+# =============================================================================
+
+--rules semicolons
+--rules redundantParens
+--rules redundantReturn
+--rules redundantVoidReturnType
+--rules redundantGet
+--rules redundantInit
+--rules redundantNilInit
+--rules redundantBreak
+--rules redundantClosure
+--rules redundantFileprivate
+--rules redundantOptionalBinding
+--rules redundantLet
+--rules redundantInternal
+--rules redundantStaticSelf
+--rules redundantObjc
+--rules redundantPattern
+--rules redundantEquatable
+--rules redundantExtensionACL
+--rules redundantLetError
+--rules redundantProperty
+--rules redundantRawValues
+--rules redundantTypedThrows
+
+# =============================================================================
+# TYPE & ORGANIZATION
+# =============================================================================
+
+--rules typeSugar
+--rules redundantType
+--rules redundantBackticks
+# --rules redundantSelf (disabled below)
+--rules modifierOrder
+--rules strongOutlets
+--rules trailingCommas
+--rules enumNamespaces
+--rules extensionAccessControl
+
+# =============================================================================
+# SPACING
+# =============================================================================
+
+--rules spaceAroundOperators
+--rules spaceAroundGenerics
+--rules spaceAroundComments
+--rules spaceInsideGenerics
+
+# =============================================================================
+# CODE QUALITY & STYLE
+# =============================================================================
+
+--rules yodaConditions
+--rules todos
+--rules trailingClosures
+--rules unusedArguments
+--rules preferForLoop
+--rules preferKeyPath
+--rules preferCountWhere
+--rules conditionalAssignment
+--rules strongifiedSelf
+--rules hoistTry
+--rules hoistAwait
+--rules hoistPatternLet
+--rules assertionFailures
+--rules isEmpty
+--rules initCoderUnavailable
+--rules emptyExtensions
+--rules unusedPrivateDeclarations
+
+# =============================================================================
+# MODERN SWIFT FEATURES
+# =============================================================================
+
+--rules leadingDelimiters
+--rules numberFormatting
+--rules anyObjectProtocol
+--rules applicationMain
+--rules fileMacro
+--rules genericExtensions
+--rules opaqueGenericParameters
+--rules environmentEntry
+--rules acronyms
+--rules preferSwiftTesting
+--rules swiftTestingTestCaseNames
+
+# =============================================================================
+# BLANK LINE MANAGEMENT
+# =============================================================================
+
+--rules blankLinesAroundMark
+--rules blankLinesAtEndOfScope
+--rules blankLinesAtStartOfScope
+--rules blankLinesBetweenChainedFunctions
+--rules blankLinesBetweenScopes
+
+# =============================================================================
+# WRAPPING & LAYOUT
+# =============================================================================
+
+--rules wrapArguments
+--rules wrapAttributes
+--rules wrapEnumCases
+--rules wrapSingleLineComments
+--rules wrapLoopBodies
+--rules wrapMultilineStatementBraces
+--rules consistentSwitchCaseSpacing
+
+# =============================================================================
+# SPECIAL CASES
+# =============================================================================
+
+--rules andOperator
+--rules blockComments
+--rules docComments
+--rules privateStateVariables
+
+# =============================================================================
+# DISABLED RULES
+# =============================================================================
+
+# Disabled rules
+--disable headerFileName
+--disable redundantSelf # breaking some files
+
+# =============================================================================
+# RULES UNDER CONSIDERATION FOR FUTURE IMPLEMENTATION
+# =============================================================================
+
+# Rules under consideration for future implementation:
+# --fileHeader (requires template definition)
+
+# =============================================================================
+# DISFAVORED RULES (EXPLICITLY DECIDED AGAINST)
+# =============================================================================
+
+# Disfavored rules (explicitly decided against):
+# --sortTypealiases (prefer manual control over typealias ordering)
+# --sortDeclarations (prefer explicit organization over automatic sorting)
+# --markTypes (too invasive - adds MARK comments before all types)
+# --organizeDeclarations (very high impact - complete class reorganization)
+# --wrap (prefer natural line breaks over enforced width limits)
+# --void (prefer current Void vs () style)
+
+# =============================================================================
+# COMMON EXCLUSIONS
+# =============================================================================
+
+# Common exclusions (projects can add their own)
+--exclude build,.build,Frameworks,${DERIVED_DATA}
+
+# =============================================================================

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Pre-commit hook for SwiftSyntax custom rules
+# Install by copying to .git/hooks/pre-commit and making executable
+
+SYNODIC_TOOLS_PATH="$(dirname "$0")/../../synodic-tools"
+
+# Get staged Swift files
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$')
+
+if [ -n "$staged_files" ]; then
+    echo "Running custom SwiftSyntax rules on staged files..."
+    
+    violations_found=false
+    
+    for file in $staged_files; do
+        if [ -f "$file" ]; then
+            result=$("$SYNODIC_TOOLS_PATH/swiftlint-tests/test-swiftsyntax-rule.sh" "$file" 2>/dev/null | grep "⚠️")
+            if [ -n "$result" ]; then
+                echo "$file: $result"
+                violations_found=true
+            fi
+        fi
+    done
+    
+    if [ "$violations_found" = true ]; then
+        echo ""
+        echo "❌ Custom SwiftSyntax rule violations found. Please fix before committing."
+        echo "   Consider breaking large SwiftUI body properties into computed properties."
+        exit 1
+    else
+        echo "✅ No custom SwiftSyntax rule violations found."
+    fi
+fi

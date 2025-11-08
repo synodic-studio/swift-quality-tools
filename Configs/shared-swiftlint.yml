@@ -1,0 +1,206 @@
+# Shared SwiftLint configuration for all Synodic projects
+# This file provides common team standards across all Swift projects
+
+# =============================================================================
+# BASIC METRICS CONFIGURATION
+# =============================================================================
+
+# Reasonable line length limits
+line_length:
+  warning: 120
+  error: 150
+  ignores_urls: true
+  ignores_function_declarations: true
+  ignores_comments: true
+
+# File and type size limits
+file_length:
+  warning: 120
+  error: 200
+
+type_body_length:
+  warning: 100
+  error: 150
+
+# Function complexity limits
+function_body_length:
+  warning: 30
+  error: 60
+
+function_parameter_count:
+  warning: 5
+  error: 8
+
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+
+# Nesting limits
+nesting:
+  type_level:
+    warning: 3
+    error: 4
+  function_level:
+    warning: 5
+    error: 6
+
+# =============================================================================
+# RULE CONFIGURATIONS
+# =============================================================================
+
+# Enforce trailing commas for better git diffs
+trailing_comma:
+  mandatory_comma: true
+
+# =============================================================================
+# BASIC OPT-IN RULES
+# =============================================================================
+
+opt_in_rules:
+  # === SAFE PERFORMANCE IMPROVEMENTS ===
+  - empty_count                        # Prefer isEmpty over count == 0
+  - empty_string                       # Prefer isEmpty over string == ""
+  - contains_over_filter_count         # Use contains instead of filter + count
+  - contains_over_filter_is_empty      # Use contains instead of filter + isEmpty
+  - first_where                        # Prefer first(where:) over filter + first
+  - last_where                         # Prefer last(where:) over filter + last
+  
+  # === BASIC CODE QUALITY ===
+  - closure_spacing                    # Consistent spacing in closures
+  - redundant_nil_coalescing          # Remove redundant nil coalescing
+  - redundant_type_annotation         # Remove redundant type annotations
+  - toggle_bool                       # Use toggle() instead of = !
+  - shorthand_operator               # Use shorthand operators (+=, -=, etc.)
+  - no_magic_numbers                 # Discourage magic numbers in code
+  
+  # === IMPORT ORGANIZATION ===
+  - sorted_imports                     # Sort import statements
+  
+  # === BASIC SAFETY ===
+  - unhandled_throwing_task           # Handle throwing tasks
+  
+  # === FILE ORGANIZATION ===
+  - one_declaration_per_file          # Only one declaration per file
+
+# =============================================================================
+# ANALYZER RULES (require 'swiftlint analyze')
+# =============================================================================
+
+analyzer_rules:
+  - unused_import                      # Remove unused imports
+
+# =============================================================================
+# DISABLED RULES
+# =============================================================================
+
+disabled_rules:
+  - todo                              # Allow TODO comments during development
+  - opening_brace                     # Intereferes with preference for multiline `if`
+
+# =============================================================================
+# CUSTOM RULES
+# =============================================================================
+
+# Use SwiftSyntax-based custom rules instead of regex for better performance
+# Run: ./swiftlint-tests/test-swiftsyntax-rule.sh to test custom rules
+# The regex-based rules below are commented out due to performance issues
+# custom_rules:
+  # Enforce skimmable SwiftUI View body properties (max 10 lines)
+  # skimmable_body:
+  #   name: "Skimmable Body"
+  #   message: "SwiftUI View body property should be 10 lines or fewer to remain skimmable"
+  #   regex: '^(\s*)var\s+body:\s*some\s+View\s*\{(?:\n.*){9,}\n\1\}$'
+  #   severity: warning
+    
+  # # SwiftUI View structure rule 1: Embedded types must come first
+  # embedded_types_first:
+  #   name: "Embedded Types First"
+  #   message: "Embedded types must be declared before all other declarations in SwiftUI Views"
+  #   regex: 'struct\s+\w+:\s*[\w\s,]*View\s*\{[^{}]*(?:@\w+|var\s+(?!body)|let\s+|func\s+|init)[^{}]*(?:private\s+|fileprivate\s+|internal\s+)?(?:enum|struct|class|protocol|actor)\s+\w+'
+  #   severity: warning
+    
+  # # SwiftUI View structure rule 2: Environment properties must be grouped
+  # environment_properties_grouped:
+  #   name: "Environment Properties Grouped"
+  #   message: "Environment properties (@Environment, @EnvironmentObject, @AppStorage, @SceneStorage) must be grouped together and come before other properties"
+  #   regex: 'struct\s+\w+:\s*[\w\s,]*View[\s\S]*?\{[\s\S]*?(?:@(?!Environment|EnvironmentObject|AppStorage|SceneStorage)\w+|var\s+(?!body)|let\s+)[\s\S]*?@(?:Environment|EnvironmentObject|AppStorage|SceneStorage)'
+  #   severity: warning
+    
+  # # SwiftUI View structure rule 3: No computed properties or methods above body
+  # no_computed_properties_or_methods_above_body:
+  #   name: "No Computed Properties or Methods Above Body"
+  #   message: "Computed properties and methods must be declared below the body property in SwiftUI Views"
+  #   regex: 'struct\s+\w+:\s*[\w\s,]*View\s*\{[^{}]*(?:var\s+\w+:\s*\w+\s*\{(?!\s*didSet|willSet)[^{}]*\}|func\s+\w+)[^{}]*var\s+body:'
+  #   severity: warning
+    
+  # # SwiftUI View structure rule 4: Init must be immediately before body
+  # init_immediately_before_body:
+  #   name: "Init Immediately Before Body"
+  #   message: "If present, init must be declared immediately before the body property in SwiftUI Views"
+  #   regex: 'init\s*\([^)]*\)\s*\{[^{}]*\}\s*(?:@\w+[^\n]*\n|var\s+(?!body)[^\n]*\n|let\s+[^\n]*\n|func\s+[^\n]*\n)[\s\S]*?var\s+body:'
+  #   severity: warning
+    
+  # # Detect functions/calls with 4+ arguments on same line
+  # multiline_arguments_threshold:
+  #   name: "Multiline Arguments Threshold"
+  #   message: "Functions with 4+ arguments should be expanded to multiple lines (use Xcode's Control+M)"
+  #   regex: '\w+\([^)\n]*,[^)\n]*,[^)\n]*,[^)\n]*[^)\n]*\)'
+  #   severity: warning
+    
+  # # Disallow modifiers on same line as closing delimiter when delimiter is on its own line
+  # no_modifiers_after_closing_delimiter:
+  #   name: "No Modifiers After Closing Delimiter"
+  #   message: "Don't chain methods/modifiers on the same line as a closing ) or ] when the delimiter is on its own line"
+  #   regex: '(?m)^\s*[)\]]\.'
+  #   match_kinds:
+  #     - identifier
+  #   severity: warning
+    
+  # # Prefer frame with alignment over VStack/HStack with Spacer for alignment
+  # prefer_frame_over_spacer_alignment:
+  #   name: "Prefer Frame Over Spacer Alignment"
+  #   message: "Use .frame(maxWidth/maxHeight: .infinity, alignment: .xxx) instead of VStack/HStack with Spacer for alignment"
+  #   regex: '[VH]Stack\s*\{\s*(?:Spacer\(\)\s*[^{}\n]*[A-Za-z_][A-Za-z0-9_\.]*[^{}\n]*\s*\}|[^{}\n]*[A-Za-z_][A-Za-z0-9_\.]*[^{}\n]*\s*Spacer\(\)\s*\})'
+  #   severity: warning
+    
+  # # Frame alignment must have width/height parameters to be effective
+  # frame_alignment_requires_dimensions:
+  #   name: "Frame Alignment Requires Dimensions"
+  #   message: "Using alignment in .frame() has no effect without width, height, maxWidth, or maxHeight parameters"
+  #   regex: '\.frame\(\s*alignment:\s*[^)]+\)'
+  #   severity: warning
+
+# =============================================================================
+# FUTURE EXPANSION REFERENCE
+# =============================================================================
+
+# This configuration starts with ~20 opt-in rules (basic set)
+# Future expansion can add rules incrementally in categories:
+#
+# === STYLE & FORMATTING (20+ rules) ===
+# - multiline_arguments, multiline_parameters, closure_end_indentation
+# - operator_usage_whitespace, vertical_whitespace_*, contrasted_opening_brace
+# - collection_alignment, literal_expression_end_indentation
+#
+# === SWIFT BEST PRACTICES (30+ rules) ===  
+# - implicit_return, explicit_init, convenience_type, pattern_matching_keywords
+# - discouraged_optional_boolean, discouraged_optional_collection
+# - function_default_parameter_at_end, self_binding
+#
+# === ERROR PREVENTION (25+ rules) ===
+# - force_unwrapping, implicitly_unwrapped_optional, identical_operands
+# - overridden_super_call, return_value_from_void_function, capture_variable
+#
+# === ACCESS CONTROL (10+ rules) ===
+# - explicit_acl, extension_access_modifier, private_*, strict_fileprivate
+#
+# === TESTING (10+ rules) ===
+# - empty_xctest_method, final_test_case, single_test_class
+#
+# === DOCUMENTATION (5+ rules) ===
+# - missing_docs, file_header
+#
+# === SPECIALIZED (20+ rules) ===
+# - accessibility_*, legacy_*, quick_*, nimble_*
+#
+# Total available: ~140 additional opt-in rules for future consideration

@@ -1,0 +1,73 @@
+Example Output from SwiftSyntax Rule Check
+==========================================
+
+$ ./scripts/check-file.sh ../../gravity-well/GravityWell/Views/PhaseControlView.swift
+🔍 Checking PhaseControlView.swift for SwiftSyntax rule violations...
+⚠️ SwiftUI View body has 27 lines (maximum: 10)
+Found 1 violation(s)
+✅ Check completed
+
+$ ./scripts/check-project.sh ../../gravity-well
+🔍 Checking project: ../../gravity-well
+📄 Found 45 Swift files
+📊 Processed 10/45 files...
+📊 Processed 20/45 files...
+📊 Processed 30/45 files...
+📊 Processed 40/45 files...
+📁 Views/PhaseControlView.swift
+⚠️ SwiftUI View body has 27 lines (maximum: 10)
+
+📁 Views/ControlPanelView.swift
+⚠️ SwiftUI View body has 15 lines (maximum: 10)
+
+🏁 Project check complete
+📊 45 files checked
+
+Xcode Integration Output:
+========================
+
+When integrated with Xcode, violations appear as warnings in the Issue Navigator:
+
+GravityWell/Views/PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 10)
+GravityWell/Views/ControlPanelView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 15 lines (maximum: 10)
+
+Suggested Fix:
+==============
+
+Instead of:
+```swift
+var body: some View {
+    VStack {
+        Text("Line 1")
+        Text("Line 2")
+        Text("Line 3")
+        // ... 20+ more lines
+    }
+}
+```
+
+Use computed properties:
+```swift
+var body: some View {
+    VStack {
+        headerSection
+        contentSection
+        footerSection
+    }
+}
+
+private var headerSection: some View {
+    VStack {
+        Text("Header")
+        // Complex header logic
+    }
+}
+
+private var contentSection: some View {
+    // Complex content logic
+}
+
+private var footerSection: some View {
+    // Complex footer logic
+}
+```

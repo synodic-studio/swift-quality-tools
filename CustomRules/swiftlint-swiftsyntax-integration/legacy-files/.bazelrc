@@ -1,0 +1,4 @@
+# Bazel configuration for SwiftLint custom rules
+
+# Enable bzlmod
+build --enable_bzlmod
