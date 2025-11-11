@@ -7,10 +7,10 @@ struct SwiftLintCustomSmart: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
-            This tool runs custom SwiftSyntax-based rules including:
-            • SwiftUI View body properties limited to 10 lines maximum
-            • SwiftUI View body properties must have exactly one top-level view (never Group)
-            """
+        This tool runs custom SwiftSyntax-based rules including:
+        • SwiftUI View body properties limited to 12 lines maximum
+        • SwiftUI View body properties must have exactly one top-level view (never Group)
+        """,
     )
 
     @Argument(help: "File or directory to check (default: current directory)")
@@ -23,7 +23,11 @@ struct SwiftLintCustomSmart: ParsableCommand {
         do {
             try ConfigDiscovery.validateTarget(targetURL)
         } catch {
-            Console.error(error.localizedDescription)
+            let errorMsg = ErrorFormatter.formatTargetError(
+                tool: "SwiftLintCustomSmart",
+                target: target,
+            )
+            Console.error(errorMsg)
             throw ExitCode.failure
         }
 
@@ -38,7 +42,14 @@ struct SwiftLintCustomSmart: ParsableCommand {
             let ruleEngineDir = ruleEnginePath.deletingLastPathComponent().deletingLastPathComponent()
 
             guard FileManager.default.fileExists(atPath: ruleEngineDir.path) else {
-                Console.error("Rule engine directory not found: \(ruleEngineDir.path)")
+                let errorMsg = ErrorFormatter.format(
+                    tool: "SwiftLintCustomSmart",
+                    errorType: "RuleEngineDirectoryNotFound",
+                    problem: "Rule engine directory not found",
+                    context: "Expected at: \(ruleEngineDir.path)",
+                    fix: "Verify swift-quality-tools CustomRules/swiftlint-swiftsyntax-integration/rule-engine/ directory exists",
+                )
+                Console.error(errorMsg)
                 throw ExitCode.failure
             }
 
@@ -47,23 +58,42 @@ struct SwiftLintCustomSmart: ParsableCommand {
                 let exitCode = try ProcessRunner.run(
                     "swift",
                     arguments: ["build"],
-                    workingDirectory: ruleEngineDir
+                    workingDirectory: ruleEngineDir,
                 )
 
                 if exitCode != 0 {
-                    Console.error("Failed to build rule engine")
+                    let errorMsg = ErrorFormatter.formatBuildError(
+                        tool: "SwiftLintCustomSmart",
+                        project: "rule-engine",
+                        exitCode: Int32(exitCode),
+                    )
+                    Console.error(errorMsg)
                     throw ExitCode.failure
                 }
 
                 // Verify it was built
                 guard FileManager.default.fileExists(atPath: ruleEnginePath.path) else {
-                    Console.error("Rule engine build succeeded but executable not found")
+                    let errorMsg = ErrorFormatter.format(
+                        tool: "SwiftLintCustomSmart",
+                        errorType: "ExecutableNotFound",
+                        problem: "Rule engine build succeeded but executable not found",
+                        context: "Expected at: \(ruleEnginePath.path)",
+                        fix: "Check if swift build created the executable in .build/debug/",
+                    )
+                    Console.error(errorMsg)
                     throw ExitCode.failure
                 }
 
                 Console.success("Rule engine built successfully")
             } catch let error as ProcessError {
-                Console.error(error.localizedDescription)
+                let errorMsg = ErrorFormatter.format(
+                    tool: "SwiftLintCustomSmart",
+                    errorType: "ProcessError",
+                    problem: error.localizedDescription,
+                    context: "Building rule engine with swift build",
+                    fix: "Ensure Swift toolchain is installed and rule-engine Package.swift is valid",
+                )
+                Console.error(errorMsg)
                 throw ExitCode.failure
             }
         }
@@ -74,6 +104,7 @@ struct SwiftLintCustomSmart: ParsableCommand {
 
         var violationCount = 0
         var totalFiles = 0
+        var filesWithViolations: [String] = []
 
         // Process target
         let fileManager = FileManager.default
@@ -105,8 +136,10 @@ struct SwiftLintCustomSmart: ParsableCommand {
 
         // Check each file
         for fileURL in filesToCheck {
-            if try checkFile(fileURL, ruleEngine: ruleEnginePath) {
+            let result = try checkFile(fileURL, ruleEngine: ruleEnginePath)
+            if result.hasViolations {
                 violationCount += 1
+                filesWithViolations.append(result.relativePath)
             }
         }
 
@@ -118,10 +151,13 @@ struct SwiftLintCustomSmart: ParsableCommand {
         if violationCount == 0 {
             Console.success("No violations found! All code follows the custom rules.")
         } else {
-            print("\(ANSIColor.red.rawValue)❌ Found \(violationCount) file(s) with violations.\(ANSIColor.reset.rawValue)")
+            print("\(ANSIColor.red.rawValue)❌ Found \(violationCount) file(s) with violations:\(ANSIColor.reset.rawValue)")
+            for filePath in filesWithViolations {
+                print("  • \(filePath)")
+            }
             print("")
             Console.section("Custom rules being checked:")
-            print("  • SwiftUI View body properties limited to 10 lines maximum")
+            print("  • SwiftUI View body properties limited to 12 lines maximum")
             print("  • SwiftUI View body properties must have exactly one top-level view (never Group)")
         }
         Console.section("=================================================")
@@ -131,12 +167,18 @@ struct SwiftLintCustomSmart: ParsableCommand {
         }
     }
 
+    /// Result of checking a single file
+    private struct CheckResult {
+        let hasViolations: Bool
+        let relativePath: String
+    }
+
     /// Check a single file for violations
     /// - Parameters:
     ///   - fileURL: URL of file to check
     ///   - ruleEngine: URL of rule engine executable
-    /// - Returns: true if violations found, false otherwise
-    private func checkFile(_ fileURL: URL, ruleEngine: URL) throws -> Bool {
+    /// - Returns: CheckResult with violation status and relative path
+    private func checkFile(_ fileURL: URL, ruleEngine: URL) throws -> CheckResult {
         let process = Process()
         process.executableURL = ruleEngine
         process.arguments = [fileURL.path]
@@ -151,22 +193,23 @@ struct SwiftLintCustomSmart: ParsableCommand {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: data, encoding: .utf8) ?? ""
 
+        let relativePath = fileURL.path.replacingOccurrences(of: FileManager.default.currentDirectoryPath + "/", with: "")
+
         // Check if there are violations
         if output.contains("⚠️") {
-            let relativePath = fileURL.path.replacingOccurrences(of: FileManager.default.currentDirectoryPath + "/", with: "")
             print("\(ANSIColor.red.rawValue)\(relativePath):\(ANSIColor.reset.rawValue)")
 
             // Print violations
-            output.components(separatedBy: .newlines).forEach { line in
+            for line in output.components(separatedBy: .newlines) {
                 if line.contains("⚠️") {
                     let cleaned = line.replacingOccurrences(of: "⚠️", with: "  •")
                     print("    \(cleaned)")
                 }
             }
             print("")
-            return true
+            return CheckResult(hasViolations: true, relativePath: relativePath)
         }
 
-        return false
+        return CheckResult(hasViolations: false, relativePath: relativePath)
     }
 }
