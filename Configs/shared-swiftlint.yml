@@ -48,9 +48,9 @@ nesting:
 # RULE CONFIGURATIONS
 # =============================================================================
 
-# Enforce trailing commas for better git diffs
-trailing_comma:
-  mandatory_comma: true
+# Trailing commas are handled by SwiftFormat - disabled here to avoid conflicts
+# trailing_comma:
+#   mandatory_comma: true
 
 # =============================================================================
 # BASIC OPT-IN RULES
@@ -96,6 +96,7 @@ analyzer_rules:
 disabled_rules:
   - todo                              # Allow TODO comments during development
   - opening_brace                     # Intereferes with preference for multiline `if`
+  - trailing_comma                    # SwiftFormat handles trailing commas
 
 # =============================================================================
 # CUSTOM RULES
@@ -105,10 +106,10 @@ disabled_rules:
 # Run: ./swiftlint-tests/test-swiftsyntax-rule.sh to test custom rules
 # The regex-based rules below are commented out due to performance issues
 # custom_rules:
-  # Enforce skimmable SwiftUI View body properties (max 10 lines)
+  # Enforce skimmable SwiftUI View body properties (max 12 lines)
   # skimmable_body:
   #   name: "Skimmable Body"
-  #   message: "SwiftUI View body property should be 10 lines or fewer to remain skimmable"
+  #   message: "SwiftUI View body property should be 12 lines or fewer to remain skimmable"
   #   regex: '^(\s*)var\s+body:\s*some\s+View\s*\{(?:\n.*){9,}\n\1\}$'
   #   severity: warning
     
