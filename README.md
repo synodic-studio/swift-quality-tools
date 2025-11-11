@@ -16,8 +16,19 @@ All tools feature smart configuration discovery that walks up the directory tree
 
 ### Build from Source
 
+Use the automated build script to build all components:
+
 ```bash
 cd ~/Developer/swift-quality-tools
+./Scripts/build-all.sh
+```
+
+This builds:
+- Main package (swiftformat-smart, swiftlint-smart, swiftlintcustom-smart)
+- Custom rule engine
+
+**Manual build:**
+```bash
 swift build -c release
 ```
 
@@ -101,8 +112,11 @@ swiftlintcustom-smart Sources/
 ```
 
 **Custom Rules:**
-- SwiftUI View `body` properties limited to 10 lines maximum
+- SwiftUI View `body` properties limited to 12 lines maximum
 - SwiftUI View `body` properties must have exactly one top-level view (never Group)
+
+**First Run:**
+The custom rule engine auto-builds on first use if not already built.
 
 ## Integration
 
@@ -180,14 +194,21 @@ SwiftSyntax-based rules in `CustomRules/swiftlint-swiftsyntax-integration/`:
 2. **Single top-level view** - Exactly one view at top level (no `Group` wrappers)
 
 **To add new rules:**
-1. Edit `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/`
-2. Rebuild: `cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build`
+1. Edit `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/test-custom-rule.swift`
+2. Rebuild: `./Scripts/build-all.sh` or manually:
+   ```bash
+   cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine
+   swift build
+   ```
 
 ## Architecture
 
 ```
 swift-quality-tools/
 ├── Package.swift                    # Swift Package definition
+├── Scripts/                         # Build and test scripts
+│   ├── build-all.sh                 # Build all components
+│   └── test-tools.sh                # Validate installation
 ├── Sources/
 │   ├── SwiftFormatSmart/            # swiftformat-smart executable
 │   ├── SwiftLintSmart/              # swiftlint-smart executable
@@ -195,12 +216,16 @@ swift-quality-tools/
 │   └── SharedUtilities/             # Shared code
 │       ├── ConfigDiscovery.swift    # Smart config finding
 │       ├── ColoredOutput.swift      # Terminal colors
-│       └── ProcessRunner.swift      # Process execution
+│       ├── ProcessRunner.swift      # Process execution
+│       └── ErrorFormatter.swift     # Self-healing error messages
 ├── Configs/                         # Shared configurations
 │   ├── shared-swiftformat.yml
 │   └── shared-swiftlint.yml
 ├── CustomRules/                     # Custom SwiftSyntax rules
 │   └── swiftlint-swiftsyntax-integration/
+│       └── rule-engine/
+│           ├── Package.swift
+│           └── test-custom-rule.swift
 └── .build/release/                  # Compiled binaries
 ```
 
@@ -212,6 +237,7 @@ swift-quality-tools/
 ✅ **Hook Integration** - Auto-format on every edit in Claude Code
 ✅ **Fast Native Binaries** - No shell/Python overhead
 ✅ **Type-Safe Swift** - Robust error handling and CLI parsing
+✅ **Self-Healing Errors** - Actionable error messages for LLM auto-repair
 ✅ **Consistent Quality** - Same rules across all projects
 
 ## Development
@@ -220,11 +246,28 @@ swift-quality-tools/
 
 ```bash
 cd ~/Developer/swift-quality-tools
-swift build -c release
+./Scripts/build-all.sh
 ```
 
 ### Testing
 
+Run the complete test suite (unit tests + integration tests):
+
+```bash
+./Scripts/run-tests.sh
+```
+
+**Test individual components:**
+
+```bash
+# Unit tests only (Swift Testing framework)
+swift test
+
+# Integration tests only (tool validation)
+./Scripts/test-tools.sh
+```
+
+**Manual testing:**
 ```bash
 # Test on this repo
 ./.build/release/swiftformat-smart Sources/
@@ -235,6 +278,23 @@ swift build -c release
 cd ~/Developer/gravity-well
 ~/Developer/swift-quality-tools/.build/release/swiftformat-smart .
 ```
+
+**Test Coverage:**
+- ErrorFormatter - Self-healing error message formatting
+- ConfigDiscovery - Smart config file discovery and validation
+- Integration - All three tools executable and working correctly
+
+### Error Messages
+
+All tools provide self-healing error messages following the pattern:
+```
+🚨 [Tool] Error: [ErrorType]
+Problem: [Clear description]
+Context: [What was being attempted]
+Fix: [Actionable suggestion]
+```
+
+This enables LLM auto-repair when errors occur in Claude Code hooks.
 
 ## Migration from synodic-tools
 

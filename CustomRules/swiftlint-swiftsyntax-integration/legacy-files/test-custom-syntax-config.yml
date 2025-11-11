@@ -1,9 +1,0 @@
-# Test configuration for SwiftSyntax-based custom rules
-
-# Only run our custom rule for testing
-only_rules:
-  - skimmable_body
-
-# Include test files
-included:
-  - swiftlint-tests/test-skimmable-body.swift

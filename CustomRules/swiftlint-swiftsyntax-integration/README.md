@@ -59,12 +59,12 @@ cd swiftlint-swiftsyntax-integration
 1. **SwiftSyntax Parser**: Parses Swift files into Abstract Syntax Tree (AST)
 2. **Rule Engine**: Visits AST nodes to find SwiftUI View body properties
 3. **Line Counting**: Accurately counts logical lines (excluding braces, empty lines)
-4. **Violation Detection**: Reports bodies with more than 10 lines
+4. **Violation Detection**: Reports bodies with more than 12 lines
 
 ## 📋 What Gets Detected
 
 **✅ Will Trigger Warning:**
-- SwiftUI View body with 11+ lines of content
+- SwiftUI View body with 13+ lines of content
 - Nested closures, conditionals, loops count as separate lines
 - Comments within body count as lines
 
@@ -78,7 +78,7 @@ cd swiftlint-swiftsyntax-integration
 
 ```
 🔍 Checking PhaseControlView.swift...
-⚠️ SwiftUI View body has 27 lines (maximum: 10)
+⚠️ SwiftUI View body has 27 lines (maximum: 12)
 Found 1 violation(s)
 
 💡 Suggestion: Extract complex logic into computed properties:
@@ -119,7 +119,7 @@ Found 1 violation(s)
 ### Option B: Xcode Integration
 1. Add "Run Script" build phase
 2. Set shell: `/bin/bash`
-3. Script content: `source /path/to/synodic-tools/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh`
+3. Script content: `source /path/to/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh`
 
 ### Option C: Git Hook
 ```bash

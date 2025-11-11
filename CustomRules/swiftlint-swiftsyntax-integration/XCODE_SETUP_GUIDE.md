@@ -16,7 +16,7 @@
 - **Script**: Copy and paste this exactly:
 
 ```bash
-source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
+source "${SRCROOT}/../swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
 ```
 
 ### 4. Position the Build Phase
@@ -33,7 +33,7 @@ source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xc
 - Open the **Issue Navigator** (⌘+5)
 - Look for warnings like:
   ```
-  PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 10)
+  PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 12)
   ```
 
 ## Troubleshooting
@@ -48,11 +48,11 @@ source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xc
    - Adjust `SYNODIC_TOOLS_PATH` in the script if different
 
 3. **Check Setup**:
-   - Run setup first: `cd synodic-tools/swiftlint-swiftsyntax-integration && ./scripts/setup.sh`
+   - Run setup first: `cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration && ./scripts/setup.sh`
 
 ### "Rule engine not built" Warning
 ```bash
-cd synodic-tools/swiftlint-swiftsyntax-integration
+cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration
 ./scripts/setup.sh
 ```
 
@@ -67,7 +67,7 @@ If Xcode integration is problematic, use manual scripts:
 
 ```bash
 # Check single file
-cd synodic-tools/swiftlint-swiftsyntax-integration
+cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration
 ./scripts/check-file.sh ../../gravity-well/GravityWell/Views/PhaseControlView.swift
 
 # Check entire project
@@ -92,7 +92,7 @@ The script does:
 ## What the Rule Detects
 
 ✅ **Will trigger warning**:
-- SwiftUI View `body` with 11+ lines
+- SwiftUI View `body` with 13+ lines
 - Complex nested closures
 - Long conditional chains
 

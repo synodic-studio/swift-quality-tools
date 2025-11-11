@@ -1,0 +1,160 @@
+import Foundation
+import Testing
+@testable import SharedUtilities
+
+@Suite("ConfigDiscovery Tests")
+struct ConfigDiscoveryTests {
+    // MARK: - Test Fixtures
+
+    private func createTempDirectory() throws -> URL {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        return tempDir
+    }
+
+    private func cleanup(_ url: URL) {
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    private func createFile(at url: URL, contents: String = "") throws {
+        try contents.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Target Validation Tests
+
+    @Test("Validate target throws error for non-existent path")
+    func validateTargetNonExistent() throws {
+        let nonExistentPath = URL(fileURLWithPath: "/tmp/nonexistent-\(UUID().uuidString)")
+
+        #expect(throws: ConfigDiscoveryError.self) {
+            try ConfigDiscovery.validateTarget(nonExistentPath)
+        }
+    }
+
+    @Test("Validate target succeeds for existing file")
+    func validateTargetExistingFile() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let testFile = tempDir.appendingPathComponent("test.swift")
+        try createFile(at: testFile, contents: "// test")
+
+        #expect(throws: Never.self) {
+            try ConfigDiscovery.validateTarget(testFile)
+        }
+    }
+
+    @Test("Validate target succeeds for existing directory")
+    func validateTargetExistingDirectory() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        #expect(throws: Never.self) {
+            try ConfigDiscovery.validateTarget(tempDir)
+        }
+    }
+
+    // MARK: - Explicit Config Tests
+
+    @Test("Find config returns explicit config when provided and exists")
+    func explicitConfigExists() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let explicitConfig = tempDir.appendingPathComponent("custom.yml")
+        try createFile(at: explicitConfig)
+
+        // Change to temp directory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let result = try ConfigDiscovery.findConfig(
+            configNames: [".swiftformat.yml"],
+            sharedConfigName: "shared-swiftformat.yml",
+            explicitConfig: explicitConfig,
+        )
+
+        #expect(result.path == explicitConfig.path)
+    }
+
+    @Test("Find config throws error when explicit config doesn't exist")
+    func explicitConfigNotExists() throws {
+        let nonExistentConfig = URL(fileURLWithPath: "/tmp/nonexistent-\(UUID().uuidString).yml")
+
+        #expect(throws: ConfigDiscoveryError.noConfigFound) {
+            try ConfigDiscovery.findConfig(
+                configNames: [".swiftformat.yml"],
+                sharedConfigName: "shared-swiftformat.yml",
+                explicitConfig: nonExistentConfig,
+            )
+        }
+    }
+
+    // MARK: - Config Discovery Error Tests
+
+    @Test("ConfigDiscoveryError multipleConfigsFound has correct description")
+    func multipleConfigsFoundError() {
+        let configs = [
+            URL(fileURLWithPath: "/path/.swiftformat.yml"),
+            URL(fileURLWithPath: "/path/.swiftformat"),
+        ]
+        let error = ConfigDiscoveryError.multipleConfigsFound(configs)
+
+        let description = error.errorDescription
+        #expect(description != nil)
+        #expect(description!.contains(".swiftformat.yml"))
+        #expect(description!.contains(".swiftformat"))
+    }
+
+    @Test("ConfigDiscoveryError noConfigFound has correct description")
+    func noConfigFoundError() {
+        let error = ConfigDiscoveryError.noConfigFound
+        let description = error.errorDescription
+
+        #expect(description != nil)
+        #expect(description!.contains("No config file found"))
+    }
+
+    @Test("ConfigDiscoveryError sharedConfigMissing includes path")
+    func sharedConfigMissingError() {
+        let missingPath = URL(fileURLWithPath: "/path/to/shared.yml")
+        let error = ConfigDiscoveryError.sharedConfigMissing(missingPath)
+
+        let description = error.errorDescription
+        #expect(description != nil)
+        #expect(description!.contains("/path/to/shared.yml"))
+    }
+
+    @Test("ConfigDiscoveryError targetNotFound includes path")
+    func targetNotFoundError() {
+        let targetPath = URL(fileURLWithPath: "/path/to/target")
+        let error = ConfigDiscoveryError.targetNotFound(targetPath)
+
+        let description = error.errorDescription
+        #expect(description != nil)
+        #expect(description!.contains("/path/to/target"))
+    }
+
+    // MARK: - Custom Rule Engine Path Tests
+
+    @Test("Custom rule engine path points to correct location")
+    func testCustomRuleEnginePath() {
+        let path = ConfigDiscovery.customRuleEnginePath
+
+        #expect(path.path.contains("swift-quality-tools"))
+        #expect(path.path.contains("CustomRules"))
+        #expect(path.path.contains("swiftlint-swiftsyntax-integration"))
+        #expect(path.path.contains("rule-engine"))
+        #expect(path.path.contains(".build/debug/test-custom-rule"))
+    }
+
+    @Test("Custom rule engine path is in home directory")
+    func customRuleEnginePathInHome() {
+        let path = ConfigDiscovery.customRuleEnginePath
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+
+        #expect(path.path.starts(with: homeDir))
+    }
+}

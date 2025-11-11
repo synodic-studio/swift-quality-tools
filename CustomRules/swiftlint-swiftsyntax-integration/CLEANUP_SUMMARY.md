@@ -44,7 +44,7 @@ cd swiftlint-swiftsyntax-integration
 ### ✅ Xcode Integration
 Copy this into a Run Script Phase:
 ```bash
-source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
+source "${SRCROOT}/../swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
 ```
 
 ### ✅ Documentation

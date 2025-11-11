@@ -11,7 +11,7 @@ public enum ANSIColor: String {
 }
 
 /// Utilities for colored console output
-public struct Console {
+public enum Console {
     /// Print error message in red
     public static func error(_ message: String) {
         print("\(ANSIColor.red.rawValue)Error: \(message)\(ANSIColor.reset.rawValue)", to: &standardError)

@@ -4,23 +4,23 @@ import PackageDescription
 let package = Package(
     name: "swift-quality-tools",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v12),
     ],
     products: [
         .executable(name: "swiftformat-smart", targets: ["SwiftFormatSmart"]),
         .executable(name: "swiftlint-smart", targets: ["SwiftLintSmart"]),
-        .executable(name: "swiftlintcustom-smart", targets: ["SwiftLintCustomSmart"])
+        .executable(name: "swiftlintcustom-smart", targets: ["SwiftLintCustomSmart"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0")
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
     ],
     targets: [
         // Shared utilities library
         .target(
             name: "SharedUtilities",
             dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
         ),
 
         // SwiftFormat Smart executable
@@ -28,8 +28,8 @@ let package = Package(
             name: "SwiftFormatSmart",
             dependencies: [
                 "SharedUtilities",
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
         ),
 
         // SwiftLint Smart executable
@@ -37,8 +37,8 @@ let package = Package(
             name: "SwiftLintSmart",
             dependencies: [
                 "SharedUtilities",
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
         ),
 
         // SwiftLint Custom Smart executable
@@ -46,8 +46,14 @@ let package = Package(
             name: "SwiftLintCustomSmart",
             dependencies: [
                 "SharedUtilities",
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]
-        )
-    ]
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
+        ),
+
+        // Tests
+        .testTarget(
+            name: "SharedUtilitiesTests",
+            dependencies: ["SharedUtilities"],
+        ),
+    ],
 )

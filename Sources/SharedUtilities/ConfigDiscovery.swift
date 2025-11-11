@@ -9,20 +9,20 @@ public enum ConfigDiscoveryError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .multipleConfigsFound(let urls):
-            return "Multiple config files found: \(urls.map { $0.lastPathComponent }.joined(separator: ", "))"
+        case let .multipleConfigsFound(urls):
+            "Multiple config files found: \(urls.map(\.lastPathComponent).joined(separator: ", "))"
         case .noConfigFound:
-            return "No config file found"
-        case .sharedConfigMissing(let url):
-            return "Shared config file missing: \(url.path)"
-        case .targetNotFound(let url):
-            return "Target not found: \(url.path)"
+            "No config file found"
+        case let .sharedConfigMissing(url):
+            "Shared config file missing: \(url.path)"
+        case let .targetNotFound(url):
+            "Target not found: \(url.path)"
         }
     }
 }
 
 /// Configuration discovery for Swift quality tools
-public struct ConfigDiscovery {
+public enum ConfigDiscovery {
     /// Path to swift-quality-tools directory
     private static let toolsPath = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Developer")

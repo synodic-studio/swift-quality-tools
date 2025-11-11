@@ -7,7 +7,7 @@
 # 2. Add "New Run Script Phase"
 # 3. Set Shell: /bin/bash
 # 4. Add this script content:
-#    source /path/to/synodic-tools/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh
+#    source /path/to/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh
 # 5. Adjust SYNODIC_TOOLS_PATH below if needed
 
 # Path to your synodic-tools directory

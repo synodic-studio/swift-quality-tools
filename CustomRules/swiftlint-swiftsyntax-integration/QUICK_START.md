@@ -8,7 +8,7 @@ The SwiftSyntax rule integration is **completely set up** and **working**. Here'
 
 ```bash
 # Go to the integration directory
-cd synodic-tools/swiftlint-swiftsyntax-integration
+cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration
 
 # Test on a single file
 ./scripts/check-file.sh ../../gravity-well/GravityWell/Views/PhaseControlView.swift
@@ -20,7 +20,7 @@ cd synodic-tools/swiftlint-swiftsyntax-integration
 **Expected output:**
 ```
 🔍 Checking PhaseControlView.swift for SwiftSyntax rule violations...
-⚠️ SwiftUI View body has 27 lines (maximum: 10)
+⚠️ SwiftUI View body has 27 lines (maximum: 12)
 Found 1 violation(s)
 ✅ Check completed
 ```
@@ -36,7 +36,7 @@ Found 1 violation(s)
 5. **Copy this script exactly:**
 
 ```bash
-source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
+source "${SRCROOT}/../swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/scripts/xcode-integration.sh"
 ```
 
 6. **Build your project** (⌘+B)
@@ -45,7 +45,7 @@ source "${SRCROOT}/../synodic-tools/swiftlint-swiftsyntax-integration/scripts/xc
 ## 📁 What You Have
 
 ```
-synodic-tools/swiftlint-swiftsyntax-integration/
+swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/
 ├── README.md              # Comprehensive documentation
 ├── QUICK_START.md         # This file
 ├── XCODE_SETUP_GUIDE.md   # Detailed Xcode setup
@@ -65,7 +65,7 @@ synodic-tools/swiftlint-swiftsyntax-integration/
 
 ## 💡 What the Rule Does
 
-**Detects:** SwiftUI View bodies with more than 10 lines
+**Detects:** SwiftUI View bodies with more than 12 lines
 **Suggests:** Breaking large bodies into computed properties
 
 **Example violation:**
@@ -98,7 +98,7 @@ private var headerView: some View {
 
 ### "Rule engine not built" error
 ```bash
-cd synodic-tools/swiftlint-swiftsyntax-integration
+cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration
 ./scripts/setup.sh
 ```
 

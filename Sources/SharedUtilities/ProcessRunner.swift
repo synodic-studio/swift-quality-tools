@@ -7,16 +7,16 @@ public enum ProcessError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .commandNotFound(let command):
-            return "Command not found: \(command)"
-        case .executionFailed(let exitCode, let command):
-            return "\(command) failed with exit code: \(exitCode)"
+        case let .commandNotFound(command):
+            "Command not found: \(command)"
+        case let .executionFailed(exitCode, command):
+            "\(command) failed with exit code: \(exitCode)"
         }
     }
 }
 
 /// Utility for running external processes
-public struct ProcessRunner {
+public enum ProcessRunner {
     /// Check if a command exists in PATH
     ///
     /// - Parameter command: Name of command to check
