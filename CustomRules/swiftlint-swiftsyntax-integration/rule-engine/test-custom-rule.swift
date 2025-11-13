@@ -42,8 +42,8 @@ final class CustomRulesVisitor: SyntaxVisitor {
             return !trimmed.isEmpty && !trimmed.hasPrefix("var body") && trimmed != "}" && trimmed != "{"
         }
 
-        if contentLines.count > 12 {
-            let violation = "⚠️ SwiftUI View body has \(contentLines.count) lines (maximum: 12)"
+        if contentLines.count > 15 {
+            let violation = "⚠️ SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
             violations.append(violation)
             print(violation)
         }

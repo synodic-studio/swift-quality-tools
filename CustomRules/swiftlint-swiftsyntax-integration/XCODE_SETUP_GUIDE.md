@@ -33,7 +33,7 @@ source "${SRCROOT}/../swift-quality-tools/CustomRules/swiftlint-swiftsyntax-inte
 - Open the **Issue Navigator** (⌘+5)
 - Look for warnings like:
   ```
-  PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 12)
+  PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 15)
   ```
 
 ## Troubleshooting

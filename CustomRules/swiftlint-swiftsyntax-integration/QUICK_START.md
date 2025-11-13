@@ -20,7 +20,7 @@ cd swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration
 **Expected output:**
 ```
 🔍 Checking PhaseControlView.swift for SwiftSyntax rule violations...
-⚠️ SwiftUI View body has 27 lines (maximum: 12)
+⚠️ SwiftUI View body has 27 lines (maximum: 15)
 Found 1 violation(s)
 ✅ Check completed
 ```
@@ -65,7 +65,7 @@ swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/
 
 ## 💡 What the Rule Does
 
-**Detects:** SwiftUI View bodies with more than 12 lines
+**Detects:** SwiftUI View bodies with more than 15 lines
 **Suggests:** Breaking large bodies into computed properties
 
 **Example violation:**

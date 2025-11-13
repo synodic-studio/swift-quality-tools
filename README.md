@@ -112,7 +112,7 @@ swiftlintcustom-smart Sources/
 ```
 
 **Custom Rules:**
-- SwiftUI View `body` properties limited to 12 lines maximum
+- SwiftUI View `body` properties limited to 15 lines maximum
 - SwiftUI View `body` properties must have exactly one top-level view (never Group)
 
 **First Run:**

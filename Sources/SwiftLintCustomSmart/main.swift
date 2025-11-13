@@ -8,7 +8,7 @@ struct SwiftLintCustomSmart: ParsableCommand {
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
         This tool runs custom SwiftSyntax-based rules including:
-        • SwiftUI View body properties limited to 12 lines maximum
+        • SwiftUI View body properties limited to 15 lines maximum
         • SwiftUI View body properties must have exactly one top-level view (never Group)
         """,
     )
@@ -100,7 +100,6 @@ struct SwiftLintCustomSmart: ParsableCommand {
 
         // Run custom rules
         Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
-        print("")
 
         var violationCount = 0
         var totalFiles = 0
@@ -145,24 +144,10 @@ struct SwiftLintCustomSmart: ParsableCommand {
 
         // Summary
         print("")
-        Console.section("==================== SUMMARY ====================")
-        print("📊 Files checked: \(totalFiles)")
-
         if violationCount == 0 {
-            Console.success("No violations found! All code follows the custom rules.")
+            Console.success("✓ \(totalFiles) files checked, no violations")
         } else {
-            print("\(ANSIColor.red.rawValue)❌ Found \(violationCount) file(s) with violations:\(ANSIColor.reset.rawValue)")
-            for filePath in filesWithViolations {
-                print("  • \(filePath)")
-            }
-            print("")
-            Console.section("Custom rules being checked:")
-            print("  • SwiftUI View body properties limited to 12 lines maximum")
-            print("  • SwiftUI View body properties must have exactly one top-level view (never Group)")
-        }
-        Console.section("=================================================")
-
-        if violationCount > 0 {
+            Console.warning("\(violationCount)/\(totalFiles) files with violations")
             throw ExitCode.failure
         }
     }

@@ -106,10 +106,10 @@ disabled_rules:
 # Run: ./swiftlint-tests/test-swiftsyntax-rule.sh to test custom rules
 # The regex-based rules below are commented out due to performance issues
 # custom_rules:
-  # Enforce skimmable SwiftUI View body properties (max 12 lines)
+  # Enforce skimmable SwiftUI View body properties (max 15 lines)
   # skimmable_body:
   #   name: "Skimmable Body"
-  #   message: "SwiftUI View body property should be 12 lines or fewer to remain skimmable"
+  #   message: "SwiftUI View body property should be 15 lines or fewer to remain skimmable"
   #   regex: '^(\s*)var\s+body:\s*some\s+View\s*\{(?:\n.*){9,}\n\1\}$'
   #   severity: warning
     

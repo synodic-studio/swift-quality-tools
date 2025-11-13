@@ -3,7 +3,7 @@ Example Output from SwiftSyntax Rule Check
 
 $ ./scripts/check-file.sh ../../gravity-well/GravityWell/Views/PhaseControlView.swift
 🔍 Checking PhaseControlView.swift for SwiftSyntax rule violations...
-⚠️ SwiftUI View body has 27 lines (maximum: 12)
+⚠️ SwiftUI View body has 27 lines (maximum: 15)
 Found 1 violation(s)
 ✅ Check completed
 
@@ -15,10 +15,10 @@ $ ./scripts/check-project.sh ../../gravity-well
 📊 Processed 30/45 files...
 📊 Processed 40/45 files...
 📁 Views/PhaseControlView.swift
-⚠️ SwiftUI View body has 27 lines (maximum: 12)
+⚠️ SwiftUI View body has 27 lines (maximum: 15)
 
 📁 Views/ControlPanelView.swift
-⚠️ SwiftUI View body has 15 lines (maximum: 12)
+⚠️ SwiftUI View body has 15 lines (maximum: 15)
 
 🏁 Project check complete
 📊 45 files checked
@@ -28,8 +28,8 @@ Xcode Integration Output:
 
 When integrated with Xcode, violations appear as warnings in the Issue Navigator:
 
-GravityWell/Views/PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 12)
-GravityWell/Views/ControlPanelView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 15 lines (maximum: 12)
+GravityWell/Views/PhaseControlView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 27 lines (maximum: 15)
+GravityWell/Views/ControlPanelView.swift:1:1: warning: SwiftSyntax Rule: SwiftUI View body has 15 lines (maximum: 15)
 
 Suggested Fix:
 ==============

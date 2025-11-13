@@ -59,7 +59,7 @@ cd swiftlint-swiftsyntax-integration
 1. **SwiftSyntax Parser**: Parses Swift files into Abstract Syntax Tree (AST)
 2. **Rule Engine**: Visits AST nodes to find SwiftUI View body properties
 3. **Line Counting**: Accurately counts logical lines (excluding braces, empty lines)
-4. **Violation Detection**: Reports bodies with more than 12 lines
+4. **Violation Detection**: Reports bodies with more than 15 lines
 
 ## 📋 What Gets Detected
 
@@ -78,7 +78,7 @@ cd swiftlint-swiftsyntax-integration
 
 ```
 🔍 Checking PhaseControlView.swift...
-⚠️ SwiftUI View body has 27 lines (maximum: 12)
+⚠️ SwiftUI View body has 27 lines (maximum: 15)
 Found 1 violation(s)
 
 💡 Suggestion: Extract complex logic into computed properties:
