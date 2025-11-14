@@ -72,10 +72,7 @@ opt_in_rules:
   - toggle_bool                       # Use toggle() instead of = !
   - shorthand_operator               # Use shorthand operators (+=, -=, etc.)
   - no_magic_numbers                 # Discourage magic numbers in code
-  
-  # === IMPORT ORGANIZATION ===
-  - sorted_imports                     # Sort import statements
-  
+
   # === BASIC SAFETY ===
   - unhandled_throwing_task           # Handle throwing tasks
   
@@ -97,6 +94,7 @@ disabled_rules:
   - todo                              # Allow TODO comments during development
   - opening_brace                     # Intereferes with preference for multiline `if`
   - trailing_comma                    # SwiftFormat handles trailing commas
+  - sorted_imports                    # SwiftFormat handles import sorting with @testable grouping
 
 # =============================================================================
 # CUSTOM RULES
