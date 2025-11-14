@@ -10,6 +10,7 @@ struct SwiftLintCustomSmart: ParsableCommand {
         This tool runs custom SwiftSyntax-based rules including:
         • SwiftUI View body properties limited to 15 lines maximum
         • SwiftUI View body properties must have exactly one top-level view (never Group)
+        • SwiftUI View body indentation depth limited to 4 levels maximum (16 spaces)
         """,
     )
 

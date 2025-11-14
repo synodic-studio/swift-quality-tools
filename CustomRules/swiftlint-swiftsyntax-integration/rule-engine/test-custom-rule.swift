@@ -27,6 +27,9 @@ final class CustomRulesVisitor: SyntaxVisitor {
 
                 // Rule 3: One top-level view (multiple statements)
                 checkOneTopLevelView(node)
+
+                // Rule 4: Excessive indentation depth
+                checkExcessiveIndentation(node)
             }
         }
 
@@ -184,8 +187,103 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
     }
 
+    private func checkExcessiveIndentation(_ node: VariableDeclSyntax) {
+        // Check for excessive indentation depth (> 4 levels)
+        guard let binding = node.bindings.first,
+              let accessor = binding.accessorBlock
+        else {
+            return
+        }
+
+        // Create a depth tracker visitor
+        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+        depthTracker.walk(accessor)
+
+        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+            let violation = "⚠️ SwiftUI View body has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider extracting views"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+
     func getViolations() -> [String] {
         violations
+    }
+}
+
+/// Tracks indentation depth through syntax tree
+final class IndentationDepthTracker: SyntaxVisitor {
+    private(set) var maxDepth: Int?
+    private var currentDepth = 0
+
+    override func visit(_: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: CodeBlockSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: ClosureExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: IfExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: IfExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: SwitchExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: SwitchExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: ForStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: ForStmtSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: WhileStmtSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: GuardStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: GuardStmtSyntax) {
+        currentDepth -= 1
     }
 }
 
