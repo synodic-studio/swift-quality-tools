@@ -114,7 +114,7 @@ swiftlintcustom-smart Sources/
 **Custom Rules:**
 - SwiftUI View `body` properties limited to 15 lines maximum
 - SwiftUI View `body` properties must have exactly one top-level view (never Group)
-- SwiftUI View `body` indentation depth limited to 4 levels maximum (prevents deep nesting)
+- Indentation depth limited to 4 levels maximum for all functions, closures, and initializers (prevents deep nesting)
 
 **First Run:**
 The custom rule engine auto-builds on first use if not already built.

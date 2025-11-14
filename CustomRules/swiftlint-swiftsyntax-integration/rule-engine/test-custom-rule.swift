@@ -27,12 +27,31 @@ final class CustomRulesVisitor: SyntaxVisitor {
 
                 // Rule 3: One top-level view (multiple statements)
                 checkOneTopLevelView(node)
-
-                // Rule 4: Excessive indentation depth
-                checkExcessiveIndentation(node)
             }
         }
 
+        return .visitChildren
+    }
+
+    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all functions)
+        if let body = node.body {
+            checkExcessiveIndentationInCodeBlock(body, context: "Function '\(node.name.text)'")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all initializers)
+        if let body = node.body {
+            checkExcessiveIndentationInCodeBlock(body, context: "Initializer")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all closures)
+        checkExcessiveIndentationInClosure(node)
         return .visitChildren
     }
 
@@ -187,20 +206,23 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
     }
 
-    private func checkExcessiveIndentation(_ node: VariableDeclSyntax) {
-        // Check for excessive indentation depth (> 4 levels)
-        guard let binding = node.bindings.first,
-              let accessor = binding.accessorBlock
-        else {
-            return
-        }
-
-        // Create a depth tracker visitor
+    private func checkExcessiveIndentationInCodeBlock(_ block: CodeBlockSyntax, context: String) {
         let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
-        depthTracker.walk(accessor)
+        depthTracker.walk(block)
 
         if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
-            let violation = "⚠️ SwiftUI View body has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider extracting views"
+            let violation = "⚠️ \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+
+    private func checkExcessiveIndentationInClosure(_ closure: ClosureExprSyntax) {
+        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+        depthTracker.walk(closure)
+
+        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+            let violation = "⚠️ Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
             violations.append(violation)
             print(violation)
         }
