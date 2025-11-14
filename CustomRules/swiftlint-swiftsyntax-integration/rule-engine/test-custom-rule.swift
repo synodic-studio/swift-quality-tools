@@ -3,6 +3,12 @@ import SwiftParser
 import SwiftSyntax
 
 /// Simplified version of our custom rules for testing
+///
+/// Rule identifiers:
+/// - skimmable_body: View body line count limit
+/// - no_group_body: Prohibit top-level Group in View bodies
+/// - one_top_level_view: Enforce single top-level view in View bodies
+/// - excessive_nesting: Indentation depth limit for all code
 final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
 
@@ -65,7 +71,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
 
         if contentLines.count > 15 {
-            let violation = "⚠️ SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
+            let violation = "⚠️ [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
             violations.append(violation)
             print(violation)
         }
@@ -105,7 +111,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         if groupLineIndex >= 0 {
             let hasModifiers = checkForViewModifiers(lines: lines, groupLineIndex: groupLineIndex)
             if !hasModifiers {
-                let violation = "⚠️ SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
+                let violation = "⚠️ [no_group_body] SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
                 violations.append(violation)
                 print(violation)
             }
@@ -200,7 +206,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
 
         if viewStatements > 1 {
-            let violation = "⚠️ SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
+            let violation = "⚠️ [one_top_level_view] SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
             violations.append(violation)
             print(violation)
         }
@@ -211,7 +217,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         depthTracker.walk(block)
 
         if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
-            let violation = "⚠️ \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+            let violation = "⚠️ [excessive_nesting] \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
             violations.append(violation)
             print(violation)
         }
@@ -222,7 +228,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         depthTracker.walk(closure)
 
         if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
-            let violation = "⚠️ Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+            let violation = "⚠️ [excessive_nesting] Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
             violations.append(violation)
             print(violation)
         }
