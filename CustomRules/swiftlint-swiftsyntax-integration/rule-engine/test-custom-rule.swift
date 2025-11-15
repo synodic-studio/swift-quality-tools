@@ -3,6 +3,12 @@ import SwiftParser
 import SwiftSyntax
 
 /// Simplified version of our custom rules for testing
+///
+/// Rule identifiers:
+/// - skimmable_body: View body line count limit
+/// - no_group_body: Prohibit top-level Group in View bodies
+/// - one_top_level_view: Enforce single top-level view in View bodies
+/// - excessive_nesting: Indentation depth limit for all code
 final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
 
@@ -33,6 +39,28 @@ final class CustomRulesVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all functions)
+        if let body = node.body {
+            checkExcessiveIndentationInCodeBlock(body, context: "Function '\(node.name.text)'")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all initializers)
+        if let body = node.body {
+            checkExcessiveIndentationInCodeBlock(body, context: "Initializer")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        // Rule 4: Excessive indentation depth (all closures)
+        checkExcessiveIndentationInClosure(node)
+        return .visitChildren
+    }
+
     private func checkSkimmableBody(_ node: VariableDeclSyntax) {
         // Count lines in the body
         let bodyText = node.description
@@ -43,7 +71,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
 
         if contentLines.count > 15 {
-            let violation = "⚠️ SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
+            let violation = "⚠️ [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
             violations.append(violation)
             print(violation)
         }
@@ -83,7 +111,7 @@ final class CustomRulesVisitor: SyntaxVisitor {
         if groupLineIndex >= 0 {
             let hasModifiers = checkForViewModifiers(lines: lines, groupLineIndex: groupLineIndex)
             if !hasModifiers {
-                let violation = "⚠️ SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
+                let violation = "⚠️ [no_group_body] SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
                 violations.append(violation)
                 print(violation)
             }
@@ -178,7 +206,29 @@ final class CustomRulesVisitor: SyntaxVisitor {
         }
 
         if viewStatements > 1 {
-            let violation = "⚠️ SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
+            let violation = "⚠️ [one_top_level_view] SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+
+    private func checkExcessiveIndentationInCodeBlock(_ block: CodeBlockSyntax, context: String) {
+        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+        depthTracker.walk(block)
+
+        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+            let violation = "⚠️ [excessive_nesting] \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+
+    private func checkExcessiveIndentationInClosure(_ closure: ClosureExprSyntax) {
+        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+        depthTracker.walk(closure)
+
+        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+            let violation = "⚠️ [excessive_nesting] Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
             violations.append(violation)
             print(violation)
         }
@@ -186,6 +236,82 @@ final class CustomRulesVisitor: SyntaxVisitor {
 
     func getViolations() -> [String] {
         violations
+    }
+}
+
+/// Tracks indentation depth through syntax tree
+final class IndentationDepthTracker: SyntaxVisitor {
+    private(set) var maxDepth: Int?
+    private var currentDepth = 0
+
+    override func visit(_: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: CodeBlockSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: ClosureExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: IfExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: IfExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: SwitchExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: SwitchExprSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: ForStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: ForStmtSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: WhileStmtSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_: GuardStmtSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+        maxDepth = max(maxDepth ?? 0, currentDepth)
+        return .visitChildren
+    }
+
+    override func visitPost(_: GuardStmtSyntax) {
+        currentDepth -= 1
     }
 }
 
