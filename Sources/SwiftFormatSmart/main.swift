@@ -38,10 +38,10 @@ struct SwiftFormatSmart: ParsableCommand {
         }
 
         // Discover config file
-        let baseConfigURL: URL
+        let configURL: URL
         do {
             let explicitConfig = config.map { URL(fileURLWithPath: $0) }
-            baseConfigURL = try ConfigDiscovery.findConfig(
+            configURL = try ConfigDiscovery.findConfig(
                 configNames: [".swiftformat.yml", ".swiftformat"],
                 sharedConfigName: "shared-swiftformat.yml",
                 explicitConfig: explicitConfig,
@@ -59,39 +59,6 @@ struct SwiftFormatSmart: ParsableCommand {
             throw ExitCode.failure
         }
 
-        // Check for project-specific overrides
-        let overridesURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            .appendingPathComponent(".swiftformat-overrides")
-
-        let configURL: URL
-        var tempConfigURL: URL?
-
-        if FileManager.default.fileExists(atPath: overridesURL.path) {
-            // Merge base config with overrides
-            do {
-                Console.info("Found overrides: \(overridesURL.path)")
-                let mergedConfig = try ConfigMerger.createMergedConfig(
-                    baseConfig: baseConfigURL,
-                    overrides: overridesURL,
-                )
-                tempConfigURL = mergedConfig
-                configURL = mergedConfig
-                Console.info("Using merged config (base + overrides)")
-            } catch {
-                let errorMsg = ErrorFormatter.format(
-                    tool: "SwiftFormatSmart",
-                    errorType: "ConfigMergeError",
-                    problem: "Failed to merge config with overrides: \(error.localizedDescription)",
-                    context: "Merging \(baseConfigURL.lastPathComponent) + .swiftformat-overrides",
-                    fix: "Check .swiftformat-overrides syntax",
-                )
-                Console.error(errorMsg)
-                throw ExitCode.failure
-            }
-        } else {
-            configURL = baseConfigURL
-        }
-
         // Check if swiftformat is installed
         guard ProcessRunner.commandExists("swiftformat") else {
             let errorMsg = ErrorFormatter.formatCommandError(
@@ -104,13 +71,6 @@ struct SwiftFormatSmart: ParsableCommand {
 
         // Run SwiftFormat
         Console.section("🔧 Running SwiftFormat on: \(target)")
-
-        // Clean up temp config file after execution
-        defer {
-            if let tempURL = tempConfigURL {
-                try? FileManager.default.removeItem(at: tempURL)
-            }
-        }
 
         do {
             let exitCode = try ProcessRunner.run(
