@@ -1,0 +1,55 @@
+import SwiftSyntax
+
+/// Rules related to SwiftUI previews
+/// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+public enum PreviewRules {
+    public static func checkPreviewRequired(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+        // Check if file declares any View or ViewModifier
+        var hasViewOrModifier = false
+        var hasPreview = false
+        var viewNames: [String] = []
+
+        for statement in sourceFile.statements {
+            // Check for struct/class declarations
+            if let structDecl = statement.item.as(StructDeclSyntax.self) {
+                // Check if it conforms to View or ViewModifier
+                if let inheritance = structDecl.inheritanceClause {
+                    for inherited in inheritance.inheritedTypes {
+                        let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
+                        if typeName.contains("View") || typeName.contains("ViewModifier") {
+                            hasViewOrModifier = true
+                            viewNames.append(structDecl.name.text)
+                            break
+                        }
+                    }
+                }
+            }
+
+            // Check for macro declarations (looking for #Preview or @Preview)
+            if let macroDecl = statement.item.as(MacroExpansionDeclSyntax.self) {
+                let macroName = macroDecl.macroName.description
+                if macroName.contains("Preview") {
+                    hasPreview = true
+                }
+            }
+
+            // Also check for function declarations with Preview attribute
+            if let funcDecl = statement.item.as(FunctionDeclSyntax.self) {
+                let hasPreviewAttribute = funcDecl.attributes.contains { attr in
+                    attr.as(AttributeSyntax.self)?.attributeName.description.contains("Preview") ?? false
+                }
+                if hasPreviewAttribute {
+                    hasPreview = true
+                }
+            }
+        }
+
+        // If file has View/ViewModifier but no Preview, report violation
+        if hasViewOrModifier, !hasPreview {
+            let viewList = viewNames.joined(separator: ", ")
+            let violation = "⚠️  [preview_required] File declares View/ViewModifier (\(viewList)) but has no #Preview - add at least one preview for development workflow"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+}
