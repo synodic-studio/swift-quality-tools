@@ -102,6 +102,9 @@ struct SwiftLintCustomSmart: ParsableCommand {
         // Run custom rules
         Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
 
+        // Load exclusion patterns from SwiftLint config
+        let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
+
         var violationCount = 0
         var totalFiles = 0
         var filesWithViolations: [String] = []
@@ -113,10 +116,10 @@ struct SwiftLintCustomSmart: ParsableCommand {
         var isDirectory: ObjCBool = false
         if fileManager.fileExists(atPath: targetURL.path, isDirectory: &isDirectory) {
             if isDirectory.boolValue {
-                // Directory - find all Swift files
+                // Directory - find all Swift files, excluding patterns from SwiftLint config
                 if let enumerator = fileManager.enumerator(at: targetURL, includingPropertiesForKeys: nil) {
                     for case let fileURL as URL in enumerator {
-                        if fileURL.pathExtension == "swift" {
+                        if fileURL.pathExtension == "swift", !shouldExclude(fileURL, patterns: exclusionPatterns) {
                             filesToCheck.append(fileURL)
                         }
                     }
@@ -157,6 +160,45 @@ struct SwiftLintCustomSmart: ParsableCommand {
     private struct CheckResult {
         let hasViolations: Bool
         let relativePath: String
+    }
+
+    /// Check if a file should be excluded from linting based on SwiftLint exclusion patterns
+    /// - Parameters:
+    ///   - fileURL: The file URL to check
+    ///   - patterns: Exclusion patterns from SwiftLint config
+    /// - Returns: True if the file should be excluded
+    private func shouldExclude(_ fileURL: URL, patterns: [String]) -> Bool {
+        let path = fileURL.path
+
+        for pattern in patterns {
+            // Handle different pattern types
+            if pattern.hasPrefix("**/") {
+                // Glob pattern like "**/.build"
+                let suffix = String(pattern.dropFirst(3))
+                if path.contains("/\(suffix)") {
+                    return true
+                }
+            } else if pattern.hasSuffix("/**") {
+                // Pattern like "Frameworks/**"
+                let prefix = String(pattern.dropLast(3))
+                if path.contains("/\(prefix)/") {
+                    return true
+                }
+            } else if pattern.contains("*") {
+                // Other glob patterns - simple contains check for the non-wildcard parts
+                let nonWildcard = pattern.replacingOccurrences(of: "*", with: "")
+                if path.contains(nonWildcard) {
+                    return true
+                }
+            } else {
+                // Simple path component match
+                if path.contains("/\(pattern)/") || path.hasSuffix("/\(pattern)") {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     /// Check a single file for violations
