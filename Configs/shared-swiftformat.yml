@@ -92,7 +92,7 @@
 --rules typeSugar
 --rules redundantType
 --rules redundantBackticks
-# --rules redundantSelf (disabled below)
+--rules redundantSelf
 --rules modifierOrder
 --rules strongOutlets
 --rules trailingCommas
@@ -183,7 +183,6 @@
 
 # Disabled rules
 --disable headerFileName
---disable redundantSelf # breaking some files
 
 # =============================================================================
 # RULES UNDER CONSIDERATION FOR FUTURE IMPLEMENTATION
