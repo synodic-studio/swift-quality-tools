@@ -677,30 +677,114 @@ extension String {
 
 ---
 
-## A5: Property Wrapper Line Breaks ⏸️ PENDING
+## A5: Property Wrapper Line Breaks ✅ RESOLVED
 
-**Status**: Created `property_wrapper_examples.md` for user review
+**Status**: Completed - User reviewed all 20+ wrappers, framework implemented
 
-**Action Required**: User to review all wrapper examples and mark preferences
+### User Responses Summary
 
-**Next Steps**:
-1. User completes property_wrapper_examples.md
-2. Extract pattern/rule from preferences
-3. Update Skill or create lint rule if mechanically enforceable
+**Category 1 - Inline (All State/Data + Short)**:
+- @State, @Binding, @StateObject, @ObservedObject → Inline
+- @Environment → "lean towards single-line" (short keypaths)
+- @EnvironmentObject → Inline
+- @Published → Inline
+- @Namespace, @GestureState, @FocusState, @AccessibilityFocusState → "used to seeing inline"
+- @Sendable, @unchecked Sendable → Inline (type signatures)
+- @IBOutlet, @IBAction → "Inline maybe but hope to never use"
+
+**Category 2 - Preceding Line (Type System + Storage + Long)**:
+- @AppStorage, @SceneStorage → "same as environment" but **preceding** (length-based)
+- @FetchRequest, @SectionedFetchRequest → "strong candidate for preceding, optionally multi-line because it is so long"
+- @available → Preceding
+- @objc → "probably preceding"
+- @Test, @Suite → Preceding
+- @MainActor → "preceding for declaration, same line for property"
+
+**Category 3 - Not About Wrapper (Parameter Formatting)**:
+- @escaping, @autoclosure → "prefer multi-line formatting everywhere unless only one argument"
+
+**Critical Refinement**:
+User: "Let's also say that if we use a preceding line wrapper then there must be a blank line above it, except if it's the very first thing in a type declaration"
+
+Clarification: "it's really just if it's the first line at all in the type declaration"
+
+### Classification
+
+**Implementation**: Skill update
+**Priority**: Medium
+**Confidence**: Strong (all 20+ wrappers categorized with rationale)
+
+### Skill Framework: Property Wrapper Line Break Formatting
+
+```markdown
+## Property Wrapper Line Break Formatting
+
+### Inline vs Preceding Line
+
+**Category 1 - Inline (Same Line):**
+State/data management + short attributes
+- @State, @Binding, @StateObject, @ObservedObject
+- @Environment, @EnvironmentObject
+- @Published
+- @Namespace, @GestureState, @FocusState, @AccessibilityFocusState
+- @Sendable, @unchecked Sendable (type signatures)
+- @IBOutlet, @IBAction (legacy)
+
+**Category 2 - Preceding Line (with Blank Line Above):**
+Type system + storage + complex/long wrappers
+- @available, @objc
+- @Test, @Suite
+- @MainActor (on type/function declarations; inline on properties)
+- @AppStorage, @SceneStorage
+- @FetchRequest, @SectionedFetchRequest
+
+**Blank Line Rule:**
+Preceding-line wrappers must have blank line above, **except if it's the first line in the type declaration**.
+
+```swift
+struct MyView: View {
+    @available(iOS 16, *)  // First line - no blank line needed
+    var modernFeature: String { "New" }
+
+    @State private var count = 0
+
+    @AppStorage("userName")  // Not first line - needs blank line
+    private var userName = ""
+
+    var body: some View { ... }
+}
+```
+
+**Rationale:**
+- **@Environment vs @AppStorage/@SceneStorage**: Environment uses short keypaths (`\.dismiss`), storage uses string keys + type annotations + defaults
+- **Length matters**: @FetchRequest/@SectionedFetchRequest moved to preceding line due to complexity/length
+- **@MainActor context**: Preceding on type/function declarations, inline on properties
+- **Type signatures**: @Sendable/@unchecked stay inline as part of type signatures
+
+**Enforcement:** Manual via code review (SwiftFormat doesn't support this pattern yet)
+```
+
+### Key Insight
+
+**Hypothesis Validation**: Original hypothesis "state vs type system" was **mostly correct** but required **length/complexity refinement**.
+
+Long wrappers move to preceding line regardless of semantic category:
+- @Environment (short) → Inline
+- @AppStorage (long) → Preceding
+
+This pragmatic layer overrides pure semantic categorization for readability.
 
 ---
 
 ## Summary of Clarifications
 
-### Resolved (5)
-1. ✅ **B6**: Pointless container anti-pattern → Skill update (high priority)
-2. ✅ **E2**: View extraction decision matrix → Skill update (high priority)
-3. ✅ **F3**: Preview dependencies → Skill update (partial, user developing opinion)
-4. ✅ **E4**: Extension usage → Skill update (medium priority)
-5. ✅ **E9**: Extension file naming → Skill update (medium priority)
-
-### Pending (1)
-6. ⏸️ **A5**: Property wrapper line breaks → Awaiting user completion of examples
+### Resolved (6)
+1. ✅ **A5**: Property wrapper line breaks → Skill update (medium priority) - 2025-11-16
+2. ✅ **B6**: Pointless container anti-pattern → Skill update (high priority) - 2025-11-15
+3. ✅ **E2**: View extraction decision matrix → Skill update (high priority) - 2025-11-15
+4. ✅ **F3**: Preview dependencies → Skill update (partial, user developing opinion) - 2025-11-15
+5. ✅ **E4**: Extension usage → Skill update (medium priority) - 2025-11-15
+6. ✅ **E9**: Extension file naming → Skill update (medium priority) - 2025-11-15
 
 ### Follow-Up Research Needed
 - Review Point1K repo for SwiftData preview patterns
@@ -709,17 +793,15 @@ extension String {
 
 ---
 
-## Implementation Priority (Updated)
+## Implementation Status
 
-### Immediate (High Priority)
-1. **B6 Framework** - Pointless container anti-pattern (strong preference, frequent issue)
-2. **E2 Framework** - View extraction decision matrix (frequent decision point)
-3. **E4 Framework** - Extension usage guidelines (clear standard established)
-4. **E9 Framework** - Extension file naming (clear standard established)
-
-### Short-Term (Medium Priority)
-5. **F3 Framework** - Preview dependencies (partial, document established patterns)
-6. **A5 Framework** - Property wrapper line breaks (pending user examples)
+### ✅ Completed (All 6 Clarifications)
+1. **A5 Framework** - Property wrapper line breaks ✅ 2025-11-16
+2. **B6 Framework** - Pointless container anti-pattern ✅ 2025-11-15
+3. **E2 Framework** - View extraction decision matrix ✅ 2025-11-15
+4. **E4 Framework** - Extension usage guidelines ✅ 2025-11-15
+5. **E9 Framework** - Extension file naming ✅ 2025-11-15
+6. **F3 Framework** - Preview dependencies (partial) ✅ 2025-11-15
 
 ### Research Tasks
 - Extract SwiftData patterns from Point1K

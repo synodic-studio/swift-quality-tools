@@ -27,7 +27,7 @@ private var isExpanded = false
 private var selectedItem: Item?
 ```
 
-**Preference**:
+**Preference**:Inline 
 
 ---
 
@@ -50,7 +50,7 @@ var text: String
 var selection: Int
 ```
 
-**Preference**:
+**Preference**:In-line 
 
 ---
 
@@ -69,7 +69,7 @@ private var viewModel = DashboardViewModel()
 private var dataManager = DataManager()
 ```
 
-**Preference**:
+**Preference**:In-line 
 
 ---
 
@@ -88,7 +88,7 @@ var settings: Settings
 var networkMonitor: NetworkMonitor
 ```
 
-**Preference**:
+**Preference**:In-line 
 
 ---
 
@@ -111,7 +111,7 @@ private var colorScheme
 private var viewContext
 ```
 
-**Preference**:
+**Preference**:I'm used to N-line here but I think there's a good case to be made for proceeding because the environment wrapper portion can be of different lengths. Let's lean towards single-line but maybe consider this more 
 
 ---
 
@@ -130,7 +130,7 @@ private var settings: Settings
 private var authManager: AuthManager
 ```
 
-**Preference**:
+**Preference**:Inline 
 
 ---
 
@@ -153,7 +153,7 @@ private var userName = ""
 private var fontSize: Double = 14.0
 ```
 
-**Preference**:
+**Preference**:Maybe same as environment 
 
 ---
 
@@ -172,7 +172,7 @@ private var selectedTab = 0
 private var scrollPosition: Double = 0
 ```
 
-**Preference**:
+**Preference**:Definitely same as AppStorage 
 
 ---
 
@@ -194,7 +194,7 @@ private var users: FetchedResults<User>
 private var tasks: FetchedResults<Task>
 ```
 
-**Preference**:
+**Preference**:Strong candidate for proceeding and optionally multi-line Because it is so long 
 
 ---
 
@@ -212,7 +212,7 @@ private var tasks: FetchedResults<Task>
 private var groupedItems: SectionedFetchResults<String, Item>
 ```
 
-**Preference**:
+**Preference**:Same as FetchRequest 
 
 ---
 
@@ -231,7 +231,7 @@ private var animation
 private var heroEffect
 ```
 
-**Preference**:
+**Preference**:I'm used to seeing this one in-place 
 
 ---
 
@@ -250,7 +250,7 @@ private var dragOffset = CGSize.zero
 private var isPressing = false
 ```
 
-**Preference**:
+**Preference**:I'm used to seeing this one in-place 
 
 ---
 
@@ -269,7 +269,7 @@ private var isFocused: Bool
 private var focusedField: Field?
 ```
 
-**Preference**:
+**Preference**:I'm used to seeing this one in-line
 
 ---
 
@@ -284,7 +284,7 @@ private var focusedField: Field?
 private var isAccessibilityFocused: Bool
 ```
 
-**Preference**:
+**Preference**:In-line 
 
 ---
 
@@ -309,7 +309,7 @@ var isLoading = false
 var errorMessage: String?
 ```
 
-**Preference**:
+**Preference**:Inline 
 
 ---
 
@@ -330,7 +330,7 @@ private var uiState = UIState()
 private func updateUI() { }
 ```
 
-**Preference**:
+**Preference**: Maybe preceding line for a declaration but same line when applied to a property?
 
 ---
 
@@ -349,7 +349,7 @@ var modernFeature: String { "New" }
 func newAPI() { }
 ```
 
-**Preference**:
+**Preference**:Preceding line 
 
 ---
 
@@ -368,7 +368,7 @@ private func handleNotification(_ notification: Notification) { }
 dynamic var observableProperty = ""
 ```
 
-**Preference**:
+**Preference**:Probably preceding line 
 
 ---
 
@@ -387,7 +387,7 @@ weak var titleLabel: UILabel!
 func buttonTapped(_ sender: UIButton) { }
 ```
 
-**Preference**:
+**Preference**:Inline Maybe but I hope to never use this so whatever 
 
 ---
 
@@ -406,7 +406,7 @@ var callback: @Sendable
     () async -> String
 ```
 
-**Preference**:
+**Preference**:Inline 
 
 ---
 
@@ -429,7 +429,7 @@ func performAsync(
 ) { }
 ```
 
-**Preference**: (Note: This is more about parameter formatting than @escaping itself)
+**Preference**: (Note: This is more about parameter formatting than @escaping itself) In general I prefer the multi-line formatting everywhere unless there's only one argument 
 
 ---
 
@@ -446,7 +446,7 @@ func assert(
 ) { }
 ```
 
-**Preference**: (Note: This is more about parameter formatting)
+**Preference**: (Note: This is more about parameter formatting) Same as for escaping 
 
 ---
 
@@ -465,7 +465,7 @@ class LegacyClass: @unchecked
 }
 ```
 
-**Preference**:
+**Preference**:Inline 
 
 ---
 
@@ -490,7 +490,7 @@ func userCreation() { }
 func flakyTest() { }
 ```
 
-**Preference**:
+**Preference**:Preceding line 
 
 ---
 
@@ -509,7 +509,7 @@ struct MathTests { }
 struct NetworkTests { }
 ```
 
-**Preference**:
+**Preference**:Preceding line 
 
 ---
 
@@ -533,3 +533,4 @@ After reviewing all examples above, please summarize:
 - Some attributes like @escaping and @autoclosure are part of parameter types, so their "line break" is more about parameter formatting than the attribute itself
 - @Sendable when used with closures is part of the type signature
 - Focus on the cases where you have a clear preference for property/method declarations
+

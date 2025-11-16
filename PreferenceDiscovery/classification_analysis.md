@@ -982,10 +982,8 @@ var body: some View {
 
 ## Deferred (Need Clarification/More Examples)
 
-### ⏸️ Pending User Input
-1. **A5**: Property wrapper line break categories - `property_wrapper_examples.md` created, awaiting user completion
-
 ### ✅ Resolved (See clarifications_resolved.md)
+1. **A5**: Property wrapper line break categories - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-16)
 2. **B6**: Pointless container anti-pattern - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
 3. **E2**: View extraction decision matrix - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
 4. **F3**: Preview dependencies strategy - Partially documented (user still developing opinion)
@@ -994,9 +992,31 @@ var body: some View {
 
 ---
 
-## Implementation Status Updates (2025-11-15)
+## Implementation Status Updates
 
-### Skill Updates Completed
+### 2025-11-16: A5 Property Wrapper Line Breaks
+
+**apple-platform-dev skill** updated with property wrapper formatting framework:
+
+**A5 - Property Wrapper Line Break Formatting**
+- Location: New section "Property Wrapper Line Break Formatting" after View Structure Order
+- Covers: Inline vs preceding line categorization for all property wrappers/attributes
+- Categories:
+  - **Inline**: State/data wrappers (@State, @Binding, @Environment, etc.), type signatures (@Sendable)
+  - **Preceding Line**: Type system (@available, @objc), testing (@Test, @Suite), storage (@AppStorage, @SceneStorage), complex/long (@FetchRequest)
+- Blank line rule: Preceding-line wrappers need blank line above (except first line in type)
+- Rationale: Length matters - @Environment (short keypaths) vs @AppStorage (string keys + types + defaults)
+
+**Key Insight**: Original hypothesis "state vs type system" was correct but refined with **length/complexity override** - long wrappers move to preceding line regardless of semantic category.
+
+**User Preferences Captured**:
+- property_wrapper_examples.md: 20+ wrappers reviewed with rationale
+- Refinements: @Environment inline, @AppStorage/@SceneStorage preceding (length-based)
+- @MainActor context-dependent: preceding on declarations, inline on properties
+
+**Enforcement**: Manual via code review (SwiftFormat doesn't support this pattern yet)
+
+### 2025-11-15: B6, E2, E4, E9 Frameworks
 
 **apple-platform-dev skill** updated with 4 new frameworks:
 
