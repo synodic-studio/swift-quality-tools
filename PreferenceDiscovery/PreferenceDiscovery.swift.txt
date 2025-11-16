@@ -1,10 +1,13 @@
 import SwiftUI
 
 // MARK: - Preference Discovery File
-
 //
 // This file contains intentional variations of Swift/SwiftUI patterns
 // to systematically discover unstated coding preferences.
+//
+// IMPORTANT: This file intentionally contains "violations" and edge cases.
+// Do NOT format this file with SwiftFormat or fix "violations" - they are
+// intentional variations for preference discovery.
 //
 // Purpose: Present edge cases and ambiguous scenarios to extract
 // implicit preferences that can be codified into:
@@ -40,7 +43,7 @@ struct Example_A1_Standard: View {
 
 // A2: Reversed order - private before wrapper
 struct Example_A2_ReversedOrder: View {
-    private @State private var count = 0
+    private @State var count = 0
     private @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -51,6 +54,9 @@ struct Example_A2_ReversedOrder: View {
 // A3: Multiple wrappers - which order?
 struct Example_A3_MultipleWrappers: View {
     @State @MainActor private var count = 0
+    // vs
+    @MainActor @State private var count2 = 0
+
     var body: some View {
         Text("Multiple wrappers")
     }
@@ -58,8 +64,8 @@ struct Example_A3_MultipleWrappers: View {
 
 // A4: Explicit vs inferred type
 struct Example_A4_ExplicitType: View {
-    @State private var count: Int = 0 // Explicit
-    @State private var name = "" // Inferred
+    @State private var count: Int = 0  // Explicit
+    @State private var name = ""        // Inferred
 
     var body: some View {
         Text("Type annotation")
@@ -69,7 +75,8 @@ struct Example_A4_ExplicitType: View {
 // A5: Line breaks with many wrappers
 struct Example_A5_LineBreaks: View {
     @State
-    @MainActor private var
+    @MainActor
+    private var
         count = 0
 
     var body: some View {
@@ -84,6 +91,13 @@ struct Example_A6_Grouping: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var settings: Settings
 
+    // Option 2: Separated by blank lines
+    @Environment(\.dismiss) private var dismiss2
+
+    @Environment(\.colorScheme) private var colorScheme2
+
+    @EnvironmentObject private var settings2: Settings
+
     var body: some View {
         Text("Grouping")
     }
@@ -91,6 +105,16 @@ struct Example_A6_Grouping: View {
 
 // A7: Alphabetical ordering within category?
 struct Example_A7_Alphabetical: View {
+    // Option 1: Declaration order
+    @State private var zebra = ""
+    @State private var apple = 0
+    @State private var middle = false
+
+    // Option 2: Alphabetical
+    @State private var apple2 = 0
+    @State private var middle2 = false
+    @State private var zebra2 = ""
+
     var body: some View {
         Text("Alphabetical")
     }
@@ -98,7 +122,10 @@ struct Example_A7_Alphabetical: View {
 
 // A8: Complex initialization
 struct Example_A8_ComplexInit: View {
-    @State private var items = [String]() // Empty literal
+    @State private var items = [String]()  // Empty literal
+    @State private var items2: [String] = []  // Type annotation
+    @State private var items3 = Array<String>()  // Constructor
+
     var body: some View {
         Text("Complex init")
     }
@@ -122,7 +149,7 @@ struct Example_B1_Exactly15Lines: View {
             Text("Line 10")
             Text("Line 11")
             Text("Line 12")
-        } // This makes 15 lines total
+        }  // This makes 15 lines total
     }
 }
 
@@ -143,7 +170,7 @@ struct Example_B2_Exactly16Lines: View {
             Text("Line 11")
             Text("Line 12")
             Text("Line 13")
-        } // 16 lines - extract?
+        }  // 16 lines - extract?
     }
 }
 
@@ -157,9 +184,9 @@ struct Example_B3_ViewModifier: ViewModifier {
             .shadow(radius: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray, lineWidth: 1),
+                    .stroke(Color.gray, lineWidth: 1)
             )
-    } // ViewModifier: same rules as View?
+    }  // ViewModifier: same rules as View?
 }
 
 // B4: Computed property returning single view - is this acceptable?
@@ -185,13 +212,15 @@ struct Example_B5_ComputedMultipleViews: View {
         }
     }
 
-    @ViewBuilder private var headerViews: some View {
+    @ViewBuilder
+    private var headerViews: some View {
         Text("Header 1")
         Text("Header 2")
         Text("Header 3")
     }
 
-    @ViewBuilder private var footerViews: some View {
+    @ViewBuilder
+    private var footerViews: some View {
         Text("Footer 1")
         Text("Footer 2")
     }
@@ -214,14 +243,14 @@ struct Example_B6_ComplexConditional: View {
                 Text("Unknown")
             }
         }
-    } // Is switch in body acceptable?
+    }  // Is switch in body acceptable?
 }
 
 // B7: Single-line body with modifier chain
 struct Example_B7_SingleLineChain: View {
     var body: some View {
         Text("Hello").padding().background(Color.blue).cornerRadius(8)
-    } // Single line but long - acceptable?
+    }  // Single line but long - acceptable?
 }
 
 // B8: Body with ForEach - counts toward line limit?
@@ -236,7 +265,7 @@ struct Example_B8_ForEach: View {
                     .background(Color.gray)
             }
         }
-    } // Does ForEach closure count?
+    }  // Does ForEach closure count?
 }
 
 // B9: Empty body - placeholder acceptable?
@@ -261,19 +290,19 @@ struct Example_B10_MultipleTrailingClosures: View {
         .task {
             print("Task")
         }
-    } // Multiple trailing closures - extract?
+    }  // Multiple trailing closures - extract?
 }
 
 // MARK: - C. Naming Conventions (10 variations)
 
 // C1: View suffix - required or optional?
-struct UserProfile: View { // No "View" suffix
+struct UserProfile: View {  // No "View" suffix
     var body: some View {
         Text("UserProfile")
     }
 }
 
-struct UserProfileView: View { // With "View" suffix
+struct UserProfileView: View {  // With "View" suffix
     var body: some View {
         Text("UserProfileView")
     }
@@ -281,6 +310,10 @@ struct UserProfileView: View { // With "View" suffix
 
 // C2: ViewModel naming
 struct Example_C2_ViewModelNaming: View {
+    @StateObject private var viewModel = MyViewModel()  // "viewModel"
+    @StateObject private var model = MyViewModel()      // "model"
+    @StateObject private var vm = MyViewModel()         // "vm"
+
     var body: some View {
         Text("ViewModel naming")
     }
@@ -288,6 +321,11 @@ struct Example_C2_ViewModelNaming: View {
 
 // C3: Boolean property naming
 struct Example_C3_BooleanNaming: View {
+    @State private var isLoading = false    // "is" prefix
+    @State private var loading = false      // No prefix
+    @State private var hasError = false     // "has" prefix
+    @State private var showsDetail = false  // "shows" prefix
+
     var body: some View {
         Text("Boolean naming")
     }
@@ -299,7 +337,17 @@ struct Example_C4_ComputedNaming: View {
         Text("Computed naming")
     }
 
-    /// Option 3: Descriptive
+    // Option 1: Noun form
+    private var header: some View {
+        Text("Header")
+    }
+
+    // Option 2: Verb form
+    private var buildHeader: some View {
+        Text("Header")
+    }
+
+    // Option 3: Descriptive
     private var headerSection: some View {
         Text("Header")
     }
@@ -307,15 +355,15 @@ struct Example_C4_ComputedNaming: View {
 
 // C5: Constants enum naming
 struct Example_C5_ConstantsNaming: View {
-    enum Constants { // "Constants"
+    enum Constants {  // "Constants"
         static let padding: CGFloat = 16
     }
 
-    enum Metrics { // "Metrics"
+    enum Metrics {  // "Metrics"
         static let padding: CGFloat = 16
     }
 
-    enum Layout { // "Layout"
+    enum Layout {  // "Layout"
         static let padding: CGFloat = 16
     }
 
@@ -326,12 +374,19 @@ struct Example_C5_ConstantsNaming: View {
 
 // C6: Private property naming with underscore
 struct Example_C6_UnderscoreNaming: View {
+    @State private var _internalState = 0  // Leading underscore
+    @State private var internalState = 0   // No underscore
+
     var body: some View {
         Text("Underscore naming")
     }
 }
 
-/// Option 2: In first type's Constants enum
+// C7: File-level constants - where to define?
+// Option 1: Top of file before types
+private let globalPadding: CGFloat = 16
+
+// Option 2: In first type's Constants enum
 struct Example_C7_FileLevelConstants: View {
     enum Constants {
         static let padding: CGFloat = 16
@@ -345,10 +400,10 @@ struct Example_C7_FileLevelConstants: View {
 // C8: Action handler naming
 struct Example_C8_ActionHandlerNaming: View {
     var body: some View {
-        Button("Tap", action: handleTap) // handle*
-        Button("Tap", action: onTap) // on*
-        Button("Tap", action: didTapButton) // did*
-        Button("Tap", action: buttonTapped) // *ed suffix
+        Button("Tap", action: handleTap)      // handle*
+        Button("Tap", action: onTap)          // on*
+        Button("Tap", action: didTapButton)   // did*
+        Button("Tap", action: buttonTapped)   // *ed suffix
     }
 
     private func handleTap() {}
@@ -359,9 +414,9 @@ struct Example_C8_ActionHandlerNaming: View {
 
 // C9: Binding property naming
 struct Example_C9_BindingNaming: View {
-    @Binding var isPresented: Bool // Same as source
-    @Binding var presented: Bool // Shortened
-    @Binding var isPresentedBinding: Bool // Explicit "Binding" suffix
+    @Binding var isPresented: Bool     // Same as source
+    @Binding var presented: Bool       // Shortened
+    @Binding var isPresentedBinding: Bool  // Explicit "Binding" suffix
 
     var body: some View {
         Text("Binding naming")
@@ -375,15 +430,15 @@ struct Example_C10_PreviewNaming: View {
     }
 }
 
-#Preview("Default") { // Descriptive name
+#Preview("Default") {  // Descriptive name
     Example_C10_PreviewNaming()
 }
 
-#Preview { // No name
+#Preview {  // No name
     Example_C10_PreviewNaming()
 }
 
-#Preview("Example_C10_PreviewNaming") { // Type name
+#Preview("Example_C10_PreviewNaming") {  // Type name
     Example_C10_PreviewNaming()
 }
 
@@ -418,12 +473,12 @@ struct Example_D1_ConstantsBottom: View {
 struct Example_D2_SmallNumbers: View {
     var body: some View {
         Text("Hello")
-            .padding(1) // Is 1 acceptable?
-            .padding(2) // Is 2 acceptable?
-            .padding(3) // Is 3 acceptable?
-            .padding(5) // Is 5 acceptable?
-            .padding(10) // Is 10 acceptable?
-            .padding(16) // Clearly needs constant
+            .padding(1)      // Is 1 acceptable?
+            .padding(2)      // Is 2 acceptable?
+            .padding(3)      // Is 3 acceptable?
+            .padding(5)      // Is 5 acceptable?
+            .padding(10)     // Is 10 acceptable?
+            .padding(16)     // Clearly needs constant
     }
 }
 
@@ -432,8 +487,8 @@ struct Example_D3_CommonValues: View {
     var body: some View {
         VStack {
             Text("A").padding(8)
-            Text("B").padding(8) // Same value twice - extract?
-            Text("C").padding(8) // Three times - definitely extract?
+            Text("B").padding(8)  // Same value twice - extract?
+            Text("C").padding(8)  // Three times - definitely extract?
         }
     }
 }
@@ -442,8 +497,8 @@ struct Example_D3_CommonValues: View {
 struct Example_D4_CalculatedConstants: View {
     enum Constants {
         static let screenWidth: CGFloat = 375
-        static let halfWidth = screenWidth / 2 // Calculated from constant
-        static let thirdWidth: CGFloat = 375 / 3 // Inline calculation
+        static let halfWidth = screenWidth / 2  // Calculated from constant
+        static let thirdWidth: CGFloat = 375 / 3  // Inline calculation
     }
 
     var body: some View {
@@ -453,23 +508,21 @@ struct Example_D4_CalculatedConstants: View {
 
 // D5: Constants scope - nested or flat?
 struct Example_D5_ConstantsScope: View {
-    /// Option 1: Flat namespace
+    // Option 1: Flat namespace
     enum Constants {
         static let padding: CGFloat = 16
         static let cornerRadius: CGFloat = 8
         static let shadowRadius: CGFloat = 2
     }
 
-    /// Option 2: Nested namespaces
+    // Option 2: Nested namespaces
     enum Metrics {
         enum Spacing {
             static let padding: CGFloat = 16
         }
-
         enum Corners {
             static let radius: CGFloat = 8
         }
-
         enum Shadows {
             static let radius: CGFloat = 2
         }
@@ -502,8 +555,8 @@ struct Example_D7_StringConstants: View {
 
     var body: some View {
         VStack {
-            Text(Strings.title) // Extracted
-            Text("Goodbye World") // Inline - acceptable?
+            Text(Strings.title)    // Extracted
+            Text("Goodbye World")  // Inline - acceptable?
         }
     }
 }
@@ -514,7 +567,7 @@ struct Example_D8_NumericTypes: View {
         static let paddingCGFloat: CGFloat = 16.0
         static let paddingDouble: Double = 16.0
         static let paddingInt: Int = 16
-        static let paddingInferred = 16.0 // Type inference
+        static let paddingInferred = 16.0  // Type inference
     }
 
     var body: some View {
@@ -535,7 +588,7 @@ struct Example_E1_ExtractionThreshold: View {
         }
     }
 
-    /// Option 2: Extracted
+    // Option 2: Extracted
     var body2: some View {
         headerSection
     }
@@ -569,7 +622,7 @@ struct Example_E2_NewViewThreshold: View {
     }
 }
 
-/// Should this be extracted to separate View?
+// Should this be extracted to separate View?
 struct ComplexSectionView: View {
     var body: some View {
         VStack {
@@ -594,7 +647,6 @@ struct Example_E3_MultipleTypes: View {
         Text("Multiple types")
     }
 }
-
 // Two types in one file - acceptable for small helpers?
 
 // E4: Extension usage - when to use?
@@ -604,14 +656,14 @@ struct Example_E4_Extensions: View {
     }
 }
 
-/// Option 1: Methods in main type
+// Option 1: Methods in main type
 extension Example_E4_Extensions {
     private func helperMethod() {
         print("Helper")
     }
 }
 
-/// Option 2: Keep in main type
+// Option 2: Keep in main type
 struct Example_E4_NoExtensions: View {
     var body: some View {
         Text("No extensions")
@@ -660,8 +712,7 @@ extension Example_E7_ExtensionConformance: Identifiable {
 // E8: Nested types - when acceptable?
 struct Example_E8_NestedTypes: View {
     enum Mode {
-        case light
-        case dark
+        case light, dark
     }
 
     struct Configuration {
@@ -682,7 +733,7 @@ struct Example_E8_NestedTypes: View {
 struct Example_E10_InitPlacement: View {
     @State private var count: Int
 
-    /// Option 1: Before body (as required by linter)
+    // Option 1: Before body (as required by linter)
     init(count: Int) {
         _count = State(initialValue: count)
     }
@@ -744,7 +795,7 @@ struct Example_F2_PreviewContent: View {
 #Preview("Realistic") {
     Example_F2_PreviewContent(
         title: "User Dashboard",
-        items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
+        items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
     )
 }
 
@@ -759,7 +810,7 @@ struct Example_F3_PreviewDependencies: View {
 
 #Preview("With Dependencies") {
     Example_F3_PreviewDependencies()
-        .environmentObject(Settings()) // Real object
+        .environmentObject(Settings())  // Real object
 }
 
 // F4: Preview placement - immediately after type or at end of file?
