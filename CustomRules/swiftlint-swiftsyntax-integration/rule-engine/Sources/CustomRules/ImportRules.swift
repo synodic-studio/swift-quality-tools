@@ -32,18 +32,17 @@ public enum ImportRules {
         guard !regularImports.isEmpty, !testableImports.isEmpty else { return }
 
         // Check if there's a blank line between the last regular import and first testable import
-        // This is a simplified check - in production, you'd analyze trivia more carefully
         if let lastRegular = regularImports.last,
            let firstTestable = testableImports.first
         {
-            let regularEnd = lastRegular.endPosition
-            let testableStart = firstTestable.position
+            // Check the leading trivia of the first testable import for blank lines
+            let leadingTrivia = firstTestable.leadingTrivia.description
 
-            // Calculate if there's sufficient space (simplified check)
-            let distance = testableStart.utf8Offset - regularEnd.utf8Offset
+            // Count newlines - should have at least 2 (one for the previous line, one for blank line)
+            let newlineCount = leadingTrivia.count(where: { $0 == "\n" })
 
-            // If imports are very close together (< 20 chars), likely missing blank line
-            if distance < 20 {
+            // If less than 2 newlines, missing blank line
+            if newlineCount < 2 {
                 let violation = "⚠️  [blank_line_import_separation] Missing blank line between regular imports and @testable imports"
                 violations.append(violation)
                 print(violation)

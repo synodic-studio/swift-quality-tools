@@ -9,6 +9,12 @@ public enum PreviewRules {
         var hasPreview = false
         var viewNames: [String] = []
 
+        // Check the entire source text for #Preview as a fallback for macro detection
+        let sourceText = sourceFile.description
+        if sourceText.contains("#Preview") || sourceText.contains("@Preview") {
+            hasPreview = true
+        }
+
         for statement in sourceFile.statements {
             // Check for struct/class declarations
             if let structDecl = statement.item.as(StructDeclSyntax.self) {
