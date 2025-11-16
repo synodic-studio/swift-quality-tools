@@ -982,12 +982,50 @@ var body: some View {
 
 ## Deferred (Need Clarification/More Examples)
 
-1. **A5**: Property wrapper line break categories - needs research on wrapper types
-2. **B6**: VStack issue with single-view switch - needs targeted example/question
-3. **E2**: New view extraction - needs more specific complexity examples
-4. **F3**: Mock vs real preview dependencies - user uncertain, needs examples
-5. **E4**: Extension usage - user wants better example
-6. **E9**: Extension file naming - mentioned but not covered here
+### ⏸️ Pending User Input
+1. **A5**: Property wrapper line break categories - `property_wrapper_examples.md` created, awaiting user completion
+
+### ✅ Resolved (See clarifications_resolved.md)
+2. **B6**: Pointless container anti-pattern - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
+3. **E2**: View extraction decision matrix - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
+4. **F3**: Preview dependencies strategy - Partially documented (user still developing opinion)
+5. **E4**: Extension usage guidelines - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
+6. **E9**: Extension file naming conventions - ✅ IMPLEMENTED in apple-platform-dev skill (2025-11-15)
+
+---
+
+## Implementation Status Updates (2025-11-15)
+
+### Skill Updates Completed
+
+**apple-platform-dev skill** updated with 4 new frameworks:
+
+1. **B6 - Pointless Container Anti-Pattern** (High Priority)
+   - Location: Strategy #4 "Avoid Pointless Containers"
+   - Covers: Switch statements, if/else, single-branch conditionals, Group usage
+   - Addresses: Unnecessary VStack/HStack wrappers around single-view returns
+
+2. **E2 - View Extraction Decision Matrix** (High Priority)
+   - Location: Strategy #3 "Component Extraction"
+   - Covers: When to use computed properties vs extracted views
+   - Decision factors: Reuse, file complexity, dependency separation, parameter overhead
+
+3. **E4 - Extension Usage Guidelines** (Medium Priority)
+   - Location: New "File Organization & Extension Patterns" section
+   - Covers: Protocol conformance, private methods, computed properties, type extensions
+   - Guidance: When to keep inline vs separate, MARK comments
+
+4. **E9 - Extension File Naming** (Medium Priority)
+   - Location: New "File Organization & Extension Patterns" section
+   - Covers: Naming patterns (Type+Feature.swift), directory organization, splitting strategy
+   - Guidance: Same file vs separate, widely used vs local
+
+**Files Modified**:
+- `/Users/bryancostanza/.claude/skills/apple-platform-dev/SKILL.md`
+
+**Documentation**:
+- `clarifications_resolved.md` - Full frameworks with user responses
+- `property_wrapper_examples.md` - Pending user completion (A5)
 
 ---
 

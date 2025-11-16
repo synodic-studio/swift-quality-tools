@@ -19,3 +19,4 @@ xcuserdata/
 *.swiftmodule
 *.swiftdoc
 *.dSYM
+.claude/

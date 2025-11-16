@@ -53,6 +53,8 @@ Categorize ALL common property wrappers into these two groups.
 
 **Is this distinction correct?** If not, what's the actual rule?
 
+I think that is a pretty decent beginning hypothesis but why don't you make me another doc here that shows every single one with both options And use realistic parameters where they apply 
+
 ---
 
 ## B6: VStack with Single-View Switch
@@ -84,6 +86,8 @@ Clarify the "pointless VStack" anti-pattern rule.
 
 **Question**: Is this the anti-pattern you were calling out?
 
+Your green check mark example here is ideal 
+
 ### Scenario 2: Conditional Returns Single View
 ```swift
 ❌ var body: some View {
@@ -107,6 +111,8 @@ Clarify the "pointless VStack" anti-pattern rule.
 
 **Question**: Same rule applies to if/else?
 
+Your green check mark option is the one I prefer here 
+
 ### Scenario 3: Optional View
 ```swift
 ❌ var body: some View {
@@ -125,6 +131,8 @@ Clarify the "pointless VStack" anti-pattern rule.
 ```
 
 **Question**: Same rule for optional unwrapping?
+
+When there is an if without an else, then really it is just one conditional view. In cases like that we should almost always hoist the if one level higher because we want to know about the visibility as soon as it's relevant and not open up a sub-view to find out that it might make itself invisible 
 
 ### Scenario 4: What About Modifiers?
 ```swift
@@ -145,6 +153,8 @@ var body: some View {
 **Anti-Pattern**: Using a container (VStack/HStack/ZStack/Group) that only ever contains exactly one view.
 
 **Is this the complete rule?**
+
+In this case you have made the VStack have purpose but it doesn't have any purpose that isn't also served by a Group so we should use a Group. We do have a lint rule that says no top-level Group but that does not apply if there are 1+ modifiers applied to the Group 
 
 ---
 
@@ -180,7 +190,7 @@ struct DashboardPage: View {
 **Scenario**: 3-line header, used once, very simple.
 
 **Questions**:
-1. Keep as computed property? ✓
+1. Keep as computed property? ✓ In this case yes I think that the computed property is a little bit better because it means that each view within the VStack in the body has similar importance in determining the structure of the view 
 2. Or extract to HeaderView file? ✗
 3. Line count threshold for extraction?
 
@@ -213,9 +223,12 @@ private var statisticsSection: some View {
 **Scenario**: 20+ lines, used once, moderately complex.
 
 **Questions**:
+
 1. Keep as computed property? (Still within parent body limit)
 2. Extract to StatisticsSectionView? (More isolated but overhead)
 3. What tips the balance?
+
+In this case the computed property is getting on the long side so it would at least make sense to try to pull out at least one subview from this computed property. And as long as the overall file size wasn't getting too big then that would be fine. But if the file is getting big then this would be a pretty good one to pull out and certainly if it were used twice then it would get pulled out. Or maybe another way to think about it is that it depends on how complex the rest of the file is. If this were the only computed property and we could just pull out one more computed property then that's great. But if there are possibilities of separating out dependencies or reducing arguments to one vs. the other then that starts pushing us toward separating to a brand new view 
 
 ### Example 3: Simple but Used Twice
 ```swift
@@ -240,7 +253,7 @@ struct ProfilePage: View {
 **Scenario**: 3 lines, used twice in same file.
 
 **Questions**:
-1. Keep as computed property? (DRY within file)
+1. Keep as computed property? (DRY within file)I think the example you have here is ideal 
 2. Extract to UserBadgeView? (Reusable across files)
 3. Does "used twice in same file" differ from "used in two different files"?
 
@@ -264,7 +277,7 @@ private var statusIndicator: some View {
 **Scenario**: Duplicated computed property across files.
 
 **Questions**:
-1. This MUST be extracted to StatusIndicatorView, right?
+1. This MUST be extracted to StatusIndicatorView, right? Yes this becomes its own new view Unless we expect that these styles are going to differ or just happen to be the same right now and we might also I want to consider as one last thing whether making this a new view will be as complicated as just using it in-place. Because for example I can see that with these status indicators if we had to provide a boolean, two colors, a width, and a height, then the function signature on that is more out of control than just duplicating this work. Again unless it is just critical that they match each other exactly But then I guess if they necessarily have to match each other exactly, then a lot of these values can be stored properties in the new view and then the function signature is really not all that big at all 
 2. Even though it's only 2-3 lines?
 
 ### Decision Framework Questions
@@ -332,6 +345,10 @@ class MockSettings: Settings {
 2. Does it matter if Settings() has complex initialization?
 3. If Settings loads from UserDefaults, does that change the answer?
 
+I think the preference is going to be to use the real settings type, and then we would just switch to mock if something about the setup actually ends up being pretty complicated or if some behavior within the real type has side effects that we need to prevent or control in some other way. But if there is something we need to control like user defaults or some time provider or something like that, then maybe we switch to a mock at that point.
+
+Oh and here's one thing I'm remembering from way back: I actually think very much that if we do have a mock, it should probably be an extension on the original type as a static member. It might make sense to make mockable a protocol but that's something we can discuss or wait on. If that's a great idea and commonly done then let's just make that the norm now. As I think more about the mock-equal protocol, I think we run into issues because it would be easy if we could just say there has to be a computed property called mock, but what if there is a reason to have multiple different mocks or a function that creates mocks? 
+
 ### Scenario 2: Network-Dependent Object
 ```swift
 struct UserListView: View {
@@ -379,7 +396,7 @@ class MockUserManager: UserManager {
 **Questions**:
 1. Which pattern do you prefer?
 2. If UserManager has a `loadTestData()` method, is that better than mocking?
-3. Or should we create a proper mock/stub protocol?
+3. Or should we create a proper mock/stub protocol? Show me more about what a mock stub protocol looks like. I have not done a lot of networking stuff, so I don't have a well-developed opinion here 
 
 ### Scenario 3: Core Data Dependencies
 ```swift
@@ -419,6 +436,8 @@ struct TaskListView: View {
 1. Which approach for Core Data previews?
 2. Should sample data creation live in preview, or in a helper?
 3. Is in-memory store + sample data considered "real" or "mock"?
+
+We should be using SwiftData Instead of core data and you could look at my Point1K repo for examples of how I've utilized it in the past. I think it is a good reference for this question in the SwiftData sense 
 
 ### Scenario 4: Authentication State
 ```swift
@@ -471,6 +490,8 @@ class MockAuthManager: AuthManager {
 2. Or is that mixing concerns (production code with test helpers)?
 3. Should mocks always be separate classes?
 
+Oh I don't know, I haven't dealt much with this kind of stuff 
+
 ### Framework to Develop
 
 **Simple Dependencies** (Settings, Preferences):
@@ -490,6 +511,8 @@ class MockAuthManager: AuthManager {
 2. Or should we create protocol-based mocks?
 3. Or inline preview setup every time?
 4. Does the answer change based on dependency complexity?
+
+Again I guess I just don't have a strong enough opinion yet except for where I might already have an example like with SwiftData 
 
 ---
 
@@ -547,6 +570,8 @@ extension UserProfile: Codable {
 
 **Question**: Protocol conformance - inline or extensions?
 
+Even though I think sometimes it's okay to do it in-line, I guess we should just set the standard as having them all separated As you show in option B, 
+
 ### Scenario 2: Grouping Private Methods
 ```swift
 // Option A: All in main type
@@ -578,6 +603,8 @@ extension ContentView {
 ```
 
 **Question**: Private method organization - inline or grouped extensions?
+
+I've seen some compelling cases for B but I'd like to stick with A until I have some exotic streak or wild hair 
 
 ### Scenario 3: MARK Comments vs Extensions
 ```swift
@@ -618,6 +645,8 @@ extension DashboardView {
 
 **Question**: Are extensions + MARK better than just MARK? Or overkill?
 
+I think these are possibly separate. I think marks are good but not required and extensions can be helpful but don't need to be a first tool to reach for 
+
 ### Scenario 4: Computed Properties Organization
 ```swift
 // Option A: Inline
@@ -655,6 +684,8 @@ extension ProfileView {
 
 **Question**: Should computed view properties go in extensions?
 
+In-line Option A 
+
 ### Scenario 5: Type-Specific Extensions
 ```swift
 // String utilities specific to this view
@@ -676,6 +707,8 @@ extension String {
 ```
 
 **Question**: Type extensions in same file as the view - acceptable or separate file?
+
+If it's a private extension and specialized then keep it as a private extension in the file. But if it's generic even if it is only used once, then make it its own extension file. I like having those things easily discoverable and I also think that it will help find things that are easily extractable into a tools framework or any other framework that I am running 
 
 ### What's the Rule?
 
@@ -721,10 +754,10 @@ extension UserProfile: Codable {
 ```
 
 **Questions**:
-1. Keep in same file if extension is small?
-2. Separate file for substantial protocol conformance?
-3. What naming pattern: `+Protocol` or `.Protocol`?
-4. Subdirectory for extensions?
+1. Keep in same file if extension is small?Yes I think in general, if it's small, keep it in the same file. But in that case it also needs to be a somewhat expected extension. In the example you gave it seems pretty unique that we'd be adding codable to a view, so that might make sense to put in a separate extension. That also highlights the point that I think if the extension is to satisfy what I would call a "distant" requirement, then it also makes sense in a sewparate extension there 
+2. Separate file for substantial protocol conformance? Basically yes 
+3. What naming pattern: `+Protocol` or `.Protocol`? I definitely prefer the Plus 
+4. Subdirectory for extensions? There can be a subdirectory from the root of the project For the widely used extensions But if it's a "local extension," then it can be in the same directory 
 
 ### Scenario 2: Type Extensions (Foundation/SwiftUI)
 ```swift
@@ -747,6 +780,8 @@ extension Date {
 2. Specific extensions: `Type+Feature.swift`?
 3. Subdirectory or root level?
 
+Option A is the default when there are a few extensions. But kind of like with our rule for enum Constants, everything should go in the enum Constants until that enum gets big and then it can make sense to make more focused constant enums by different names 
+
 ### Scenario 3: View-Specific Extensions in Same File
 ```swift
 // File: DashboardView.swift
@@ -763,6 +798,8 @@ extension DashboardView {
 ```
 
 **Question**: When does an extension warrant a separate file?
+
+I feel we've covered this in other questions. What makes this different? Unless I'm missing something, yes this is acceptable But also maybe why not just put that within the view struct in the first place instead of an extension? 
 
 ### Scenario 4: Multiple Extensions for Same Type
 ```swift
@@ -788,6 +825,8 @@ extension String {
 
 **Question**: Multiple extension files per type - acceptable pattern?
 
+This is acceptable as long as it's not something like we have three extension files for three individual extensions that are each actually very small That would be annoying 
+
 ### Scenario 5: Extension Organization
 ```
 Project/
@@ -809,6 +848,8 @@ Project/
 2. Or centralized Extensions/ directory?
 3. Mix of both (protocol conformance with type, utilities in Extensions/)?
 
+Option A is the first option but if there gets to be a lot of them then we will use option B. Of course this is subjective but maybe starting around 4 extensions it would start to be a consideration to make a new directory And then I think certainly at 6 to 8 we're going to need to move to extensions directory 
+
 ### Framework Questions
 
 **Naming Convention**:
@@ -817,6 +858,7 @@ Project/
 - `TypeNameFeature.swift`?
 
 **Location**:
+
 - Same directory as type?
 - Extensions/ subdirectory?
 - Context-dependent?
@@ -830,6 +872,8 @@ Project/
 - One file per logical grouping?
 - All extensions in one file?
 - Context-dependent?
+
+I think I answered all of these inline? Did I miss anything? 
 
 ---
 

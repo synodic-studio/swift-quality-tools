@@ -30,7 +30,7 @@ struct Example_A1_Standard: View {
 }
 ```
 
-**Decision**:
+**Decision**:You should already know the answer to this based on existing documents we worked on 
 
 **Reasoning**:
 
@@ -53,7 +53,7 @@ struct Example_A2_ReversedOrder: View {
 }
 ```
 
-**Decision**:
+**Decision**:I'm not even sure if that's allowed but the wrapper definitely goes first 
 
 **Reasoning**:
 
@@ -77,7 +77,7 @@ struct Example_A3_MultipleWrappers: View {
 }
 ```
 
-**Decision**:
+**Decision**:This isn't a real example because View is already main aactor 
 
 **Reasoning**:
 
@@ -100,9 +100,12 @@ struct Example_A4_ExplicitType: View {
 }
 ```
 
-**Decision**:
+**Decision**:Always use the inferred type unless you need to coerce it into something else (cgfloat from 1.0) or if you would need to use the type name without the inference (token = SpaceToken.x4 I would prefer to use explicit type so that after the equal sign it is just the static member)
 
-**Reasoning**:
+**Reasoning**:General Swift style guide preferences:
+
+- Use type inference for the first part of my decision
+- For the second part of the decision it was somewhat arbitrary but I need to pick one way and I do really like the way that Swift lets you skip the type and just use the period for the membership
 
 **Confidence**:
 
@@ -125,7 +128,7 @@ struct Example_A5_LineBreaks: View {
 }
 ```
 
-**Decision**:
+**Decision**:I feel like there's generally two kinds of categories of rappers and I don't know exactly which ones belong to which but MainActor belongs to a group that I believe should be the line above the thing that it is modifying, while State is absolutely something that should be used in line 
 
 **Reasoning**:
 
@@ -157,7 +160,7 @@ struct Example_A6_Grouping: View {
 }
 ```
 
-**Decision**:
+**Decision**:Definitely grooped
 
 **Reasoning**:
 
@@ -187,7 +190,7 @@ struct Example_A7_Alphabetical: View {
 }
 ```
 
-**Decision**:
+**Decision**:Absolutely declaration order 
 
 **Reasoning**:
 
@@ -211,7 +214,7 @@ struct Example_A8_ComplexInit: View {
 }
 ```
 
-**Decision**:
+**Decision**:Always type annotation Because empty literal is OK but not preferred and using something like Array and specifying the generic type instead of using the syntactic sugar is a pretty strong no-no 
 
 **Reasoning**:
 
@@ -246,7 +249,7 @@ struct Example_B1_Exactly15Lines: View {
 }
 ```
 
-**Decision**:
+**Decision**:It's okay to go right up to the limit and I will provide feedback if it needs to be broken up in a different way
 
 **Reasoning**:
 
@@ -280,7 +283,7 @@ struct Example_B2_Exactly16Lines: View {
 }
 ```
 
-**Decision**:
+**Decision**:You must split it up unless it would be a destructive or confusing act. If you do think it's a destructive or confusing act then confer with me and I will give you permission to use the SwiftLint ignore or tell you how to approach the refactor 
 
 **Reasoning**:
 
@@ -308,7 +311,7 @@ struct Example_B3_ViewModifier: ViewModifier {
 }
 ```
 
-**Decision**:
+**Decision**:Same rule as View. We might need to create a new rule for that now that you point it out 
 
 **Reasoning**:
 
@@ -335,7 +338,7 @@ struct Example_B4_ComputedSingleView: View {
 }
 ```
 
-**Decision**:
+**Decision**:You already know the answer to this. This is verboten horrible 
 
 **Reasoning**:
 
@@ -371,7 +374,7 @@ struct Example_B5_ComputedMultipleViews: View {
 }
 ```
 
-**Decision**:
+**Decision**:This is acceptable but not ideal. I think ViewBuilder is best used when there are two different possible types being returned. I think ViewBuilder is best for these multiple views when you're creating something like a container view 
 
 **Reasoning**:
 
@@ -404,7 +407,7 @@ struct Example_B6_ComplexConditional: View {
 }
 ```
 
-**Decision**:
+**Decision**:I wouldn't call this a complex switch statement in which case that would be fine. But if something really is a complex switch statement with complicated cases, then we want to move that to a computed property. I'll also say that this VStack is wrong because there is only ever going to be one view and the stack has no purpose 
 
 **Reasoning**:
 
@@ -424,7 +427,7 @@ struct Example_B7_SingleLineChain: View {
 }
 ```
 
-**Decision**:
+**Decision**:When I code by hand, I think there are occasionally good exceptions for allowing modifier on the same line, but I'm going to say that in general this is verboten and they must always be on a new line. I think we already have a lint rule for this though 
 
 **Reasoning**:
 
@@ -452,7 +455,7 @@ struct Example_B8_ForEach: View {
 }
 ```
 
-**Decision**:
+**Decision**:I don't know what there is really to ask here. A line is a line. Done 
 
 **Reasoning**:
 
@@ -472,7 +475,7 @@ struct Example_B9_EmptyBody: View {
 }
 ```
 
-**Decision**:
+**Decision**:If you do this, I will throw my laptop out the window And then jump out after it 
 
 **Reasoning**:
 
@@ -503,7 +506,7 @@ struct Example_B10_MultipleTrailingClosures: View {
 }
 ```
 
-**Decision**:
+**Decision**:It's fine if we're under the body line limit. Times like this are a good time to use the perform argument when it is a closure. That takes no arguments Which isn't what you've presented here but it's an adjacent strategy 
 
 **Reasoning**:
 
@@ -531,7 +534,7 @@ struct UserProfileView: View {  // With "View" suffix
 }
 ```
 
-**Decision**:
+**Decision**:I'm not super hardcore about this but I think in general just about everything should have a view suffix. Some other options are a row suffix or a page suffix. A row is something that would be used in something like a list, whereas a page is something that takes up the entire screen or nearly the entire screen but is treated as a very large unit 
 
 **Reasoning**:
 
@@ -555,7 +558,7 @@ struct Example_C2_ViewModelNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:I've never had a strong opinion on this but I guess we should just pick something and stick with it Let's go with ViewModel I guess 
 
 **Reasoning**:
 
@@ -580,9 +583,9 @@ struct Example_C3_BooleanNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**: is prefix is ideal but has is alo okay. Shows is not okay.
 
-**Reasoning**:
+**Reasoning**:I feel somewhat strongly that a Boolean almost always has to have a verb as the first word. But a verb like shows seems more like an action instead of a state 
 
 **Confidence**:
 
@@ -615,7 +618,7 @@ struct Example_C4_ComputedNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:Option 1 is fine. Option 2 is never okay. Option 3 is good and in this specific example. Though if it says "header section," I think I pretty much want it to be an actual section view. So use some other suffix if it's something else. Even something like title view is okay even if the underlying type is text For example 
 
 **Reasoning**:
 
@@ -647,7 +650,7 @@ struct Example_C5_ConstantsNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:I prefer the constants option almost always but if it starts getting big then I will break it out into other enums. The ones you have here are decent examples 
 
 **Reasoning**:
 
@@ -670,7 +673,7 @@ struct Example_C6_UnderscoreNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:I think I'm ready to say "never use underscores" for property names 
 
 **Reasoning**:
 
@@ -698,7 +701,7 @@ struct Example_C7_FileLevelConstants: View {
 }
 ```
 
-**Decision**:
+**Decision**:There might be some cases where a global variable makes sense but you need to ask the president (me) first. I would need a more specific example if you think this is still relevant. Especially because I strictly enforce the one declaration per file rule 
 
 **Reasoning**:
 
@@ -726,7 +729,12 @@ struct Example_C8_ActionHandlerNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:I have a very strong opinion on some of this. I think a closure that directly does a needed thing should have an action suffix, but if it's something that happens as a result of something else, then the "on" prefix makes sense. The two examples that I draw this reasoning off of are:
+
+1. For something like button the closure argument is action so I like to use the terminology xxAction when I am passing a closure that serves a role like that.
+2. But then for something like Sheet there is an onDismiss closure and that isn't the closure that dismisses the sheet. It is the closure that gets run once the sheet is closed. 
+
+Ask me follow-up questions on this if we need to continue to separate this out 
 
 **Reasoning**:
 
@@ -750,7 +758,7 @@ struct Example_C9_BindingNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**: Putting the type name in the variable name is I think very bad practice and should only be used when we really need to keep the original variable as it is but we need it to exist in another type too. Then we might suffix the name with the type name or in this case the wrapper name. I realize this goes against our practice for putting "view" in the name of some views, but there I think it is slightly different because we could just as well have a button or a page and those all conform to view as well. But we're treating them a little bit differently and we want the names to be descriptive. So we use the suffix to be descriptive of the kind of content in that view struct, not that it is a view struct 
 
 **Reasoning**:
 
@@ -782,7 +790,9 @@ struct Example_C10_PreviewNaming: View {
 }
 ```
 
-**Decision**:
+**Decision**:If there's just one preview, I really don't care. I also think that all previews should be combined into one preview that displays all the options. So for example in this case, I would rather have one preview macro that shows each of the three versions of this view. Unless the view that we are putting in the preview is intended to be a whole page, in which case we would use multiple preview macros.
+
+But to get back to your original question, I prefer descriptive names if we are going to name the preview, but probably don't use a name at all if there is only one preview 
 
 **Reasoning**:
 
@@ -824,7 +834,7 @@ struct Example_D1_ConstantsBottom: View {
 }
 ```
 
-**Decision**:
+**Decision**:You already know the answer to this. They go first 
 
 **Reasoning**:
 
@@ -850,7 +860,7 @@ struct Example_D2_SmallNumbers: View {
 }
 ```
 
-**Decision**:
+**Decision**:I'm going to say a magic number is a magic number and we have a lint rule for that. The rule is to put it in enum constants Well I guess actually that hint is in the SwiftLint custom command but still 
 
 **Reasoning**:
 
@@ -874,7 +884,7 @@ struct Example_D3_CommonValues: View {
 }
 ```
 
-**Decision**:
+**Decision**:I think sometimes it's a matter of degree. Once it's twice, I'm definitely pretty interested in extracting it. But this needs to be weighed against how much we are really cleaning up. A single modifier used three times is still not very much but five modifiers used twice probably makes sense to pull it out 
 
 **Reasoning**:
 
@@ -900,7 +910,7 @@ struct Example_D4_CalculatedConstants: View {
 }
 ```
 
-**Decision**:
+**Decision**:Should be calculated from constants 
 
 **Reasoning**:
 
@@ -940,7 +950,7 @@ struct Example_D5_ConstantsScope: View {
 }
 ```
 
-**Decision**:
+**Decision**:9 times out of 10 I'm looking for totally flat 
 
 **Reasoning**:
 
@@ -966,7 +976,7 @@ struct Example_D6_ColorConstants: View {
 }
 ```
 
-**Decision**:
+**Decision**:Do you mean between a colors enum and a constants enum? If the constants enum is not too big, then just put them there but if it starts getting split up, then a name like colors is totally fine. My thinking here is that I want it to be fast and easy to just add other constants to the constants enum without having to rename it 
 
 **Reasoning**:
 
@@ -994,7 +1004,7 @@ struct Example_D7_StringConstants: View {
 }
 ```
 
-**Decision**:
+**Decision**:Pretty much want to extract it into a constants enum 
 
 **Reasoning**:
 
@@ -1021,7 +1031,7 @@ struct Example_D8_NumericTypes: View {
 }
 ```
 
-**Decision**:
+**Decision**:I discussed this earlier but in general in Swift the preferences for type inference. In the example you have here, only the CG float one is an appropriate use of explicit type because 16.0 would otherwise be double type 
 
 **Reasoning**:
 
@@ -1061,7 +1071,7 @@ struct Example_E1_ExtractionThreshold: View {
 }
 ```
 
-**Decision**:
+**Decision**:You know damn well that option two is unacceptable. If the question is supposed to be more nuanced than that, then you'll need to ask it again 
 
 **Reasoning**:
 
@@ -1107,7 +1117,7 @@ struct ComplexSectionView: View {
 }
 ```
 
-**Decision**:
+**Decision**:Creating a new view file has its own bit of overhead so it really needs to provide some level of simplification. And in the example you've given this is already extremely simple so we should not be putting it into a new view. But I do see that you called it complexSection so there might be more to it that you're implying isn't evident and you might need to ask me again 
 
 **Reasoning**:
 
@@ -1134,7 +1144,7 @@ struct Example_E3_MultipleTypes: View {
 // Two types in one file - acceptable for small helpers?
 ```
 
-**Decision**:
+**Decision**:Yes we already have rules for this. I hate having more than one declaration per file 
 
 **Reasoning**:
 
@@ -1172,7 +1182,7 @@ struct Example_E4_NoExtensions: View {
 }
 ```
 
-**Decision**:
+**Decision**:This seems like a pretty dumb example and it should be kept in the main type. If you want to ask a more interesting version of that, come back to me 
 
 **Reasoning**:
 
@@ -1198,7 +1208,7 @@ class UserDataController: ObservableObject {
 }
 ```
 
-**Decision**:
+**Decision**:Well I think a ViewModel has a one-to-one relationship with a ViewType. I tend to use the word manager but I don't know if there might be some other preference, or norm, or style guidelines for using manager versus controller or something. I guess maybe I'd lean a little bit more toward manager just because when I hear controller I'm thinking it sounds like UI kit world 
 
 **Reasoning**:
 
@@ -1232,7 +1242,7 @@ extension Example_E7_ExtensionConformance: Identifiable {
 }
 ```
 
-**Decision**:
+**Decision**:I feel like I'm somewhat split on this. Sometimes it really makes sense to put it in an extension and I think in the most pure rules that putting it in an extension is the most correct. But sometimes it really just seems like overkill. So this is kind of a 50/50 depends 
 
 **Reasoning**:
 
@@ -1260,7 +1270,7 @@ struct Example_E8_NestedTypes: View {
 }
 ```
 
-**Decision**:
+**Decision**:Discouraged but sometimes makes sense. Especially if it is very tightly coupled to this type and isn't used anywhere else. This might have to be more of a vibe thing and we can just say probably preference for not nesting the types but it's an option 
 
 **Reasoning**:
 
@@ -1278,7 +1288,7 @@ struct Example_E8_NestedTypes: View {
 // File: "UserProfileScreen.swift" (descriptive)
 ```
 
-**Decision**:
+**Decision**:Matches type name absolutely. Things change a little bit though for extensions But you should ask me some well-generated questions directly for that if there aren't any lower in this document 
 
 **Reasoning**:
 
@@ -1305,7 +1315,7 @@ struct Example_E10_InitPlacement: View {
 }
 ```
 
-**Decision**:
+**Decision**:Yes duh why are you asking I guess?
 
 **Reasoning**:
 
@@ -1351,7 +1361,7 @@ struct Example_F1_PreviewCount: View {
 }
 ```
 
-**Decision**:
+**Decision**:Very much option one unless the view is a page itself In which case multiple previews 
 
 **Reasoning**:
 
@@ -1387,7 +1397,7 @@ struct Example_F2_PreviewContent: View {
 }
 ```
 
-**Decision**:
+**Decision**:Slight preference for minimal even though I think in the long run we will be doing a lot of maximal things. But I think that that might be more like snapshot testing or UI testing or something like that 
 
 **Reasoning**:
 
@@ -1414,7 +1424,7 @@ struct Example_F3_PreviewDependencies: View {
 }
 ```
 
-**Decision**:
+**Decision**:Oh crap, yeah I don't know. I get really annoyed with mock objects at work but I also know that using the real objects can be really annoying too. I guess I'm not sure here. Maybe you could generate some more examples 
 
 **Reasoning**:
 
@@ -1428,7 +1438,7 @@ struct Example_F3_PreviewDependencies: View {
 
 (See examples above for both patterns)
 
-**Decision**:
+**Decision**:Well since we only have one type declaration per file, these seem to be about the same thing. But I can say that absolutely the preview should be the very last thing whatsoever 
 
 **Reasoning**:
 
@@ -1455,7 +1465,7 @@ struct ExampleModifier: ViewModifier {
 }
 ```
 
-**Decision**:
+**Decision**:Yes I thought we already created a rule for this 
 
 **Reasoning**:
 
@@ -1470,7 +1480,7 @@ struct ExampleModifier: ViewModifier {
 (File organization question)
 File: Example_F6_Preview.swift (separate file) vs inline in same file
 
-**Decision**:
+**Decision**:I once did have a preview that got really big and so it made sense to put it in another file. If I'm not mistaken though I think it was because there was a lot of setup to make it work and so it might have just been that in the separate file we made the preview view but we still used that preview view in the base views preview macro 
 
 **Reasoning**:
 
