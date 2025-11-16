@@ -135,4 +135,92 @@ public enum ConfigDiscovery {
             .appendingPathComponent("debug")
             .appendingPathComponent("test-custom-rule")
     }
+
+    /// Read exclusion patterns from SwiftLint configuration file
+    /// - Parameter configPath: Path to SwiftLint config file (optional)
+    /// - Returns: Array of exclusion patterns found in the config
+    public static func readSwiftLintExclusions(configPath: URL? = nil) -> [String] {
+        // Try to find SwiftLint config
+        let config: URL
+        if let explicitConfig = configPath {
+            config = explicitConfig
+        } else {
+            // Try to find SwiftLint config in current directory or parent directories
+            let fileManager = FileManager.default
+            var currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+
+            // Search up the directory tree for SwiftLint config
+            for _ in 0 ..< 10 {
+                // Try both .yml and .yaml extensions
+                for configName in [".swiftlint.yml", ".swiftlint.yaml"] {
+                    let configURL = currentDir.appendingPathComponent(configName)
+                    if fileManager.fileExists(atPath: configURL.path) {
+                        config = configURL
+                        return parseExclusions(from: config)
+                    }
+                }
+
+                // Move up one directory
+                let parent = currentDir.deletingLastPathComponent()
+                if parent.path == currentDir.path {
+                    break // Reached root
+                }
+                currentDir = parent
+            }
+
+            // No config found, return default exclusions
+            return [
+                ".build",
+                "build",
+                "Frameworks",
+                "DerivedData",
+            ]
+        }
+
+        return parseExclusions(from: config)
+    }
+
+    /// Parse exclusion patterns from SwiftLint config file
+    private static func parseExclusions(from config: URL) -> [String] {
+        // Read and parse the YAML file
+        guard let contents = try? String(contentsOf: config, encoding: .utf8) else {
+            return []
+        }
+
+        var exclusions: [String] = []
+        var inExcludedSection = false
+
+        for line in contents.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // Check if we're entering the excluded section
+            if trimmed.hasPrefix("excluded:") {
+                inExcludedSection = true
+                continue
+            }
+
+            // If we're in the excluded section
+            if inExcludedSection {
+                // Check if this line starts a new top-level section (no leading whitespace before key)
+                if !line.isEmpty, !line.first!.isWhitespace, trimmed.contains(":") {
+                    // New section started, exit excluded section
+                    inExcludedSection = false
+                    continue
+                }
+
+                // Extract exclusion pattern (lines starting with - in the excluded section)
+                if trimmed.hasPrefix("- ") {
+                    let pattern = trimmed
+                        .dropFirst(2) // Remove "- "
+                        .trimmingCharacters(in: .whitespaces)
+                        .trimmingCharacters(in: CharacterSet(charactersIn: "\"'")) // Remove quotes
+                    if !pattern.isEmpty {
+                        exclusions.append(pattern)
+                    }
+                }
+            }
+        }
+
+        return exclusions
+    }
 }

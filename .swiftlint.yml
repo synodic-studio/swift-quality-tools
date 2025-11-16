@@ -1,0 +1,26 @@
+# swift-quality-tools project-specific SwiftLint configuration
+
+# Parent configuration
+parent_config: Configs/shared-swiftlint.yml
+
+# Project-specific included directories
+included:
+  - Sources
+  - Tests
+
+# Project-specific exclusions
+excluded:
+  - .build
+  - build
+  - Frameworks
+  - "**/.build"
+  - "**/build"
+  - "**/DerivedData"
+  - "**/*-derived*"
+  - CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build
+  - CustomRules/swiftlint-swiftsyntax-integration/rule-engine/build
+
+# Project-specific rule adjustments
+disabled_rules:
+  - line_length
+  - function_body_length
