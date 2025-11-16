@@ -1,13 +1,127 @@
 # Identified But Not Implemented
 
-**Source**: Phase 4 Alpha preference discovery session (2025-11-15 to 2025-11-16)
-**Full Analysis**: See `archive/phase4-alpha/classification_analysis.md` for complete rationale
+**Sources**:
+- Pre-Phase 4: SwiftSyntax rule ideas from `CustomRules/swiftlint-swiftsyntax-integration/SWIFTSYNTAX_RULES.md`
+- Phase 4 Alpha: Preference discovery session (2025-11-15 to 2025-11-16)
 
-This document tracks preferences identified during systematic edge case review but not yet implemented in SwiftSyntax rules or apple-platform-dev skill.
+**Full Analysis**: See `PreferenceDiscovery/archive/phase4-alpha/classification_analysis.md` for Phase 4 Alpha rationale
+
+This document tracks all identified but unimplemented SwiftSyntax rules and skill frameworks.
 
 ---
 
-## High Priority
+## Pre-Phase 4 Identified Rules
+
+**Source**: `CustomRules/swiftlint-swiftsyntax-integration/SWIFTSYNTAX_RULES.md` - "Future Enhancements" section
+
+### SwiftSyntax Rules
+
+#### 1. prefer_frame_over_spacer
+**Priority**: Medium
+**Difficulty**: Medium
+
+**What**: Suggest using `.frame(maxHeight: .infinity, alignment: .top)` instead of `VStack { content; Spacer() }`
+
+**Why**: More concise, declarative, and performant approach to alignment
+
+**Example**:
+```swift
+// ❌ Avoid
+VStack {
+    Text("Header")
+    Spacer()
+}
+
+// ✅ Prefer
+Text("Header")
+    .frame(maxHeight: .infinity, alignment: .top)
+```
+
+**Note**: This is a preference, not always wrong - VStack+Spacer is more explicit about layout intent
+
+---
+
+#### 2. frame_alignment_requires_dimensions
+**Priority**: Low
+**Difficulty**: Low
+
+**What**: Warn when using `.frame(alignment: .top)` without specifying width or height
+
+**Why**: Frame alignment has no effect without dimensions - likely a mistake
+
+**Example**:
+```swift
+// ❌ Warning - alignment has no effect
+Text("Hello")
+    .frame(alignment: .top)
+
+// ✅ Correct - alignment works with dimension
+Text("Hello")
+    .frame(maxHeight: .infinity, alignment: .top)
+```
+
+---
+
+#### 3. multiline_arguments_threshold
+**Priority**: Low
+**Difficulty**: Medium
+
+**What**: Functions with 4+ parameters should have each parameter on its own line
+
+**Why**: Improves readability and maintainability
+
+**Example**:
+```swift
+// ❌ Hard to read
+func configure(name: String, age: Int, address: String, phone: String) { }
+
+// ✅ Clear and scannable
+func configure(
+    name: String,
+    age: Int,
+    address: String,
+    phone: String
+) { }
+```
+
+**Note**: SwiftFormat may already handle this - verify before implementing
+
+---
+
+#### 4. no_if_modifier
+**Priority**: High
+**Difficulty**: Low
+
+**What**: Detect custom `.if` modifier pattern and suggest standard SwiftUI patterns
+
+**Why**: Custom `.if` modifier is an anti-pattern - SwiftUI has better native approaches
+
+**Example**:
+```swift
+// ❌ Custom .if modifier (anti-pattern)
+Text("Hello")
+    .if(isRed) { $0.foregroundColor(.red) }
+
+// ✅ Use standard SwiftUI conditional modifiers
+Text("Hello")
+    .foregroundColor(isRed ? .red : .primary)
+
+// ✅ Or use @ViewBuilder for complex cases
+@ViewBuilder
+var text: some View {
+    if isRed {
+        Text("Hello").foregroundColor(.red)
+    } else {
+        Text("Hello")
+    }
+}
+```
+
+**Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+
+---
+
+## Phase 4 Alpha - High Priority
 
 ### SwiftSyntax Rules
 

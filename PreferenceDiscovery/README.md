@@ -102,7 +102,7 @@ Each example includes:
 
 **See**: `archive/phase4-alpha/README.md` for complete session analysis
 
-**Identified But Not Implemented**: See `identified-but-not-implemented.md` for pending SwiftSyntax rules and skill frameworks from Phase 4 Alpha, organized by priority.
+**Identified But Not Implemented**: See `../docs/identified-but-not-implemented.md` for all pending SwiftSyntax rules and skill frameworks (pre-Phase 4 + Phase 4 Alpha), organized by priority.
 
 ## Integration with Phase 3
 
@@ -148,7 +148,7 @@ Based on research across:
 - Track framework usage in session logs
 - Note friction points in skill application
 - Maintain decision rationale
-- Implement high-priority items from `identified-but-not-implemented.md` as time permits
+- Implement high-priority items from `../docs/identified-but-not-implemented.md` as time permits
 
 ## License
 

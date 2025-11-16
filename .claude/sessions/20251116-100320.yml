@@ -757,3 +757,207 @@ new: |
   - Maintain decision rationale
   - Implement high-priority items from `identified-but-not-implemented.md` as time permits
 
+---
+# Commit 8ca04d0d
+commit_sha: 8ca04d0da2e1b2d801761cb5900af8d1fb78f076
+commit_time: 2025-11-16 12:01:17 -0700
+commit_message: |
+  docs: create identified-but-not-implemented tracking file
+
+---
+# Edit 2025-11-16T12:25:44.244467
+time: 2025-11-16T12:25:44.244477
+file: /Users/bryancostanza/Developer/swift-quality-tools/docs/identified-but-not-implemented.md
+change_type: docs
+user_prompt: |
+  in swift quality tool, why did we not do these? and/or why are they only recorded at the bottom of one ranadom page? Let's make sure all identified work is recorded, probably in the identified-but-not-implemented file
+  
+  - `prefer_frame_over_spacer` - Frame with alignment over VStack+Spacer
+  - `frame_alignment_requires_dimensions` - Frame alignment needs width/height
+  - `multiline_arguments_threshold` - Functions with 4+ args on multiple lines
+  - `no_if_modifier` - Detect custom .if modifier usage
+old: |
+  # Identified But Not Implemented
+  
+  **Source**: Phase 4 Alpha preference discovery session (2025-11-15 to 2025-11-16)
+  **Full Analysis**: See `archive/phase4-alpha/classification_analysis.md` for complete rationale
+  
+  This document tracks preferences identified during systematic edge case review but not yet implemented in SwiftSyntax rules or apple-platform-dev skill.
+  
+  ---
+  
+  ## High Priority
+new: |
+  # Identified But Not Implemented
+  
+  **Sources**:
+  - Pre-Phase 4: SwiftSyntax rule ideas from `CustomRules/swiftlint-swiftsyntax-integration/SWIFTSYNTAX_RULES.md`
+  - Phase 4 Alpha: Preference discovery session (2025-11-15 to 2025-11-16)
+  
+  **Full Analysis**: See `PreferenceDiscovery/archive/phase4-alpha/classification_analysis.md` for Phase 4 Alpha rationale
+  
+  This document tracks all identified but unimplemented SwiftSyntax rules and skill frameworks.
+  
+  ---
+  
+  ## Pre-Phase 4 Identified Rules
+  
+  **Source**: `CustomRules/swiftlint-swiftsyntax-integration/SWIFTSYNTAX_RULES.md` - "Future Enhancements" section
+  
+  ### SwiftSyntax Rules
+  
+  #### 1. prefer_frame_over_spacer
+  **Priority**: Medium
+  **Difficulty**: Medium
+  
+  **What**: Suggest using `.frame(maxHeight: .infinity, alignment: .top)` instead of `VStack { content; Spacer() }`
+  
+  **Why**: More concise, declarative, and performant approach to alignment
+  
+  **Example**:
+  ```swift
+  // ❌ Avoid
+  VStack {
+      Text("Header")
+      Spacer()
+  }
+  
+  // ✅ Prefer
+  Text("Header")
+      .frame(maxHeight: .infinity, alignment: .top)
+  ```
+  
+  **Note**: This is a preference, not always wrong - VStack+Spacer is more explicit about layout intent
+  
+  ---
+  
+  #### 2. frame_alignment_requires_dimensions
+  **Priority**: Low
+  **Difficulty**: Low
+  
+  **What**: Warn when using `.frame(alignment: .top)` without specifying width or height
+  
+  **Why**: Frame alignment has no effect without dimensions - likely a mistake
+  
+  **Example**:
+  ```swift
+  // ❌ Warning - alignment has no effect
+  Text("Hello")
+      .frame(alignment: .top)
+  
+  // ✅ Correct - alignment works with dimension
+  Text("Hello")
+      .frame(maxHeight: .infinity, alignment: .top)
+  ```
+  
+  ---
+  
+  #### 3. multiline_arguments_threshold
+  **Priority**: Low
+  **Difficulty**: Medium
+  
+  **What**: Functions with 4+ parameters should have each parameter on its own line
+  
+  **Why**: Improves readability and maintainability
+  
+  **Example**:
+  ```swift
+  // ❌ Hard to read
+  func configure(name: String, age: Int, address: String, phone: String) { }
+  
+  // ✅ Clear and scannable
+  func configure(
+      name: String,
+      age: Int,
+      address: String,
+      phone: String
+  ) { }
+  ```
+  
+  **Note**: SwiftFormat may already handle this - verify before implementing
+  
+  ---
+  
+  #### 4. no_if_modifier
+  **Priority**: High
+  **Difficulty**: Low
+  
+  **What**: Detect custom `.if` modifier pattern and suggest standard SwiftUI patterns
+  
+  **Why**: Custom `.if` modifier is an anti-pattern - SwiftUI has better native approaches
+  
+  **Example**:
+  ```swift
+  // ❌ Custom .if modifier (anti-pattern)
+  Text("Hello")
+      .if(isRed) { $0.foregroundColor(.red) }
+  
+  // ✅ Use standard SwiftUI conditional modifiers
+  Text("Hello")
+      .foregroundColor(isRed ? .red : .primary)
+  
+  // ✅ Or use @ViewBuilder for complex cases
+  @ViewBuilder
+  var text: some View {
+      if isRed {
+          Text("Hello").foregroundColor(.red)
+      } else {
+          Text("Hello")
+      }
+  }
+  ```
+  
+  **Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+  
+  ---
+  
+  ## Phase 4 Alpha - High Priority
+
+---
+# Edit 2025-11-16T12:26:19.469635
+time: 2025-11-16T12:26:19.469645
+file: /Users/bryancostanza/Developer/swift-quality-tools/PreferenceDiscovery/README.md
+change_type: docs
+user_prompt: |
+  in swift quality tool, why did we not do these? and/or why are they only recorded at the bottom of one ranadom page? Let's make sure all identified work is recorded, probably in the identified-but-not-implemented file
+  
+  - `prefer_frame_over_spacer` - Frame with alignment over VStack+Spacer
+  - `frame_alignment_requires_dimensions` - Frame alignment needs width/height
+  - `multiline_arguments_threshold` - Functions with 4+ args on multiple lines
+  - `no_if_modifier` - Detect custom .if modifier usage
+old: |
+  **See**: `archive/phase4-alpha/README.md` for complete session analysis
+  
+  **Identified But Not Implemented**: See `identified-but-not-implemented.md` for pending SwiftSyntax rules and skill frameworks from Phase 4 Alpha, organized by priority.
+new: |
+  **See**: `archive/phase4-alpha/README.md` for complete session analysis
+  
+  **Identified But Not Implemented**: See `../docs/identified-but-not-implemented.md` for all pending SwiftSyntax rules and skill frameworks (pre-Phase 4 + Phase 4 Alpha), organized by priority.
+
+---
+# Edit 2025-11-16T12:26:51.911810
+time: 2025-11-16T12:26:51.911821
+file: /Users/bryancostanza/Developer/swift-quality-tools/PreferenceDiscovery/README.md
+change_type: docs
+user_prompt: |
+  in swift quality tool, why did we not do these? and/or why are they only recorded at the bottom of one ranadom page? Let's make sure all identified work is recorded, probably in the identified-but-not-implemented file
+  
+  - `prefer_frame_over_spacer` - Frame with alignment over VStack+Spacer
+  - `frame_alignment_requires_dimensions` - Frame alignment needs width/height
+  - `multiline_arguments_threshold` - Functions with 4+ args on multiple lines
+  - `no_if_modifier` - Detect custom .if modifier usage
+old: |
+  **Continuous Improvement** (between sessions):
+  - Document edge cases as discovered
+  - Track framework usage in session logs
+  - Note friction points in skill application
+  - Maintain decision rationale
+  - Implement high-priority items from `identified-but-not-implemented.md` as time permits
+new: |
+  **Continuous Improvement** (between sessions):
+  - Document edge cases as discovered
+  - Track framework usage in session logs
+  - Note friction points in skill application
+  - Maintain decision rationale
+  - Implement high-priority items from `../docs/identified-but-not-implemented.md` as time permits
+
