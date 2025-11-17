@@ -29,7 +29,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             isInSwiftUIView = true
 
             // Rule: view_structure_order
-            ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+            // DISABLED: Rule has bugs with computed property detection
+            // See: docs/TODO-view-structure-order-fix.md
+            // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
         }
 
         return .visitChildren

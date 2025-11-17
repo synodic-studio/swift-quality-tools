@@ -961,3 +961,198 @@ new: |
   - Maintain decision rationale
   - Implement high-priority items from `../docs/identified-but-not-implemented.md` as time permits
 
+---
+# Edit 2025-11-16T13:58:37.909763
+time: 2025-11-16T13:58:37.909776
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/PreviewRules.swift
+change_type: bugfix
+user_prompt: |
+  Is the preview_required lint check broken? I think I see that you got that error for ColorComparisonView but it does have a preview...
+old: |
+  public enum PreviewRules {
+      public static func checkPreviewRequired(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          // Check if file declares any View or ViewModifier
+          var hasViewOrModifier = false
+          var hasPreview = false
+          var viewNames: [String] = []
+  
+          for statement in sourceFile.statements {
+              // Check for struct/class declarations
+              if let structDecl = statement.item.as(StructDeclSyntax.self) {
+                  // Check if it conforms to View or ViewModifier
+                  if let inheritance = structDecl.inheritanceClause {
+                      for inherited in inheritance.inheritedTypes {
+                          let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
+                          if typeName.contains("View") || typeName.contains("ViewModifier") {
+                              hasViewOrModifier = true
+                              viewNames.append(structDecl.name.text)
+                              break
+                          }
+                      }
+                  }
+              }
+  
+              // Check for macro declarations (looking for #Preview or @Preview)
+              if let macroDecl = statement.item.as(MacroExpansionDeclSyntax.self) {
+                  let macroName = macroDecl.macroName.description
+                  if macroName.contains("Preview") {
+                      hasPreview = true
+                  }
+              }
+  
+              // Also check for function declarations with Preview attribute
+              if let funcDecl = statement.item.as(FunctionDeclSyntax.self) {
+                  let hasPreviewAttribute = funcDecl.attributes.contains { attr in
+                      attr.as(AttributeSyntax.self)?.attributeName.description.contains("Preview") ?? false
+                  }
+                  if hasPreviewAttribute {
+                      hasPreview = true
+                  }
+              }
+          }
+  
+          // If file has View/ViewModifier but no Preview, report violation
+          if hasViewOrModifier, !hasPreview {
+              let viewList = viewNames.joined(separator: ", ")
+              let violation = "⚠️  [preview_required] File declares View/ViewModifier (\(viewList)) but has no #Preview - add at least one preview for development workflow"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  }
+new: |
+  public enum PreviewRules {
+      public static func checkPreviewRequired(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          // Check if file declares any View or ViewModifier
+          var hasViewOrModifier = false
+          var hasPreview = false
+          var viewNames: [String] = []
+  
+          // Check the entire source text for #Preview as a fallback for macro detection
+          let sourceText = sourceFile.description
+          if sourceText.contains("#Preview") || sourceText.contains("@Preview") {
+              hasPreview = true
+          }
+  
+          for statement in sourceFile.statements {
+              // Check for struct/class declarations
+              if let structDecl = statement.item.as(StructDeclSyntax.self) {
+                  // Check if it conforms to View or ViewModifier
+                  if let inheritance = structDecl.inheritanceClause {
+                      for inherited in inheritance.inheritedTypes {
+                          let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
+                          if typeName.contains("View") || typeName.contains("ViewModifier") {
+                              hasViewOrModifier = true
+                              viewNames.append(structDecl.name.text)
+                              break
+                          }
+                      }
+                  }
+              }
+  
+              // Check for macro declarations (looking for #Preview or @Preview)
+              if let macroDecl = statement.item.as(MacroExpansionDeclSyntax.self) {
+                  let macroName = macroDecl.macroName.description
+                  if macroName.contains("Preview") {
+                      hasPreview = true
+                  }
+              }
+  
+              // Also check for function declarations with Preview attribute
+              if let funcDecl = statement.item.as(FunctionDeclSyntax.self) {
+                  let hasPreviewAttribute = funcDecl.attributes.contains { attr in
+                      attr.as(AttributeSyntax.self)?.attributeName.description.contains("Preview") ?? false
+                  }
+                  if hasPreviewAttribute {
+                      hasPreview = true
+                  }
+              }
+          }
+  
+          // If file has View/ViewModifier but no Preview, report violation
+          if hasViewOrModifier, !hasPreview {
+              let viewList = viewNames.joined(separator: ", ")
+              let violation = "⚠️  [preview_required] File declares View/ViewModifier (\(viewList)) but has no #Preview - add at least one preview for development workflow"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  }
+
+---
+# Edit 2025-11-16T14:16:07.418624
+time: 2025-11-16T14:16:07.418634
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ImportRules.swift
+change_type: bugfix
+user_prompt: |
+  Is the preview_required lint check broken? I think I see that you got that error for ColorComparisonView but it does have a preview...
+old: |
+          // If we have both types, check for blank line separation
+          guard !regularImports.isEmpty, !testableImports.isEmpty else { return }
+  
+          // Check if there's a blank line between the last regular import and first testable import
+          // This is a simplified check - in production, you'd analyze trivia more carefully
+          if let lastRegular = regularImports.last,
+             let firstTestable = testableImports.first
+          {
+              let regularEnd = lastRegular.endPosition
+              let testableStart = firstTestable.position
+  
+              // Calculate if there's sufficient space (simplified check)
+              let distance = testableStart.utf8Offset - regularEnd.utf8Offset
+  
+              // If imports are very close together (< 20 chars), likely missing blank line
+              if distance < 20 {
+                  let violation = "⚠️  [blank_line_import_separation] Missing blank line between regular imports and @testable imports"
+                  violations.append(violation)
+                  print(violation)
+              }
+          }
+new: |
+          // If we have both types, check for blank line separation
+          guard !regularImports.isEmpty, !testableImports.isEmpty else { return }
+  
+          // Check if there's a blank line between the last regular import and first testable import
+          if let lastRegular = regularImports.last,
+             let firstTestable = testableImports.first
+          {
+              // Check the leading trivia of the first testable import for blank lines
+              let leadingTrivia = firstTestable.leadingTrivia.description
+  
+              // Count newlines - should have at least 2 (one for the previous line, one for blank line)
+              let newlineCount = leadingTrivia.filter { $0 == "\n" }.count
+  
+              // If less than 2 newlines, missing blank line
+              if newlineCount < 2 {
+                  let violation = "⚠️  [blank_line_import_separation] Missing blank line between regular imports and @testable imports"
+                  violations.append(violation)
+                  print(violation)
+              }
+          }
+
+---
+# Edit 2025-11-16T16:29:41.966695
+time: 2025-11-16T16:29:41.966707
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  Alright I thought I had infinite time but I'm running out of time now. So why don't we disable this lint check in the custom linter, re-compile,  and then put a to-do item in the docs directory of the Swift quality tools to fix that check? Put some examples in there of what is working or not
+old: |
+          if conformsToView {
+              currentStructDecl = node
+              isInSwiftUIView = true
+  
+              // Rule: view_structure_order
+              ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+          }
+new: |
+          if conformsToView {
+              currentStructDecl = node
+              isInSwiftUIView = true
+  
+              // Rule: view_structure_order
+              // DISABLED: Rule has bugs with computed property detection
+              // See: docs/TODO-view-structure-order-fix.md
+              // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+          }
+
