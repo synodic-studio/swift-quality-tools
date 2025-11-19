@@ -1156,3 +1156,353 @@ new: |
               // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
           }
 
+---
+# Edit 2025-11-18T20:35:31.866166
+time: 2025-11-18T20:35:31.866178
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/ConfigDiscovery.swift
+change_type: feature
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+      /// Search directory tree for SwiftLint config file
+      private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+new: |
+      /// Find SwiftLint config file in a directory
+      private static func findSwiftLintConfig(in directory: URL, fileManager: FileManager) -> URL? {
+          for configName in [".swiftlint.yml", ".swiftlint.yaml"] {
+              let configURL = directory.appendingPathComponent(configName)
+              if fileManager.fileExists(atPath: configURL.path) {
+                  return configURL
+              }
+          }
+          return nil
+      }
+  
+      /// Search directory tree for SwiftLint config file
+      private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+
+---
+# Edit 2025-11-18T20:35:51.861149
+time: 2025-11-18T20:35:51.861161
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SwiftFormatSmart/main.swift
+change_type: feature
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+      /// Throw an error when formatting fails
+      private func throwFormattingError(exitCode: Int, target: String) throws -> Never {
+          let errorMsg = ErrorFormatter.format(
+              tool: "SwiftFormatSmart",
+              errorType: "ExecutionFailed",
+              problem: "SwiftFormat failed with exit code \(exitCode)",
+              context: "Formatting \(target)",
+              fix: "Review SwiftFormat output above for syntax errors or formatting issues",
+          )
+          Console.error(errorMsg)
+          throw ExitCode(Int32(exitCode))
+      }
+new: |
+      /// Throw an error when formatting fails
+      private func throwFormattingError(exitCode: Int32, target: String) throws -> Never {
+          let errorMsg = ErrorFormatter.format(
+              tool: "SwiftFormatSmart",
+              errorType: "ExecutionFailed",
+              problem: "SwiftFormat failed with exit code \(exitCode)",
+              context: "Formatting \(target)",
+              fix: "Review SwiftFormat output above for syntax errors or formatting issues",
+          )
+          Console.error(errorMsg)
+          throw ExitCode(exitCode)
+      }
+
+---
+# Edit 2025-11-18T20:36:04.890626
+time: 2025-11-18T20:36:04.890636
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SwiftLintCustomSmart/main.swift
+change_type: feature
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+      /// Throw an error if the build failed
+      private func throwIfBuildFailed(_ exitCode: Int) throws {
+          guard exitCode == 0 else {
+              let errorMsg = ErrorFormatter.formatBuildError(
+                  tool: "SwiftLintCustomSmart",
+                  project: "rule-engine",
+                  exitCode: Int32(exitCode),
+              )
+              Console.error(errorMsg)
+              throw ExitCode.failure
+          }
+      }
+new: |
+      /// Throw an error if the build failed
+      private func throwIfBuildFailed(_ exitCode: Int32) throws {
+          guard exitCode == 0 else {
+              let errorMsg = ErrorFormatter.formatBuildError(
+                  tool: "SwiftLintCustomSmart",
+                  project: "rule-engine",
+                  exitCode: exitCode,
+              )
+              Console.error(errorMsg)
+              throw ExitCode.failure
+          }
+      }
+
+---
+# Edit 2025-11-18T20:36:21.555960
+time: 2025-11-18T20:36:21.555969
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/ConfigDiscovery.swift
+change_type: feature
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+  /// Errors that can occur during config discovery
+  public enum ConfigDiscoveryError: LocalizedError {
+      case multipleConfigsFound([URL])
+      case noConfigFound
+      case sharedConfigMissing(URL)
+      case targetNotFound(URL)
+  
+      public var errorDescription: String? {
+          switch self {
+          case let .multipleConfigsFound(urls):
+              "Multiple config files found: \(urls.map(\.lastPathComponent).joined(separator: ", "))"
+          case .noConfigFound:
+              "No config file found"
+          case let .sharedConfigMissing(url):
+              "Shared config file missing: \(url.path)"
+          case let .targetNotFound(url):
+              "Target not found: \(url.path)"
+          }
+      }
+  }
+new: |
+  /// Errors that can occur during config discovery
+  public enum ConfigDiscoveryError: LocalizedError, Equatable {
+      case multipleConfigsFound([URL])
+      case noConfigFound
+      case sharedConfigMissing(URL)
+      case targetNotFound(URL)
+  
+      public var errorDescription: String? {
+          switch self {
+          case let .multipleConfigsFound(urls):
+              "Multiple config files found: \(urls.map(\.lastPathComponent).joined(separator: ", "))"
+          case .noConfigFound:
+              "No config file found"
+          case let .sharedConfigMissing(url):
+              "Shared config file missing: \(url.path)"
+          case let .targetNotFound(url):
+              "Target not found: \(url.path)"
+          }
+      }
+  
+      public static func == (lhs: ConfigDiscoveryError, rhs: ConfigDiscoveryError) -> Bool {
+          switch (lhs, rhs) {
+          case let (.multipleConfigsFound(lhsURLs), .multipleConfigsFound(rhsURLs)):
+              lhsURLs.map(\.path) == rhsURLs.map(\.path)
+          case (.noConfigFound, .noConfigFound):
+              true
+          case let (.sharedConfigMissing(lhsURL), .sharedConfigMissing(rhsURL)):
+              lhsURL.path == rhsURL.path
+          case let (.targetNotFound(lhsURL), .targetNotFound(rhsURL)):
+              lhsURL.path == rhsURL.path
+          default:
+              false
+          }
+      }
+  }
+
+---
+# Edit 2025-11-18T20:37:02.994883
+time: 2025-11-18T20:37:02.994894
+file: /Users/bryancostanza/Developer/swift-quality-tools/Tests/SharedUtilitiesTests/ConfigDiscoveryTests.swift
+change_type: test
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+      @Test("Custom rule engine path is in home directory")
+      func customRuleEnginePathInHome() {
+          let path = ConfigDiscovery.customRuleEnginePath
+          let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+  
+          #expect(path.path.starts(with: homeDir))
+      }
+  }
+new: |
+      @Test("Custom rule engine path is in home directory")
+      func customRuleEnginePathInHome() {
+          let path = ConfigDiscovery.customRuleEnginePath
+          let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+  
+          #expect(path.path.starts(with: homeDir))
+      }
+  
+      // MARK: - Directory Tree Search Tests
+  
+      @Test("Find config in current directory")
+      func findConfigInCurrentDirectory() throws {
+          let tempDir = try createTempDirectory()
+          defer { cleanup(tempDir) }
+  
+          // Create config in temp directory
+          let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+          try createFile(at: configFile, contents: "# test config")
+  
+          // Change to temp directory
+          let originalDir = FileManager.default.currentDirectoryPath
+          FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+          defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+  
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml"
+          )
+  
+          #expect(result.lastPathComponent == ".swiftformat.yml")
+          #expect(result.path.contains(tempDir.lastPathComponent))
+      }
+  
+      @Test("Find config in parent directory")
+      func findConfigInParentDirectory() throws {
+          let tempDir = try createTempDirectory()
+          defer { cleanup(tempDir) }
+  
+          // Create config in temp directory
+          let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+          try createFile(at: configFile, contents: "# test config")
+  
+          // Create subdirectory
+          let subDir = tempDir.appendingPathComponent("subdir")
+          try FileManager.default.createDirectory(at: subDir, withIntermediateDirectories: true)
+  
+          // Change to subdirectory
+          let originalDir = FileManager.default.currentDirectoryPath
+          FileManager.default.changeCurrentDirectoryPath(subDir.path)
+          defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+  
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml"
+          )
+  
+          #expect(result.lastPathComponent == ".swiftformat.yml")
+          #expect(result.path.contains(tempDir.lastPathComponent))
+      }
+  
+      @Test("Find config walking up multiple directories")
+      func findConfigWalkingUpMultipleLevels() throws {
+          let tempDir = try createTempDirectory()
+          defer { cleanup(tempDir) }
+  
+          // Create config in temp directory
+          let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+          try createFile(at: configFile, contents: "# test config")
+  
+          // Create nested subdirectories
+          let deepDir = tempDir
+              .appendingPathComponent("level1")
+              .appendingPathComponent("level2")
+              .appendingPathComponent("level3")
+          try FileManager.default.createDirectory(at: deepDir, withIntermediateDirectories: true)
+  
+          // Change to deep subdirectory
+          let originalDir = FileManager.default.currentDirectoryPath
+          FileManager.default.changeCurrentDirectoryPath(deepDir.path)
+          defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+  
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml"
+          )
+  
+          #expect(result.lastPathComponent == ".swiftformat.yml")
+          #expect(result.path.contains(tempDir.lastPathComponent))
+      }
+  
+      @Test("Multiple configs in same directory throws error")
+      func multipleConfigsInSameDirectory() throws {
+          let tempDir = try createTempDirectory()
+          defer { cleanup(tempDir) }
+  
+          // Create multiple config files
+          try createFile(at: tempDir.appendingPathComponent(".swiftformat.yml"), contents: "# config 1")
+          try createFile(at: tempDir.appendingPathComponent(".swiftformat"), contents: "# config 2")
+  
+          // Change to temp directory
+          let originalDir = FileManager.default.currentDirectoryPath
+          FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+          defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+  
+          #expect(throws: ConfigDiscoveryError.self) {
+              try ConfigDiscovery.findConfig(
+                  configNames: [".swiftformat.yml", ".swiftformat"],
+                  sharedConfigName: "shared-swiftformat.yml"
+              )
+          }
+      }
+  
+      @Test("Prefers closest config when multiple in tree")
+      func prefersClosestConfig() throws {
+          let tempDir = try createTempDirectory()
+          defer { cleanup(tempDir) }
+  
+          // Create config in root
+          let rootConfig = tempDir.appendingPathComponent(".swiftformat.yml")
+          try createFile(at: rootConfig, contents: "# root config")
+  
+          // Create subdirectory with its own config
+          let subDir = tempDir.appendingPathComponent("subdir")
+          try FileManager.default.createDirectory(at: subDir, withIntermediateDirectories: true)
+          let subConfig = subDir.appendingPathComponent(".swiftformat.yml")
+          try createFile(at: subConfig, contents: "# sub config")
+  
+          // Change to subdirectory
+          let originalDir = FileManager.default.currentDirectoryPath
+          FileManager.default.changeCurrentDirectoryPath(subDir.path)
+          defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+  
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml"
+          )
+  
+          // Should find the config in subdir, not the parent
+          #expect(result.path == subConfig.path)
+      }
+  }
+
+---
+# Edit 2025-11-18T20:37:26.981809
+time: 2025-11-18T20:37:26.981823
+file: /Users/bryancostanza/Developer/swift-quality-tools/Tests/SharedUtilitiesTests/ConfigDiscoveryTests.swift
+change_type: test
+user_prompt: |
+  commit ALL and push then start a new branch to do 1-3 and then another branch for 4+5
+old: |
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml",
+          )
+  
+          // Should find the config in subdir, not the parent
+          #expect(result.path == subConfig.path)
+new: |
+          let result = try ConfigDiscovery.findConfig(
+              configNames: [".swiftformat.yml"],
+              sharedConfigName: "shared-swiftformat.yml",
+          )
+  
+          // Should find the config in subdir, not the parent
+          // Resolve both paths to handle /var vs /private/var symlink on macOS
+          #expect(result.path.hasSuffix("subdir/.swiftformat.yml"))
+          #expect(!result.path.hasSuffix(tempDir.lastPathComponent + "/.swiftformat.yml"))
+
+---
+# Commit 1dcb987c
+commit_sha: 1dcb987cea8176bd09cd9ec0bd2e69b74cb3398b
+commit_time: 2025-11-18 20:39:26 -0700
+commit_message: |
+  Add comprehensive test coverage for core functionality
+
