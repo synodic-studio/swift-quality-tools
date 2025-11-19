@@ -3,7 +3,7 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (10 total):
+/// Rule identifiers (11 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
 /// - no_group_body: Prohibit top-level Group in View bodies
 /// - one_top_level_view: Enforce single top-level view in View bodies
@@ -14,6 +14,7 @@ import SwiftSyntax
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
 /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
+/// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
 public final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
     private var currentStructDecl: StructDeclSyntax?
@@ -98,6 +99,10 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewStructureRules: Check stack minimum children
         ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+
+        // OnChangeRules: Check for 2-param onChange with ignored old value
+        OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+
         return .visitChildren
     }
 

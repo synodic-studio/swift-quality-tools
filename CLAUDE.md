@@ -17,6 +17,7 @@ Swift Quality Tools is a centralized Swift code quality tooling package with sma
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
 - `excessive_indentation`: Physical indentation limit (16 spaces / 4 tabs max)
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+- `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
 - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
 
 ### Violation Format
@@ -26,9 +27,10 @@ All violations follow this format:
 ⚠️ [rule_identifier] Violation description
 ```
 
-Example:
+Examples:
 ```
 ⚠️ [excessive_indentation] Line 42 has excessive indentation (20 spaces, maximum: 16) - refactor code to reduce nesting depth
+⚠️ [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ _, newValue in ...' with '{ ... }' and reference the observed value directly
 ```
 
 ### Adding New Rules
