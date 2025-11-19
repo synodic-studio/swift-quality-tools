@@ -13,7 +13,7 @@ Swift Quality Tools is a centralized Swift code quality tooling package with sma
 ### Current Rule Identifiers
 
 - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
-- `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+- `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
 - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
 - `excessive_nesting`: AST-based nesting depth limit (3 levels max - allows modifier chains up to 16 spaces)

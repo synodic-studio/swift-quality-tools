@@ -1701,9 +1701,9 @@ new: |
   ```
 
 ---
-# Edit 2025-11-19T08:30:14.481020
-time: 2025-11-19T08:30:14.481034
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+# Edit 2025-11-19T08:23:14.534315
+time: 2025-11-19T08:23:14.534326
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1716,28 +1716,22 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-          if conformsToView {
-              currentStructDecl = node
-              isInSwiftUIView = true
-  
-              // Rule: view_structure_order
-              // DISABLED: Rule has bugs with computed property detection
-              // See: docs/TODO-view-structure-order-fix.md
-              // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
-          }
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max)
+  /// - no_group_body: No top-level Group without modifiers
+  /// - one_top_level_view: Exactly one top-level view
+  public enum ViewBodyRules {
 new: |
-          if conformsToView {
-              currentStructDecl = node
-              isInSwiftUIView = true
-  
-              // Rule: view_structure_order
-              ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
-          }
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max)
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  public enum ViewBodyRules {
 
 ---
-# Edit 2025-11-19T08:30:17.250583
-time: 2025-11-19T08:30:17.250591
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+# Edit 2025-11-19T08:23:18.385182
+time: 2025-11-19T08:23:18.385195
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1750,150 +1744,60 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-  /// - view_structure_order: Enforce View property ordering (DISABLED)
+      public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
 new: |
-  /// - view_structure_order: Enforce View property ordering
-
----
-# Edit 2025-11-19T08:31:42.637559
-time: 2025-11-19T08:31:42.637567
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/test-view-structure.swift
-change_type: test
-user_prompt: |
-  1 that is a bit of a strange name but fine if that's the best we've got
+      /// Check if a Group initializer has view modifiers applied
+      /// - Parameter node: The function call expression node
+      /// - Returns: True if the Group has modifiers
+      private static func groupHasModifiers(_ node: FunctionCallExprSyntax) -> Bool {
+          // Walk up the syntax tree to see if this Group is part of a modifier chain
+          var current: Syntax? = Syntax(node)
   
-  after that create a new branch for the .if rule
-  
-  and another branch to try fixing the view structure
-  
-  another banch to remove excessive_indentation
-  
-  make a PR for each of these ^ branches too
-old: |
-  /// Test 1: Computed property before body (should NOT violate)
-  struct TestComputedBeforeBody: View {
-      @State private var count: Int = 0
-  
-      private var config: String {
-          "computed value"
-      }
-  
-      var body: some View {
-          Text(config)
-      }
-  }
-new: |
-  /// Test 1: Computed property before body (SHOULD violate - computed must be after body)
-  struct TestComputedBeforeBody: View {
-      @State private var count: Int = 0
-  
-      private var config: String {
-          "computed value"
-      }
-  
-      var body: some View {
-          Text(config)
-      }
-  }
-
----
-# Edit 2025-11-19T08:31:45.340371
-time: 2025-11-19T08:31:45.340380
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/test-view-structure.swift
-change_type: test
-user_prompt: |
-  1 that is a bit of a strange name but fine if that's the best we've got
-  
-  after that create a new branch for the .if rule
-  
-  and another branch to try fixing the view structure
-  
-  another banch to remove excessive_indentation
-  
-  make a PR for each of these ^ branches too
-old: |
-  /// Test 6: Correct order (should NOT violate)
-  struct TestCorrectOrder: View {
-      @State private var count: Int = 0
-  
-      var body: some View {
-          Text("Hello")
-      }
-  
-      private var computed: String {
-          "value"
-new: |
-  /// Test 6: Correct order (should NOT violate) - stored → body → computed
-  struct TestCorrectOrder: View {
-      @State private var count: Int = 0
-  
-      var body: some View {
-          Text("Hello")
-      }
-  
-      private var computed: String {
-          "value"
-
----
-# Edit 2025-11-19T08:33:39.988449
-time: 2025-11-19T08:33:39.988458
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
-change_type: bugfix
-user_prompt: |
-  1 that is a bit of a strange name but fine if that's the best we've got
-  
-  after that create a new branch for the .if rule
-  
-  and another branch to try fixing the view structure
-  
-  another banch to remove excessive_indentation
-  
-  make a PR for each of these ^ branches too
-old: |
-      private static func categorizeMember(
-          _ member: MemberBlockItemSyntax,
-          memberDesc: String,
-          categories: inout [(category: MemberCategory, description: String)],
-      ) {
-          if let varDecl = member.decl.as(VariableDeclSyntax.self) {
-              if isBodyProperty(varDecl) {
-                  categories.append((.body, "body property"))
-                  return
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if let memberAccess = parent.as(MemberAccessExprSyntax.self) {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
               }
   
-              if isComputedProperty(varDecl) {
-                  categories.append((.computedOrMethod, memberDesc.prefix(50).description))
-                  return
+              // Check if parent is a FunctionCallExprSyntax with our node as the called expression
+              if let functionCall = parent.as(FunctionCallExprSyntax.self) {
+                  // This means our Group is being used as the base for a modifier call
+                  if functionCall.calledExpression.description.contains(node.description) {
+                      return true
+                  }
               }
   
-              let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
-              categories.append((category, memberDesc.prefix(50).description))
-new: |
-      private static func categorizeMember(
-          _ member: MemberBlockItemSyntax,
-          memberDesc: String,
-          categories: inout [(category: MemberCategory, description: String)],
-      ) {
-          if let varDecl = member.decl.as(VariableDeclSyntax.self) {
-              if isBodyProperty(varDecl) {
-                  categories.append((.body, "body property"))
-                  return
-              }
+              current = parent
+          }
   
-              if isComputedProperty(varDecl) {
-                  let propName = getPropertyName(varDecl) ?? "computed property"
-                  categories.append((.computedOrMethod, propName))
-                  return
-              }
+          return false
+      }
   
-              let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
-              let propName = getPropertyName(varDecl) ?? "property"
-              categories.append((category, propName))
+      /// Check for Group usage without modifiers anywhere in SwiftUI code
+      /// If Group has no modifiers, suggest using @ViewBuilder instead
+      public static func checkGroupWithoutModifiers(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+          // Check if this is a Group initializer
+          let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespaces)
+  
+          guard calledExpr == "Group" else {
+              return
+          }
+  
+          // Check if the Group has modifiers
+          if !groupHasModifiers(node) {
+              let violation = "⚠️  [no_group_body] Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  
+      public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
 
 ---
-# Edit 2025-11-19T08:34:02.482952
-time: 2025-11-19T08:34:02.482961
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+# Edit 2025-11-19T08:23:32.685534
+time: 2025-11-19T08:23:32.685545
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1906,31 +1810,33 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-      private static func isComputedProperty(_ varDecl: VariableDeclSyntax) -> Bool {
-          varDecl.bindings.first?.accessorBlock != nil
-      }
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
   
-      private static func categorizeMember(
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+  
+          return .visitChildren
+      }
 new: |
-      private static func isComputedProperty(_ varDecl: VariableDeclSyntax) -> Bool {
-          varDecl.bindings.first?.accessorBlock != nil
-      }
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check for Group without modifiers
+          ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
   
-      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
-          guard let binding = varDecl.bindings.first,
-                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-          else {
-              return nil
-          }
-          return identifier.identifier.text
-      }
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
   
-      private static func categorizeMember(
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+  
+          return .visitChildren
+      }
 
 ---
-# Edit 2025-11-19T08:34:05.237296
-time: 2025-11-19T08:34:05.237304
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+# Edit 2025-11-19T08:23:43.084755
+time: 2025-11-19T08:23:43.084765
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1943,21 +1849,44 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-          } else if member.decl.is(FunctionDeclSyntax.self) {
-              categories.append((.computedOrMethod, memberDesc.prefix(50).description))
-          }
-      }
+  /// Rule identifiers (11 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
 new: |
-          } else if let funcDecl = member.decl.as(FunctionDeclSyntax.self) {
-              let funcName = funcDecl.name.text
-              categories.append((.computedOrMethod, funcName))
-          }
-      }
+  /// Rule identifiers (11 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Enforce single top-level view in View bodies
 
 ---
-# Edit 2025-11-19T08:34:09.330560
-time: 2025-11-19T08:34:09.330569
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+# Edit 2025-11-19T08:24:04.301782
+time: 2025-11-19T08:24:04.301791
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CLAUDE.md
+change_type: docs
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+new: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+
+---
+# Edit 2025-11-19T08:25:07.113354
+time: 2025-11-19T08:25:07.113365
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1970,102 +1899,17 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-          for (category, description) in memberCategories {
-              guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
-  
-              if currentIndex < maxCategorySeen {
-                  let violation = "⚠️  [view_structure_order] SwiftUI View has incorrect member order - '\(description)' should come before later members (expected: embedded types → env props → other props → init → body → computed/methods)"
-                  violations.append(violation)
-                  print(violation)
-                  return // Report once per struct
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if let memberAccess = parent.as(MemberAccessExprSyntax.self) {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
               }
-  
-              maxCategorySeen = max(maxCategorySeen, currentIndex)
-          }
 new: |
-          for (category, description) in memberCategories {
-              guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
-  
-              if currentIndex < maxCategorySeen {
-                  let categoryName = getCategoryName(category)
-                  let violation = "⚠️  [view_structure_order] '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
-                  violations.append(violation)
-                  print(violation)
-                  // Don't return - report all violations
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if parent.as(MemberAccessExprSyntax.self) != nil {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
               }
-  
-              maxCategorySeen = max(maxCategorySeen, currentIndex)
-          }
-
----
-# Edit 2025-11-19T08:34:14.928574
-time: 2025-11-19T08:34:14.928584
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
-change_type: bugfix
-user_prompt: |
-  1 that is a bit of a strange name but fine if that's the best we've got
-  
-  after that create a new branch for the .if rule
-  
-  and another branch to try fixing the view structure
-  
-  another banch to remove excessive_indentation
-  
-  make a PR for each of these ^ branches too
-old: |
-      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
-          guard let binding = varDecl.bindings.first,
-                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-          else {
-              return nil
-          }
-          return identifier.identifier.text
-      }
-  
-      private static func categorizeMember(
-new: |
-      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
-          guard let binding = varDecl.bindings.first,
-                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-          else {
-              return nil
-          }
-          return identifier.identifier.text
-      }
-  
-      private static func getCategoryName(_ category: MemberCategory) -> String {
-          switch category {
-          case .embeddedType: return "embedded type"
-          case .environmentProperty: return "environment property"
-          case .otherProperty: return "stored property"
-          case .initializer: return "initializer"
-          case .body: return "body property"
-          case .computedOrMethod: return "computed/method"
-          }
-      }
-  
-      private static func categorizeMember(
-
----
-# Edit 2025-11-19T08:42:02.446744
-time: 2025-11-19T08:42:02.446759
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
-change_type: style
-user_prompt: |
-  can you do a test run of the view structure lint rule in the gravity well project to confirm it's as-expected?
-old: |
-      private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
-          varDecl.attributes.contains { attr in
-              let attrName = attr.as(AttributeSyntax.self)?.attributeName.description ?? ""
-              return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
-          }
-      }
-new: |
-      private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
-          varDecl.attributes.contains { attr in
-              guard let attrSyntax = attr.as(AttributeSyntax.self) else { return false }
-              let attrName = attrSyntax.attributeName.trimmedDescription
-              return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
-          }
-      }
 

@@ -5,7 +5,7 @@ import SwiftSyntax
 ///
 /// Rule identifiers (12 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
-/// - no_group_body: Prohibit top-level Group in View bodies
+/// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
 /// - no_if_modifier: Detect custom .if modifier anti-pattern
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
@@ -96,6 +96,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     // }
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // ViewBodyRules: Check for Group without modifiers
+        ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+
         // ViewBodyRules: Check for .if modifier anti-pattern
         ViewBodyRules.checkNoIfModifier(node, violations: &violations)
 
