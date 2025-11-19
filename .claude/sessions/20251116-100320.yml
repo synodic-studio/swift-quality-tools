@@ -1700,3 +1700,372 @@ new: |
   ⚠️ [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ _, newValue in ...' with '{ ... }' and reference the observed value directly
   ```
 
+---
+# Edit 2025-11-19T08:30:14.481020
+time: 2025-11-19T08:30:14.481034
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+          if conformsToView {
+              currentStructDecl = node
+              isInSwiftUIView = true
+  
+              // Rule: view_structure_order
+              // DISABLED: Rule has bugs with computed property detection
+              // See: docs/TODO-view-structure-order-fix.md
+              // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+          }
+new: |
+          if conformsToView {
+              currentStructDecl = node
+              isInSwiftUIView = true
+  
+              // Rule: view_structure_order
+              ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+          }
+
+---
+# Edit 2025-11-19T08:30:17.250583
+time: 2025-11-19T08:30:17.250591
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  /// - view_structure_order: Enforce View property ordering (DISABLED)
+new: |
+  /// - view_structure_order: Enforce View property ordering
+
+---
+# Edit 2025-11-19T08:31:42.637559
+time: 2025-11-19T08:31:42.637567
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/test-view-structure.swift
+change_type: test
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  /// Test 1: Computed property before body (should NOT violate)
+  struct TestComputedBeforeBody: View {
+      @State private var count: Int = 0
+  
+      private var config: String {
+          "computed value"
+      }
+  
+      var body: some View {
+          Text(config)
+      }
+  }
+new: |
+  /// Test 1: Computed property before body (SHOULD violate - computed must be after body)
+  struct TestComputedBeforeBody: View {
+      @State private var count: Int = 0
+  
+      private var config: String {
+          "computed value"
+      }
+  
+      var body: some View {
+          Text(config)
+      }
+  }
+
+---
+# Edit 2025-11-19T08:31:45.340371
+time: 2025-11-19T08:31:45.340380
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/test-view-structure.swift
+change_type: test
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  /// Test 6: Correct order (should NOT violate)
+  struct TestCorrectOrder: View {
+      @State private var count: Int = 0
+  
+      var body: some View {
+          Text("Hello")
+      }
+  
+      private var computed: String {
+          "value"
+new: |
+  /// Test 6: Correct order (should NOT violate) - stored → body → computed
+  struct TestCorrectOrder: View {
+      @State private var count: Int = 0
+  
+      var body: some View {
+          Text("Hello")
+      }
+  
+      private var computed: String {
+          "value"
+
+---
+# Edit 2025-11-19T08:33:39.988449
+time: 2025-11-19T08:33:39.988458
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+      private static func categorizeMember(
+          _ member: MemberBlockItemSyntax,
+          memberDesc: String,
+          categories: inout [(category: MemberCategory, description: String)],
+      ) {
+          if let varDecl = member.decl.as(VariableDeclSyntax.self) {
+              if isBodyProperty(varDecl) {
+                  categories.append((.body, "body property"))
+                  return
+              }
+  
+              if isComputedProperty(varDecl) {
+                  categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+                  return
+              }
+  
+              let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
+              categories.append((category, memberDesc.prefix(50).description))
+new: |
+      private static func categorizeMember(
+          _ member: MemberBlockItemSyntax,
+          memberDesc: String,
+          categories: inout [(category: MemberCategory, description: String)],
+      ) {
+          if let varDecl = member.decl.as(VariableDeclSyntax.self) {
+              if isBodyProperty(varDecl) {
+                  categories.append((.body, "body property"))
+                  return
+              }
+  
+              if isComputedProperty(varDecl) {
+                  let propName = getPropertyName(varDecl) ?? "computed property"
+                  categories.append((.computedOrMethod, propName))
+                  return
+              }
+  
+              let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
+              let propName = getPropertyName(varDecl) ?? "property"
+              categories.append((category, propName))
+
+---
+# Edit 2025-11-19T08:34:02.482952
+time: 2025-11-19T08:34:02.482961
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+      private static func isComputedProperty(_ varDecl: VariableDeclSyntax) -> Bool {
+          varDecl.bindings.first?.accessorBlock != nil
+      }
+  
+      private static func categorizeMember(
+new: |
+      private static func isComputedProperty(_ varDecl: VariableDeclSyntax) -> Bool {
+          varDecl.bindings.first?.accessorBlock != nil
+      }
+  
+      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
+          guard let binding = varDecl.bindings.first,
+                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+          else {
+              return nil
+          }
+          return identifier.identifier.text
+      }
+  
+      private static func categorizeMember(
+
+---
+# Edit 2025-11-19T08:34:05.237296
+time: 2025-11-19T08:34:05.237304
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+          } else if member.decl.is(FunctionDeclSyntax.self) {
+              categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+          }
+      }
+new: |
+          } else if let funcDecl = member.decl.as(FunctionDeclSyntax.self) {
+              let funcName = funcDecl.name.text
+              categories.append((.computedOrMethod, funcName))
+          }
+      }
+
+---
+# Edit 2025-11-19T08:34:09.330560
+time: 2025-11-19T08:34:09.330569
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+          for (category, description) in memberCategories {
+              guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
+  
+              if currentIndex < maxCategorySeen {
+                  let violation = "⚠️  [view_structure_order] SwiftUI View has incorrect member order - '\(description)' should come before later members (expected: embedded types → env props → other props → init → body → computed/methods)"
+                  violations.append(violation)
+                  print(violation)
+                  return // Report once per struct
+              }
+  
+              maxCategorySeen = max(maxCategorySeen, currentIndex)
+          }
+new: |
+          for (category, description) in memberCategories {
+              guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
+  
+              if currentIndex < maxCategorySeen {
+                  let categoryName = getCategoryName(category)
+                  let violation = "⚠️  [view_structure_order] '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
+                  violations.append(violation)
+                  print(violation)
+                  // Don't return - report all violations
+              }
+  
+              maxCategorySeen = max(maxCategorySeen, currentIndex)
+          }
+
+---
+# Edit 2025-11-19T08:34:14.928574
+time: 2025-11-19T08:34:14.928584
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
+          guard let binding = varDecl.bindings.first,
+                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+          else {
+              return nil
+          }
+          return identifier.identifier.text
+      }
+  
+      private static func categorizeMember(
+new: |
+      private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
+          guard let binding = varDecl.bindings.first,
+                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+          else {
+              return nil
+          }
+          return identifier.identifier.text
+      }
+  
+      private static func getCategoryName(_ category: MemberCategory) -> String {
+          switch category {
+          case .embeddedType: return "embedded type"
+          case .environmentProperty: return "environment property"
+          case .otherProperty: return "stored property"
+          case .initializer: return "initializer"
+          case .body: return "body property"
+          case .computedOrMethod: return "computed/method"
+          }
+      }
+  
+      private static func categorizeMember(
+
+---
+# Edit 2025-11-19T08:42:02.446744
+time: 2025-11-19T08:42:02.446759
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-fix-view-structure/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: style
+user_prompt: |
+  can you do a test run of the view structure lint rule in the gravity well project to confirm it's as-expected?
+old: |
+      private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
+          varDecl.attributes.contains { attr in
+              let attrName = attr.as(AttributeSyntax.self)?.attributeName.description ?? ""
+              return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
+          }
+      }
+new: |
+      private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
+          varDecl.attributes.contains { attr in
+              guard let attrSyntax = attr.as(AttributeSyntax.self) else { return false }
+              let attrName = attrSyntax.attributeName.trimmedDescription
+              return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
+          }
+      }
+

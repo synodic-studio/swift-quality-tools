@@ -16,7 +16,8 @@ public enum ViewStructureRules {
 
     private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
         varDecl.attributes.contains { attr in
-            let attrName = attr.as(AttributeSyntax.self)?.attributeName.description ?? ""
+            guard let attrSyntax = attr.as(AttributeSyntax.self) else { return false }
+            let attrName = attrSyntax.attributeName.trimmedDescription
             return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
         }
     }
@@ -32,6 +33,26 @@ public enum ViewStructureRules {
         varDecl.bindings.first?.accessorBlock != nil
     }
 
+    private static func getPropertyName(_ varDecl: VariableDeclSyntax) -> String? {
+        guard let binding = varDecl.bindings.first,
+              let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+        else {
+            return nil
+        }
+        return identifier.identifier.text
+    }
+
+    private static func getCategoryName(_ category: MemberCategory) -> String {
+        switch category {
+        case .embeddedType: "embedded type"
+        case .environmentProperty: "environment property"
+        case .otherProperty: "stored property"
+        case .initializer: "initializer"
+        case .body: "body property"
+        case .computedOrMethod: "computed/method"
+        }
+    }
+
     private static func categorizeMember(
         _ member: MemberBlockItemSyntax,
         memberDesc: String,
@@ -44,12 +65,14 @@ public enum ViewStructureRules {
             }
 
             if isComputedProperty(varDecl) {
-                categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+                let propName = getPropertyName(varDecl) ?? "computed property"
+                categories.append((.computedOrMethod, propName))
                 return
             }
 
             let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
-            categories.append((category, memberDesc.prefix(50).description))
+            let propName = getPropertyName(varDecl) ?? "property"
+            categories.append((category, propName))
         } else if member.decl.is(InitializerDeclSyntax.self) {
             categories.append((.initializer, "init"))
         } else if member.decl.is(EnumDeclSyntax.self) || member.decl.is(StructDeclSyntax.self) ||
@@ -57,8 +80,9 @@ public enum ViewStructureRules {
             member.decl.is(ActorDeclSyntax.self)
         {
             categories.append((.embeddedType, memberDesc.prefix(50).description))
-        } else if member.decl.is(FunctionDeclSyntax.self) {
-            categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+        } else if let funcDecl = member.decl.as(FunctionDeclSyntax.self) {
+            let funcName = funcDecl.name.text
+            categories.append((.computedOrMethod, funcName))
         }
     }
 
@@ -95,10 +119,11 @@ public enum ViewStructureRules {
             guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
 
             if currentIndex < maxCategorySeen {
-                let violation = "⚠️  [view_structure_order] SwiftUI View has incorrect member order - '\(description)' should come before later members (expected: embedded types → env props → other props → init → body → computed/methods)"
+                let categoryName = getCategoryName(category)
+                let violation = "⚠️  [view_structure_order] '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
                 violations.append(violation)
                 print(violation)
-                return // Report once per struct
+                // Don't return - report all violations
             }
 
             maxCategorySeen = max(maxCategorySeen, currentIndex)

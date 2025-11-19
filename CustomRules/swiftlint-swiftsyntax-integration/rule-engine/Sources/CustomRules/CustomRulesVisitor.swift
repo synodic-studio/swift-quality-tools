@@ -8,7 +8,7 @@ import SwiftSyntax
 /// - no_group_body: Prohibit top-level Group in View bodies
 /// - one_top_level_view: Enforce single top-level view in View bodies
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
-/// - view_structure_order: Enforce View property ordering (DISABLED)
+/// - view_structure_order: Enforce View property ordering
 /// - no_wrapper_body: Detect pointless wrapper body properties
 /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
@@ -31,9 +31,7 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             isInSwiftUIView = true
 
             // Rule: view_structure_order
-            // DISABLED: Rule has bugs with computed property detection
-            // See: docs/TODO-view-structure-order-fix.md
-            // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+            ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
         }
 
         return .visitChildren
