@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur during config discovery
-public enum ConfigDiscoveryError: LocalizedError {
+public enum ConfigDiscoveryError: LocalizedError, Equatable {
     case multipleConfigsFound([URL])
     case noConfigFound
     case sharedConfigMissing(URL)
@@ -17,6 +17,21 @@ public enum ConfigDiscoveryError: LocalizedError {
             "Shared config file missing: \(url.path)"
         case let .targetNotFound(url):
             "Target not found: \(url.path)"
+        }
+    }
+
+    public static func == (lhs: ConfigDiscoveryError, rhs: ConfigDiscoveryError) -> Bool {
+        switch (lhs, rhs) {
+        case let (.multipleConfigsFound(lhsURLs), .multipleConfigsFound(rhsURLs)):
+            lhsURLs.map(\.path) == rhsURLs.map(\.path)
+        case (.noConfigFound, .noConfigFound):
+            true
+        case let (.sharedConfigMissing(lhsURL), .sharedConfigMissing(rhsURL)):
+            lhsURL.path == rhsURL.path
+        case let (.targetNotFound(lhsURL), .targetNotFound(rhsURL)):
+            lhsURL.path == rhsURL.path
+        default:
+            false
         }
     }
 }
@@ -130,6 +145,17 @@ public enum ConfigDiscovery {
             .appendingPathComponent(".build")
             .appendingPathComponent("debug")
             .appendingPathComponent("test-custom-rule")
+    }
+
+    /// Find SwiftLint config file in a directory
+    private static func findSwiftLintConfig(in directory: URL, fileManager: FileManager) -> URL? {
+        for configName in [".swiftlint.yml", ".swiftlint.yaml"] {
+            let configURL = directory.appendingPathComponent(configName)
+            if fileManager.fileExists(atPath: configURL.path) {
+                return configURL
+            }
+        }
+        return nil
     }
 
     /// Search directory tree for SwiftLint config file
