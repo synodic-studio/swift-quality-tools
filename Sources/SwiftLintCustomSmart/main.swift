@@ -85,12 +85,12 @@ struct SwiftLintCustomSmart: ParsableCommand {
     }
 
     /// Throw an error if the build failed
-    private func throwIfBuildFailed(_ exitCode: Int) throws {
+    private func throwIfBuildFailed(_ exitCode: Int32) throws {
         guard exitCode == 0 else {
             let errorMsg = ErrorFormatter.formatBuildError(
                 tool: "SwiftLintCustomSmart",
                 project: "rule-engine",
-                exitCode: Int32(exitCode),
+                exitCode: exitCode,
             )
             Console.error(errorMsg)
             throw ExitCode.failure

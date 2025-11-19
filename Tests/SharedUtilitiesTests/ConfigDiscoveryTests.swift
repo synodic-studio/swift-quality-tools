@@ -157,4 +157,139 @@ struct ConfigDiscoveryTests {
 
         #expect(path.path.starts(with: homeDir))
     }
+
+    // MARK: - Directory Tree Search Tests
+
+    @Test("Find config in current directory")
+    func findConfigInCurrentDirectory() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Create config in temp directory
+        let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+        try createFile(at: configFile, contents: "# test config")
+
+        // Change to temp directory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let result = try ConfigDiscovery.findConfig(
+            configNames: [".swiftformat.yml"],
+            sharedConfigName: "shared-swiftformat.yml",
+        )
+
+        #expect(result.lastPathComponent == ".swiftformat.yml")
+        #expect(result.path.contains(tempDir.lastPathComponent))
+    }
+
+    @Test("Find config in parent directory")
+    func findConfigInParentDirectory() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Create config in temp directory
+        let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+        try createFile(at: configFile, contents: "# test config")
+
+        // Create subdirectory
+        let subDir = tempDir.appendingPathComponent("subdir")
+        try FileManager.default.createDirectory(at: subDir, withIntermediateDirectories: true)
+
+        // Change to subdirectory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(subDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let result = try ConfigDiscovery.findConfig(
+            configNames: [".swiftformat.yml"],
+            sharedConfigName: "shared-swiftformat.yml",
+        )
+
+        #expect(result.lastPathComponent == ".swiftformat.yml")
+        #expect(result.path.contains(tempDir.lastPathComponent))
+    }
+
+    @Test("Find config walking up multiple directories")
+    func findConfigWalkingUpMultipleLevels() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Create config in temp directory
+        let configFile = tempDir.appendingPathComponent(".swiftformat.yml")
+        try createFile(at: configFile, contents: "# test config")
+
+        // Create nested subdirectories
+        let deepDir = tempDir
+            .appendingPathComponent("level1")
+            .appendingPathComponent("level2")
+            .appendingPathComponent("level3")
+        try FileManager.default.createDirectory(at: deepDir, withIntermediateDirectories: true)
+
+        // Change to deep subdirectory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(deepDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let result = try ConfigDiscovery.findConfig(
+            configNames: [".swiftformat.yml"],
+            sharedConfigName: "shared-swiftformat.yml",
+        )
+
+        #expect(result.lastPathComponent == ".swiftformat.yml")
+        #expect(result.path.contains(tempDir.lastPathComponent))
+    }
+
+    @Test("Multiple configs in same directory throws error")
+    func multipleConfigsInSameDirectory() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Create multiple config files
+        try createFile(at: tempDir.appendingPathComponent(".swiftformat.yml"), contents: "# config 1")
+        try createFile(at: tempDir.appendingPathComponent(".swiftformat"), contents: "# config 2")
+
+        // Change to temp directory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        #expect(throws: ConfigDiscoveryError.self) {
+            try ConfigDiscovery.findConfig(
+                configNames: [".swiftformat.yml", ".swiftformat"],
+                sharedConfigName: "shared-swiftformat.yml",
+            )
+        }
+    }
+
+    @Test("Prefers closest config when multiple in tree")
+    func prefersClosestConfig() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Create config in root
+        let rootConfig = tempDir.appendingPathComponent(".swiftformat.yml")
+        try createFile(at: rootConfig, contents: "# root config")
+
+        // Create subdirectory with its own config
+        let subDir = tempDir.appendingPathComponent("subdir")
+        try FileManager.default.createDirectory(at: subDir, withIntermediateDirectories: true)
+        let subConfig = subDir.appendingPathComponent(".swiftformat.yml")
+        try createFile(at: subConfig, contents: "# sub config")
+
+        // Change to subdirectory
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(subDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let result = try ConfigDiscovery.findConfig(
+            configNames: [".swiftformat.yml"],
+            sharedConfigName: "shared-swiftformat.yml",
+        )
+
+        // Should find the config in subdir, not the parent
+        // Resolve both paths to handle /var vs /private/var symlink on macOS
+        #expect(result.path.hasSuffix("subdir/.swiftformat.yml"))
+        #expect(!result.path.hasSuffix(tempDir.lastPathComponent + "/.swiftformat.yml"))
+    }
 }
