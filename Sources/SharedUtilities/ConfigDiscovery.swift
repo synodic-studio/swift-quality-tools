@@ -90,13 +90,9 @@ public enum ConfigDiscovery {
             let currentURL = URL(fileURLWithPath: currentDir)
 
             // Check for all config names in current directory
-            var foundConfigs: [URL] = []
-            for configName in configNames {
-                let configURL = currentURL.appendingPathComponent(configName)
-                if fileManager.fileExists(atPath: configURL.path) {
-                    foundConfigs.append(configURL)
-                }
-            }
+            let foundConfigs = configNames
+                .map { currentURL.appendingPathComponent($0) }
+                .filter { fileManager.fileExists(atPath: $0.path) }
 
             // If multiple configs found, error
             if foundConfigs.count > 1 {
@@ -136,6 +132,26 @@ public enum ConfigDiscovery {
             .appendingPathComponent("test-custom-rule")
     }
 
+    /// Search directory tree for SwiftLint config file
+    private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+        let fileManager = FileManager.default
+        var currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+
+        for _ in 0 ..< 10 {
+            if let foundConfig = findSwiftLintConfig(in: currentDir, fileManager: fileManager) {
+                return foundConfig
+            }
+
+            let parent = currentDir.deletingLastPathComponent()
+            guard parent.path != currentDir.path else {
+                break // Reached root
+            }
+            currentDir = parent
+        }
+
+        return nil
+    }
+
     /// Read exclusion patterns from SwiftLint configuration file
     /// - Parameter configPath: Path to SwiftLint config file (optional)
     /// - Returns: Array of exclusion patterns found in the config
@@ -146,26 +162,8 @@ public enum ConfigDiscovery {
             config = explicitConfig
         } else {
             // Try to find SwiftLint config in current directory or parent directories
-            let fileManager = FileManager.default
-            var currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
-
-            // Search up the directory tree for SwiftLint config
-            for _ in 0 ..< 10 {
-                // Try both .yml and .yaml extensions
-                for configName in [".swiftlint.yml", ".swiftlint.yaml"] {
-                    let configURL = currentDir.appendingPathComponent(configName)
-                    if fileManager.fileExists(atPath: configURL.path) {
-                        config = configURL
-                        return parseExclusions(from: config)
-                    }
-                }
-
-                // Move up one directory
-                let parent = currentDir.deletingLastPathComponent()
-                if parent.path == currentDir.path {
-                    break // Reached root
-                }
-                currentDir = parent
+            if let foundConfig = searchDirectoryTreeForSwiftLintConfig() {
+                return parseExclusions(from: foundConfig)
             }
 
             // No config found, return default exclusions
@@ -200,27 +198,40 @@ public enum ConfigDiscovery {
             }
 
             // If we're in the excluded section
-            if inExcludedSection {
-                // Check if this line starts a new top-level section (no leading whitespace before key)
-                if !line.isEmpty, !line.first!.isWhitespace, trimmed.contains(":") {
-                    // New section started, exit excluded section
-                    inExcludedSection = false
-                    continue
-                }
-
-                // Extract exclusion pattern (lines starting with - in the excluded section)
-                if trimmed.hasPrefix("- ") {
-                    let pattern = trimmed
-                        .dropFirst(2) // Remove "- "
-                        .trimmingCharacters(in: .whitespaces)
-                        .trimmingCharacters(in: CharacterSet(charactersIn: "\"'")) // Remove quotes
-                    if !pattern.isEmpty {
-                        exclusions.append(pattern)
-                    }
-                }
-            }
+            guard inExcludedSection else { continue }
+            inExcludedSection = handleExcludedSection(line: line, trimmed: trimmed, exclusions: &exclusions)
         }
 
         return exclusions
+    }
+
+    /// Handle a line in the excluded section of SwiftLint config
+    /// - Parameters:
+    ///   - line: The full line from the config file
+    ///   - trimmed: The trimmed version of the line
+    ///   - exclusions: Array to append exclusion patterns to
+    /// - Returns: True if still in excluded section, false if exited
+    private static func handleExcludedSection(
+        line: String,
+        trimmed: String,
+        exclusions: inout [String]
+    ) -> Bool {
+        // Check if this line starts a new top-level section
+        if !line.isEmpty, !line.first!.isWhitespace, trimmed.contains(":") {
+            return false // Exited excluded section
+        }
+
+        // Extract exclusion pattern (lines starting with - in the excluded section)
+        if trimmed.hasPrefix("- ") {
+            let pattern = trimmed
+                .dropFirst(2) // Remove "- "
+                .trimmingCharacters(in: .whitespaces)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\"'")) // Remove quotes
+            if !pattern.isEmpty {
+                exclusions.append(pattern)
+            }
+        }
+
+        return true // Still in excluded section
     }
 }

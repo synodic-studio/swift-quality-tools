@@ -81,15 +81,7 @@ struct SwiftFormatSmart: ParsableCommand {
             if exitCode == 0 {
                 Console.success("SwiftFormat completed successfully")
             } else {
-                let errorMsg = ErrorFormatter.format(
-                    tool: "SwiftFormatSmart",
-                    errorType: "ExecutionFailed",
-                    problem: "SwiftFormat failed with exit code \(exitCode)",
-                    context: "Formatting \(target)",
-                    fix: "Review SwiftFormat output above for syntax errors or formatting issues",
-                )
-                Console.error(errorMsg)
-                throw ExitCode(Int32(exitCode))
+                try throwFormattingError(exitCode: exitCode, target: target)
             }
         } catch let error as ProcessError {
             let errorMsg = ErrorFormatter.format(
@@ -102,5 +94,18 @@ struct SwiftFormatSmart: ParsableCommand {
             Console.error(errorMsg)
             throw ExitCode.failure
         }
+    }
+
+    /// Throw an error when formatting fails
+    private func throwFormattingError(exitCode: Int, target: String) throws -> Never {
+        let errorMsg = ErrorFormatter.format(
+            tool: "SwiftFormatSmart",
+            errorType: "ExecutionFailed",
+            problem: "SwiftFormat failed with exit code \(exitCode)",
+            context: "Formatting \(target)",
+            fix: "Review SwiftFormat output above for syntax errors or formatting issues",
+        )
+        Console.error(errorMsg)
+        throw ExitCode(Int32(exitCode))
     }
 }
