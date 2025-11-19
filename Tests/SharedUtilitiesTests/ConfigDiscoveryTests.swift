@@ -292,4 +292,145 @@ struct ConfigDiscoveryTests {
         #expect(result.path.hasSuffix("subdir/.swiftformat.yml"))
         #expect(!result.path.hasSuffix(tempDir.lastPathComponent + "/.swiftformat.yml"))
     }
+
+    // MARK: - SwiftLint Exclusion Parsing Tests
+
+    @Test("readSwiftLintExclusions parses basic exclusions")
+    func readSwiftLintExclusionsBasic() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let configContent = """
+        excluded:
+          - .build
+          - DerivedData
+          - Frameworks
+        """
+
+        let configFile = tempDir.appendingPathComponent(".swiftlint.yml")
+        try createFile(at: configFile, contents: configContent)
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions(configPath: configFile)
+
+        #expect(exclusions.contains(".build"))
+        #expect(exclusions.contains("DerivedData"))
+        #expect(exclusions.contains("Frameworks"))
+        #expect(exclusions.count == 3)
+    }
+
+    @Test("readSwiftLintExclusions handles quoted patterns")
+    func readSwiftLintExclusionsQuoted() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let configContent = """
+        excluded:
+          - ".build"
+          - 'DerivedData'
+          - "Frameworks"
+        """
+
+        let configFile = tempDir.appendingPathComponent(".swiftlint.yml")
+        try createFile(at: configFile, contents: configContent)
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions(configPath: configFile)
+
+        #expect(exclusions.contains(".build"))
+        #expect(exclusions.contains("DerivedData"))
+        #expect(exclusions.contains("Frameworks"))
+    }
+
+    @Test("readSwiftLintExclusions handles multiple sections")
+    func readSwiftLintExclusionsMultipleSections() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let configContent = """
+        disabled_rules:
+          - line_length
+          - trailing_whitespace
+
+        excluded:
+          - .build
+          - DerivedData
+
+        opt_in_rules:
+          - empty_count
+        """
+
+        let configFile = tempDir.appendingPathComponent(".swiftlint.yml")
+        try createFile(at: configFile, contents: configContent)
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions(configPath: configFile)
+
+        #expect(exclusions.contains(".build"))
+        #expect(exclusions.contains("DerivedData"))
+        #expect(!exclusions.contains("line_length"))
+        #expect(!exclusions.contains("empty_count"))
+    }
+
+    @Test("readSwiftLintExclusions returns defaults when no config found")
+    func readSwiftLintExclusionsDefaults() throws {
+        // Create temp directory with no config file
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        // Change to directory with no config
+        let originalDir = FileManager.default.currentDirectoryPath
+        FileManager.default.changeCurrentDirectoryPath(tempDir.path)
+        defer { FileManager.default.changeCurrentDirectoryPath(originalDir) }
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions()
+
+        // Should return default exclusions
+        #expect(exclusions.contains(".build"))
+        #expect(exclusions.contains("build"))
+        #expect(exclusions.contains("Frameworks"))
+        #expect(exclusions.contains("DerivedData"))
+    }
+
+    @Test("readSwiftLintExclusions handles empty excluded section")
+    func readSwiftLintExclusionsEmpty() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let configContent = """
+        disabled_rules:
+          - line_length
+
+        excluded:
+
+        opt_in_rules:
+          - empty_count
+        """
+
+        let configFile = tempDir.appendingPathComponent(".swiftlint.yml")
+        try createFile(at: configFile, contents: configContent)
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions(configPath: configFile)
+
+        #expect(exclusions.isEmpty)
+    }
+
+    @Test("readSwiftLintExclusions handles indented exclusions")
+    func readSwiftLintExclusionsIndented() throws {
+        let tempDir = try createTempDirectory()
+        defer { cleanup(tempDir) }
+
+        let configContent = """
+        excluded:
+            - .build
+            - DerivedData
+            - Frameworks
+        """
+
+        let configFile = tempDir.appendingPathComponent(".swiftlint.yml")
+        try createFile(at: configFile, contents: configContent)
+
+        let exclusions = ConfigDiscovery.readSwiftLintExclusions(configPath: configFile)
+
+        #expect(exclusions.contains(".build"))
+        #expect(exclusions.contains("DerivedData"))
+        #expect(exclusions.contains("Frameworks"))
+    }
 }
