@@ -3,7 +3,7 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (9 total):
+/// Rule identifiers (10 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
 /// - no_group_body: Prohibit top-level Group in View bodies
 /// - one_top_level_view: Enforce single top-level view in View bodies
@@ -13,6 +13,7 @@ import SwiftSyntax
 /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+/// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
 public final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
     private var currentStructDecl: StructDeclSyntax?
@@ -93,6 +94,12 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     //     CodeQualityRules.checkMagicFloatNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
     //     return .visitChildren
     // }
+
+    override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // ViewStructureRules: Check stack minimum children
+        ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+        return .visitChildren
+    }
 
     public func getViolations() -> [String] {
         violations

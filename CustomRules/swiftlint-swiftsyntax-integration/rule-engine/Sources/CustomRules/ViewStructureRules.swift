@@ -3,6 +3,7 @@ import SwiftSyntax
 /// Rules related to SwiftUI View structure and organization
 /// - view_structure_order: Member ordering enforcement
 /// - no_wrapper_body: No pointless wrapper bodies
+/// - stack_minimum_children: Stacks (VStack/HStack/ZStack) must have at least 2 children
 public enum ViewStructureRules {
     public static func checkViewStructureOrder(_ structDecl: StructDeclSyntax, violations: inout [String]) {
         // Expected order:
@@ -131,5 +132,109 @@ public enum ViewStructureRules {
                 print(violation)
             }
         }
+    }
+
+    public static func checkStackMinimumChildren(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+        // Check if this is a VStack, HStack, or ZStack call
+        // Note: Using trimmedDescription to avoid whitespace issues
+        let calledExpr = node.calledExpression.trimmedDescription
+        guard calledExpr == "VStack" || calledExpr == "HStack" || calledExpr == "ZStack" else {
+            return
+        }
+
+        // Find the trailing closure (the content block)
+        guard let trailingClosure = node.trailingClosure else {
+            return
+        }
+
+        // Count top-level statements in the closure
+        let statements = trailingClosure.statements
+        let topLevelCount = statements.count
+
+        // If there are 2+ top-level children, it's fine
+        if topLevelCount >= 2 {
+            return
+        }
+
+        // If there's exactly 1 top-level child, check if it's an allowed exception
+        if topLevelCount == 1 {
+            let firstItem = statements.first!
+            let itemNode = firstItem.item
+
+            // The item can be either a direct expression (functionCallExpr, memberAccessExpr, etc.)
+            // or wrapped in an ExpressionStmtSyntax (for if/switch expressions)
+            var expr: (any ExprSyntaxProtocol)?
+
+            if let exprStmt = itemNode.as(ExpressionStmtSyntax.self) {
+                expr = exprStmt.expression
+            } else if let directExpr = itemNode.as(ExprSyntax.self) {
+                expr = directExpr
+            }
+
+            guard let expr else {
+                return // Can't determine expression type
+            }
+
+            // Allow ForEach as single child
+            if let functionCall = expr.as(FunctionCallExprSyntax.self) {
+                let funcName = functionCall.calledExpression.trimmedDescription
+                if funcName == "ForEach" || funcName.hasSuffix(".ForEach") {
+                    return // ForEach is allowed as single child
+                }
+            }
+
+            // Check if it's an if/else expression
+            if let ifExpr = expr.as(IfExprSyntax.self) {
+                // Check if any branch has 2+ views
+                if anyBranchHasMultipleViews(ifExpr) {
+                    return // Allowed because at least one branch has multiple children
+                }
+            }
+
+            // Check if it's a switch expression
+            if let switchExpr = expr.as(SwitchExprSyntax.self) {
+                // Check if any case has 2+ views
+                if anyCaseHasMultipleViews(switchExpr) {
+                    return // Allowed because at least one case has multiple children
+                }
+            }
+        }
+
+        // If we get here, it's a violation
+        let violation = "⚠️  [stack_minimum_children] \(calledExpr) should have at least 2 children (or use ForEach, or have if/else with a branch containing 2+ views)"
+        violations.append(violation)
+        print(violation)
+    }
+
+    private static func anyBranchHasMultipleViews(_ ifExpr: IfExprSyntax) -> Bool {
+        // Check the main 'then' branch
+        if ifExpr.body.statements.count >= 2 {
+            return true
+        }
+
+        // Check the 'else' branch if it exists
+        if let elseBody = ifExpr.elseBody {
+            if let elseIfExpr = elseBody.as(IfExprSyntax.self) {
+                // Recursive check for else-if
+                return anyBranchHasMultipleViews(elseIfExpr)
+            } else if let codeBlock = elseBody.as(CodeBlockSyntax.self) {
+                if codeBlock.statements.count >= 2 {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private static func anyCaseHasMultipleViews(_ switchExpr: SwitchExprSyntax) -> Bool {
+        for caseItem in switchExpr.cases {
+            if let switchCase = caseItem.as(SwitchCaseSyntax.self) {
+                if switchCase.statements.count >= 2 {
+                    return true
+                }
+            }
+        }
+        return false
     }
 }
