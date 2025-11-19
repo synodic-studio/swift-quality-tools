@@ -4,6 +4,7 @@ import SwiftSyntax
 /// - skimmable_body: Line count limit (15 max)
 /// - no_group_body: No top-level Group without modifiers
 /// - one_top_level_view: Exactly one top-level view
+/// - no_if_modifier: Detect custom .if modifier anti-pattern
 public enum ViewBodyRules {
     private static func isRelevantBodyLine(_ trimmed: String) -> Bool {
         !trimmed.isEmpty && !trimmed.contains("get") && !trimmed.contains("var body") && trimmed != "{" && trimmed != "}"
@@ -161,5 +162,25 @@ public enum ViewBodyRules {
             violations.append(violation)
             print(violation)
         }
+    }
+
+    /// Detect custom .if modifier anti-pattern
+    /// Suggests using standard SwiftUI patterns instead (ternary, @ViewBuilder, etc.)
+    public static func checkNoIfModifier(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+        // Check if this is a call to .if(
+        guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
+              memberAccess.declName.baseName.text == "if"
+        else {
+            return
+        }
+
+        let violation = """
+        ⚠️  [no_if_modifier] Avoid custom .if modifier - use standard SwiftUI patterns instead
+           • For simple conditionals: .foregroundColor(condition ? .red : .blue)
+           • For complex cases: Use @ViewBuilder with if/else
+           • Rationale: .if bypasses SwiftUI's view identity system
+        """
+        violations.append(violation)
+        print(violation)
     }
 }
