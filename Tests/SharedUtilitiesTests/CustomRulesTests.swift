@@ -298,4 +298,108 @@ struct CustomRulesTests {
         let output = try runRuleEngine(on: file)
         #expect(!output.contains("[excessive_indentation]"))
     }
+
+    // MARK: - OnChange Ignored Old Value Rule Tests
+
+    @Test("onchange_ignored_old_value: Detects 2-param onChange with _ old value")
+    func onChangeIgnoredOldValueViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var value = 0
+
+            var body: some View {
+                Text("Value: \\(value)")
+                    .onChange(of: value) { _, newValue in
+                        print("Changed to: \\(newValue)")
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[onchange_ignored_old_value]"))
+    }
+
+    @Test("onchange_ignored_old_value: Detects 2-param onChange with _oldValue pattern")
+    func onChangeIgnoredOldValueUnderscorePrefix() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var value = false
+
+            var body: some View {
+                Text("Value: \\(value)")
+                    .onChange(of: value) { _oldValue, newValue in
+                        doSomething(with: newValue)
+                    }
+            }
+
+            func doSomething(with value: Bool) {
+                print(value)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[onchange_ignored_old_value]"))
+    }
+
+    @Test("onchange_ignored_old_value: Accepts 0-param onChange")
+    func onChangeZeroParamNoViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var value = ""
+
+            var body: some View {
+                Text("Value: \\(value)")
+                    .onChange(of: value) {
+                        print("Changed to: \\(value)")
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[onchange_ignored_old_value]"))
+    }
+
+    @Test("onchange_ignored_old_value: Accepts 2-param onChange where both params are used")
+    func onChangeBothParamsUsedNoViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var value = 0
+
+            var body: some View {
+                Text("Value: \\(value)")
+                    .onChange(of: value) { oldValue, newValue in
+                        print("Changed from \\(oldValue) to \\(newValue)")
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[onchange_ignored_old_value]"))
+    }
 }
