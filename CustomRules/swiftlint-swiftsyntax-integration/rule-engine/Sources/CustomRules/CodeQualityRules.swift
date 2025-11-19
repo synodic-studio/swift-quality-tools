@@ -1,8 +1,8 @@
 import SwiftSyntax
 
 /// Rules related to general code quality
-/// - constants_enum_usage: No magic numbers
-/// - excessive_nesting: Max 4 indentation levels
+/// - constants_enum_usage: No magic numbers (DISABLED)
+/// - excessive_indentation: Max 16 spaces of physical indentation (4 tabs)
 public enum CodeQualityRules {
     public static func checkMagicNumber(_ node: IntegerLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
         let value = node.literal.text
@@ -38,101 +38,25 @@ public enum CodeQualityRules {
         print(violation)
     }
 
-    public static func checkExcessiveIndentationInCodeBlock(_ block: CodeBlockSyntax, context: String, violations: inout [String]) {
-        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
-        depthTracker.walk(block)
+    public static func checkExcessiveIndentation(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+        let sourceText = sourceFile.description
+        let lines = sourceText.components(separatedBy: .newlines)
 
-        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
-            let violation = "⚠️  [excessive_nesting] \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
-            violations.append(violation)
-            print(violation)
+        for (lineNumber, line) in lines.enumerated() {
+            // Count leading spaces
+            let leadingSpaces = line.prefix(while: { $0 == " " }).count
+
+            // Skip empty lines and lines with only whitespace
+            if line.trimmingCharacters(in: .whitespaces).isEmpty {
+                continue
+            }
+
+            // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
+            if leadingSpaces > 16 {
+                let violation = "⚠️  [excessive_indentation] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - refactor code to reduce nesting depth"
+                violations.append(violation)
+                print(violation)
+            }
         }
-    }
-
-    public static func checkExcessiveIndentationInClosure(_ closure: ClosureExprSyntax, violations: inout [String]) {
-        let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
-        depthTracker.walk(closure)
-
-        if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
-            let violation = "⚠️  [excessive_nesting] Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
-            violations.append(violation)
-            print(violation)
-        }
-    }
-}
-
-/// Tracks indentation depth through syntax tree
-final class IndentationDepthTracker: SyntaxVisitor {
-    private(set) var maxDepth: Int?
-    private var currentDepth = 0
-
-    override func visit(_: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: CodeBlockSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: ClosureExprSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: IfExprSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: IfExprSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: SwitchExprSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: SwitchExprSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: ForStmtSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: ForStmtSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: WhileStmtSyntax) {
-        currentDepth -= 1
-    }
-
-    override func visit(_: GuardStmtSyntax) -> SyntaxVisitorContinueKind {
-        currentDepth += 1
-        maxDepth = max(maxDepth ?? 0, currentDepth)
-        return .visitChildren
-    }
-
-    override func visitPost(_: GuardStmtSyntax) {
-        currentDepth -= 1
     }
 }
