@@ -3,12 +3,13 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (11 total):
+/// Rule identifiers (12 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
-/// - no_group_body: Prohibit top-level Group in View bodies
+/// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
+/// - no_if_modifier: Detect custom .if modifier anti-pattern
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
-/// - view_structure_order: Enforce View property ordering (DISABLED)
+/// - view_structure_order: Enforce View property ordering
 /// - no_wrapper_body: Detect pointless wrapper body properties
 /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
@@ -31,9 +32,7 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             isInSwiftUIView = true
 
             // Rule: view_structure_order
-            // DISABLED: Rule has bugs with computed property detection
-            // See: docs/TODO-view-structure-order-fix.md
-            // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+            ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
         }
 
         return .visitChildren
@@ -97,6 +96,12 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     // }
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // ViewBodyRules: Check for Group without modifiers
+        ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+
+        // ViewBodyRules: Check for .if modifier anti-pattern
+        ViewBodyRules.checkNoIfModifier(node, violations: &violations)
+
         // ViewStructureRules: Check stack minimum children
         ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
 

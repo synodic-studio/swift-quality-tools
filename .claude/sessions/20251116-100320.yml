@@ -1701,9 +1701,9 @@ new: |
   ```
 
 ---
-# Edit 2025-11-19T08:35:20.724652
-time: 2025-11-19T08:35:20.724660
-file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-remove-indentation/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+# Edit 2025-11-19T08:23:14.534315
+time: 2025-11-19T08:23:14.534326
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
 change_type: bugfix
 user_prompt: |
   1 that is a bit of a strange name but fine if that's the best we've got
@@ -1716,23 +1716,200 @@ user_prompt: |
   
   make a PR for each of these ^ branches too
 old: |
-          // PreviewRules
-          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max)
+  /// - no_group_body: No top-level Group without modifiers
+  /// - one_top_level_view: Exactly one top-level view
+  public enum ViewBodyRules {
+new: |
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max)
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  public enum ViewBodyRules {
+
+---
+# Edit 2025-11-19T08:23:18.385182
+time: 2025-11-19T08:23:18.385195
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
   
-          // CodeQualityRules: Excessive nesting (AST-based depth check)
-          CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+      public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
+new: |
+      /// Check if a Group initializer has view modifiers applied
+      /// - Parameter node: The function call expression node
+      /// - Returns: True if the Group has modifiers
+      private static func groupHasModifiers(_ node: FunctionCallExprSyntax) -> Bool {
+          // Walk up the syntax tree to see if this Group is part of a modifier chain
+          var current: Syntax? = Syntax(node)
+  
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if let memberAccess = parent.as(MemberAccessExprSyntax.self) {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
+              }
+  
+              // Check if parent is a FunctionCallExprSyntax with our node as the called expression
+              if let functionCall = parent.as(FunctionCallExprSyntax.self) {
+                  // This means our Group is being used as the base for a modifier call
+                  if functionCall.calledExpression.description.contains(node.description) {
+                      return true
+                  }
+              }
+  
+              current = parent
+          }
+  
+          return false
+      }
+  
+      /// Check for Group usage without modifiers anywhere in SwiftUI code
+      /// If Group has no modifiers, suggest using @ViewBuilder instead
+      public static func checkGroupWithoutModifiers(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+          // Check if this is a Group initializer
+          let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespaces)
+  
+          guard calledExpr == "Group" else {
+              return
+          }
+  
+          // Check if the Group has modifiers
+          if !groupHasModifiers(node) {
+              let violation = "⚠️  [no_group_body] Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  
+      public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
+
+---
+# Edit 2025-11-19T08:23:32.685534
+time: 2025-11-19T08:23:32.685545
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+  
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
   
           return .visitChildren
       }
 new: |
-          // PreviewRules
-          PreviewRules.checkPreviewRequired(node, violations: &violations)
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check for Group without modifiers
+          ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
   
-          // DISABLED: Excessive nesting rule
-          // Rationale: SwiftFormat handles indentation, other architectural rules (body line count,
-          // no Group wrappers) provide better signals, and the rule may be too strict for legitimate patterns
-          // CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+  
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
   
           return .visitChildren
       }
+
+---
+# Edit 2025-11-19T08:23:43.084755
+time: 2025-11-19T08:23:43.084765
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  /// Rule identifiers (11 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+new: |
+  /// Rule identifiers (11 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+
+---
+# Edit 2025-11-19T08:24:04.301782
+time: 2025-11-19T08:24:04.301791
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CLAUDE.md
+change_type: docs
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+new: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+
+---
+# Edit 2025-11-19T08:25:07.113354
+time: 2025-11-19T08:25:07.113365
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-no-group-body/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if let memberAccess = parent.as(MemberAccessExprSyntax.self) {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
+              }
+new: |
+          while let parent = current?.parent {
+              // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+              if parent.as(MemberAccessExprSyntax.self) != nil {
+                  // The member access's base should be our Group (or a chain containing it)
+                  return true
+              }
 

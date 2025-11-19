@@ -2,8 +2,9 @@ import SwiftSyntax
 
 /// Rules related to SwiftUI View body properties
 /// - skimmable_body: Line count limit (15 max)
-/// - no_group_body: No top-level Group without modifiers
+/// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Exactly one top-level view
+/// - no_if_modifier: Detect custom .if modifier anti-pattern
 public enum ViewBodyRules {
     private static func isRelevantBodyLine(_ trimmed: String) -> Bool {
         !trimmed.isEmpty && !trimmed.contains("get") && !trimmed.contains("var body") && trimmed != "{" && trimmed != "}"
@@ -117,6 +118,52 @@ public enum ViewBodyRules {
             trimmed.contains("Spacer(")
     }
 
+    /// Check if a Group initializer has view modifiers applied
+    /// - Parameter node: The function call expression node
+    /// - Returns: True if the Group has modifiers
+    private static func groupHasModifiers(_ node: FunctionCallExprSyntax) -> Bool {
+        // Walk up the syntax tree to see if this Group is part of a modifier chain
+        var current: Syntax? = Syntax(node)
+
+        while let parent = current?.parent {
+            // Check if parent is a MemberAccessExprSyntax (e.g., .padding(), .background())
+            if parent.as(MemberAccessExprSyntax.self) != nil {
+                // The member access's base should be our Group (or a chain containing it)
+                return true
+            }
+
+            // Check if parent is a FunctionCallExprSyntax with our node as the called expression
+            if let functionCall = parent.as(FunctionCallExprSyntax.self) {
+                // This means our Group is being used as the base for a modifier call
+                if functionCall.calledExpression.description.contains(node.description) {
+                    return true
+                }
+            }
+
+            current = parent
+        }
+
+        return false
+    }
+
+    /// Check for Group usage without modifiers anywhere in SwiftUI code
+    /// If Group has no modifiers, suggest using @ViewBuilder instead
+    public static func checkGroupWithoutModifiers(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+        // Check if this is a Group initializer
+        let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespaces)
+
+        guard calledExpr == "Group" else {
+            return
+        }
+
+        // Check if the Group has modifiers
+        if !groupHasModifiers(node) {
+            let violation = "⚠️  [no_group_body] Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
+            violations.append(violation)
+            print(violation)
+        }
+    }
+
     public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
         // Look for multiple top-level statements in the body
         guard let binding = node.bindings.first,
@@ -161,5 +208,25 @@ public enum ViewBodyRules {
             violations.append(violation)
             print(violation)
         }
+    }
+
+    /// Detect custom .if modifier anti-pattern
+    /// Suggests using standard SwiftUI patterns instead (ternary, @ViewBuilder, etc.)
+    public static func checkNoIfModifier(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+        // Check if this is a call to .if(
+        guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
+              memberAccess.declName.baseName.text == "if"
+        else {
+            return
+        }
+
+        let violation = """
+        ⚠️  [no_if_modifier] Avoid custom .if modifier - use standard SwiftUI patterns instead
+           • For simple conditionals: .foregroundColor(condition ? .red : .blue)
+           • For complex cases: Use @ViewBuilder with if/else
+           • Rationale: .if bypasses SwiftUI's view identity system
+        """
+        violations.append(violation)
+        print(violation)
     }
 }
