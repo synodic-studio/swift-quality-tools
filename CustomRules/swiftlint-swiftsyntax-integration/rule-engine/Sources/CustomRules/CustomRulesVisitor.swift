@@ -3,10 +3,11 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (11 total):
+/// Rule identifiers (12 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
 /// - no_group_body: Prohibit top-level Group in View bodies
 /// - one_top_level_view: Enforce single top-level view in View bodies
+/// - no_if_modifier: Detect custom .if modifier anti-pattern
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
 /// - view_structure_order: Enforce View property ordering (DISABLED)
 /// - no_wrapper_body: Detect pointless wrapper body properties
@@ -97,6 +98,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     // }
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // ViewBodyRules: Check for .if modifier anti-pattern
+        ViewBodyRules.checkNoIfModifier(node, violations: &violations)
+
         // ViewStructureRules: Check stack minimum children
         ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
 
