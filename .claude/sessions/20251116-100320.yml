@@ -1156,3 +1156,175 @@ new: |
               // ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
           }
 
+---
+# Edit 2025-11-18T20:26:03.087909
+time: 2025-11-18T20:26:03.087919
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/ConfigDiscovery.swift
+change_type: unknown
+user_prompt: |
+  7 merged. Did you run the tests that we have?
+old: |
+      /// Search directory tree for SwiftLint config file
+      private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+new: |
+      /// Find SwiftLint config file in a directory
+      private static func findSwiftLintConfig(in directory: URL, fileManager: FileManager) -> URL? {
+          for configName in [".swiftlint.yml", ".swiftlint.yaml"] {
+              let configURL = directory.appendingPathComponent(configName)
+              if fileManager.fileExists(atPath: configURL.path) {
+                  return configURL
+              }
+          }
+          return nil
+      }
+  
+      /// Search directory tree for SwiftLint config file
+      private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+
+---
+# Edit 2025-11-18T20:26:23.575743
+time: 2025-11-18T20:26:23.575755
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/ConfigDiscovery.swift
+change_type: unknown
+user_prompt: |
+  7 merged. Did you run the tests that we have?
+old: |
+  /// Errors that can occur during config discovery
+  public enum ConfigDiscoveryError: LocalizedError {
+      case multipleConfigsFound([URL])
+      case noConfigFound
+      case sharedConfigMissing(URL)
+      case targetNotFound(URL)
+  
+      public var errorDescription: String? {
+          switch self {
+          case let .multipleConfigsFound(urls):
+              "Multiple config files found: \(urls.map(\.lastPathComponent).joined(separator: ", "))"
+          case .noConfigFound:
+              "No config file found"
+          case let .sharedConfigMissing(url):
+              "Shared config file missing: \(url.path)"
+          case let .targetNotFound(url):
+              "Target not found: \(url.path)"
+          }
+      }
+  }
+new: |
+  /// Errors that can occur during config discovery
+  public enum ConfigDiscoveryError: LocalizedError, Equatable {
+      case multipleConfigsFound([URL])
+      case noConfigFound
+      case sharedConfigMissing(URL)
+      case targetNotFound(URL)
+  
+      public var errorDescription: String? {
+          switch self {
+          case let .multipleConfigsFound(urls):
+              "Multiple config files found: \(urls.map(\.lastPathComponent).joined(separator: ", "))"
+          case .noConfigFound:
+              "No config file found"
+          case let .sharedConfigMissing(url):
+              "Shared config file missing: \(url.path)"
+          case let .targetNotFound(url):
+              "Target not found: \(url.path)"
+          }
+      }
+  
+      public static func == (lhs: ConfigDiscoveryError, rhs: ConfigDiscoveryError) -> Bool {
+          switch (lhs, rhs) {
+          case let (.multipleConfigsFound(lhsURLs), .multipleConfigsFound(rhsURLs)):
+              lhsURLs.map(\.path) == rhsURLs.map(\.path)
+          case (.noConfigFound, .noConfigFound):
+              true
+          case let (.sharedConfigMissing(lhsURL), .sharedConfigMissing(rhsURL)):
+              lhsURL.path == rhsURL.path
+          case let (.targetNotFound(lhsURL), .targetNotFound(rhsURL)):
+              lhsURL.path == rhsURL.path
+          default:
+              false
+          }
+      }
+  }
+
+---
+# Edit 2025-11-18T20:28:35.484523
+time: 2025-11-18T20:28:35.484533
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SwiftFormatSmart/main.swift
+change_type: unknown
+user_prompt: |
+  7 merged. Did you run the tests that we have?
+old: |
+      /// Throw an error when formatting fails
+      private func throwFormattingError(exitCode: Int, target: String) throws -> Never {
+          let errorMsg = ErrorFormatter.format(
+              tool: "SwiftFormatSmart",
+              errorType: "ExecutionFailed",
+              problem: "SwiftFormat failed with exit code \(exitCode)",
+              context: "Formatting \(target)",
+              fix: "Review SwiftFormat output above for syntax errors or formatting issues",
+          )
+          Console.error(errorMsg)
+          throw ExitCode(Int32(exitCode))
+      }
+new: |
+      /// Throw an error when formatting fails
+      private func throwFormattingError(exitCode: Int32, target: String) throws -> Never {
+          let errorMsg = ErrorFormatter.format(
+              tool: "SwiftFormatSmart",
+              errorType: "ExecutionFailed",
+              problem: "SwiftFormat failed with exit code \(exitCode)",
+              context: "Formatting \(target)",
+              fix: "Review SwiftFormat output above for syntax errors or formatting issues",
+          )
+          Console.error(errorMsg)
+          throw ExitCode(exitCode)
+      }
+
+---
+# Edit 2025-11-18T20:28:56.062665
+time: 2025-11-18T20:28:56.062674
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SwiftLintCustomSmart/main.swift
+change_type: unknown
+user_prompt: |
+  7 merged. Did you run the tests that we have?
+old: |
+      /// Throw an error if the build failed
+      private func throwIfBuildFailed(_ exitCode: Int) throws {
+          guard exitCode == 0 else {
+              let errorMsg = ErrorFormatter.formatBuildError(
+                  tool: "SwiftLintCustomSmart",
+                  project: "rule-engine",
+                  exitCode: Int32(exitCode),
+              )
+              Console.error(errorMsg)
+              throw ExitCode.failure
+          }
+      }
+new: |
+      /// Throw an error if the build failed
+      private func throwIfBuildFailed(_ exitCode: Int32) throws {
+          guard exitCode == 0 else {
+              let errorMsg = ErrorFormatter.formatBuildError(
+                  tool: "SwiftLintCustomSmart",
+                  project: "rule-engine",
+                  exitCode: exitCode,
+              )
+              Console.error(errorMsg)
+              throw ExitCode.failure
+          }
+      }
+
+---
+# Commit c3c64aca
+commit_sha: c3c64aca266c61871a996517209a6456b052e1f9
+commit_time: 2025-11-18 20:29:30 -0700
+commit_message: |
+  Fix test failures and type mismatches
+
+---
+# Commit a57cdff3
+commit_sha: a57cdff366b5c306362b1c5cc63fb041f3b44def
+commit_time: 2025-11-18 20:33:58 -0700
+commit_message: |
+  Add Claude Code session files for documentation
+
