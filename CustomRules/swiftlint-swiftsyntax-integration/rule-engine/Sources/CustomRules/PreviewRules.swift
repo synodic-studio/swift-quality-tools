@@ -3,6 +3,35 @@ import SwiftSyntax
 /// Rules related to SwiftUI previews
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
 public enum PreviewRules {
+    private static func checkStructForView(_ structDecl: StructDeclSyntax, hasView: inout Bool, viewNames: inout [String]) {
+        guard let inheritance = structDecl.inheritanceClause else { return }
+
+        for inherited in inheritance.inheritedTypes {
+            let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
+            if typeName.contains("View") || typeName.contains("ViewModifier") {
+                hasView = true
+                viewNames.append(structDecl.name.text)
+                break
+            }
+        }
+    }
+
+    private static func checkMacroForPreview(_ macroDecl: MacroExpansionDeclSyntax, hasPreview: inout Bool) {
+        let macroName = macroDecl.macroName.description
+        if macroName.contains("Preview") {
+            hasPreview = true
+        }
+    }
+
+    private static func checkFunctionForPreview(_ funcDecl: FunctionDeclSyntax, hasPreview: inout Bool) {
+        let hasPreviewAttribute = funcDecl.attributes.contains { attr in
+            attr.as(AttributeSyntax.self)?.attributeName.description.contains("Preview") ?? false
+        }
+        if hasPreviewAttribute {
+            hasPreview = true
+        }
+    }
+
     public static func checkPreviewRequired(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
         // Check if file declares any View or ViewModifier
         var hasViewOrModifier = false
@@ -18,35 +47,17 @@ public enum PreviewRules {
         for statement in sourceFile.statements {
             // Check for struct/class declarations
             if let structDecl = statement.item.as(StructDeclSyntax.self) {
-                // Check if it conforms to View or ViewModifier
-                if let inheritance = structDecl.inheritanceClause {
-                    for inherited in inheritance.inheritedTypes {
-                        let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
-                        if typeName.contains("View") || typeName.contains("ViewModifier") {
-                            hasViewOrModifier = true
-                            viewNames.append(structDecl.name.text)
-                            break
-                        }
-                    }
-                }
+                checkStructForView(structDecl, hasView: &hasViewOrModifier, viewNames: &viewNames)
             }
 
             // Check for macro declarations (looking for #Preview or @Preview)
             if let macroDecl = statement.item.as(MacroExpansionDeclSyntax.self) {
-                let macroName = macroDecl.macroName.description
-                if macroName.contains("Preview") {
-                    hasPreview = true
-                }
+                checkMacroForPreview(macroDecl, hasPreview: &hasPreview)
             }
 
             // Also check for function declarations with Preview attribute
             if let funcDecl = statement.item.as(FunctionDeclSyntax.self) {
-                let hasPreviewAttribute = funcDecl.attributes.contains { attr in
-                    attr.as(AttributeSyntax.self)?.attributeName.description.contains("Preview") ?? false
-                }
-                if hasPreviewAttribute {
-                    hasPreview = true
-                }
+                checkFunctionForPreview(funcDecl, hasPreview: &hasPreview)
             }
         }
 

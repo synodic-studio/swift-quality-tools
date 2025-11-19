@@ -7,7 +7,7 @@ import SwiftSyntax
 /// - skimmable_body: View body line count limit (max 15 lines)
 /// - no_group_body: Prohibit top-level Group in View bodies
 /// - one_top_level_view: Enforce single top-level view in View bodies
-/// - excessive_indentation: Physical indentation limit (max 16 spaces / 4 tabs)
+/// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
 /// - view_structure_order: Enforce View property ordering (DISABLED)
 /// - no_wrapper_body: Detect pointless wrapper body properties
 /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
@@ -77,8 +77,8 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         // PreviewRules
         PreviewRules.checkPreviewRequired(node, violations: &violations)
 
-        // CodeQualityRules: Excessive indentation (physical spaces check)
-        CodeQualityRules.checkExcessiveIndentation(node, violations: &violations)
+        // CodeQualityRules: Excessive nesting (AST-based depth check)
+        CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
 
         return .visitChildren
     }

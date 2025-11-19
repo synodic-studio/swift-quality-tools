@@ -5,6 +5,63 @@ import SwiftSyntax
 /// - no_wrapper_body: No pointless wrapper bodies
 /// - stack_minimum_children: Stacks (VStack/HStack/ZStack) must have at least 2 children
 public enum ViewStructureRules {
+    enum MemberCategory {
+        case embeddedType
+        case environmentProperty
+        case otherProperty
+        case initializer
+        case body
+        case computedOrMethod
+    }
+
+    private static func hasEnvironmentAttribute(_ varDecl: VariableDeclSyntax) -> Bool {
+        varDecl.attributes.contains { attr in
+            let attrName = attr.as(AttributeSyntax.self)?.attributeName.description ?? ""
+            return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"].contains(attrName)
+        }
+    }
+
+    private static func isBodyProperty(_ varDecl: VariableDeclSyntax) -> Bool {
+        guard let binding = varDecl.bindings.first,
+              let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+        else { return false }
+        return identifier.identifier.text == "body"
+    }
+
+    private static func isComputedProperty(_ varDecl: VariableDeclSyntax) -> Bool {
+        varDecl.bindings.first?.accessorBlock != nil
+    }
+
+    private static func categorizeMember(
+        _ member: MemberBlockItemSyntax,
+        memberDesc: String,
+        categories: inout [(category: MemberCategory, description: String)],
+    ) {
+        if let varDecl = member.decl.as(VariableDeclSyntax.self) {
+            if isBodyProperty(varDecl) {
+                categories.append((.body, "body property"))
+                return
+            }
+
+            if isComputedProperty(varDecl) {
+                categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+                return
+            }
+
+            let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
+            categories.append((category, memberDesc.prefix(50).description))
+        } else if member.decl.is(InitializerDeclSyntax.self) {
+            categories.append((.initializer, "init"))
+        } else if member.decl.is(EnumDeclSyntax.self) || member.decl.is(StructDeclSyntax.self) ||
+            member.decl.is(ClassDeclSyntax.self) || member.decl.is(ProtocolDeclSyntax.self) ||
+            member.decl.is(ActorDeclSyntax.self)
+        {
+            categories.append((.embeddedType, memberDesc.prefix(50).description))
+        } else if member.decl.is(FunctionDeclSyntax.self) {
+            categories.append((.computedOrMethod, memberDesc.prefix(50).description))
+        }
+    }
+
     public static func checkViewStructureOrder(_ structDecl: StructDeclSyntax, violations: inout [String]) {
         // Expected order:
         // 1. Embedded types (enum, struct, class, protocol, actor)
@@ -14,56 +71,13 @@ public enum ViewStructureRules {
         // 5. body property
         // 6. Computed properties and methods
 
-        enum MemberCategory {
-            case embeddedType
-            case environmentProperty
-            case otherProperty
-            case initializer
-            case body
-            case computedOrMethod
-        }
-
         var memberCategories: [(category: MemberCategory, description: String)] = []
 
         for member in structDecl.memberBlock.members {
             let memberDesc = member.decl.description.trimmingCharacters(in: .whitespacesAndNewlines)
 
             // Categorize each member
-            if let varDecl = member.decl.as(VariableDeclSyntax.self) {
-                // Check if it's body
-                if let binding = varDecl.bindings.first,
-                   let identifier = binding.pattern.as(IdentifierPatternSyntax.self),
-                   identifier.identifier.text == "body"
-                {
-                    memberCategories.append((.body, "body property"))
-                    continue
-                }
-
-                // Check for environment properties
-                let hasEnvironmentAttribute = varDecl.attributes.contains { attr in
-                    let attrName = attr.as(AttributeSyntax.self)?.attributeName.description ?? ""
-                    return ["Environment", "EnvironmentObject", "AppStorage", "SceneStorage"]
-                        .contains(attrName)
-                }
-
-                if hasEnvironmentAttribute {
-                    memberCategories.append((.environmentProperty, memberDesc.prefix(50).description))
-                } else {
-                    memberCategories.append((.otherProperty, memberDesc.prefix(50).description))
-                }
-            } else if member.decl.is(InitializerDeclSyntax.self) {
-                memberCategories.append((.initializer, "init"))
-            } else if member.decl.is(EnumDeclSyntax.self) || member.decl.is(StructDeclSyntax.self) ||
-                member.decl.is(ClassDeclSyntax.self) || member.decl.is(ProtocolDeclSyntax.self) ||
-                member.decl.is(ActorDeclSyntax.self)
-            {
-                memberCategories.append((.embeddedType, memberDesc.prefix(50).description))
-            } else if member.decl.is(FunctionDeclSyntax.self) ||
-                (member.decl.is(VariableDeclSyntax.self) &&
-                    member.decl.as(VariableDeclSyntax.self)?.bindings.first?.accessorBlock != nil)
-            {
-                memberCategories.append((.computedOrMethod, memberDesc.prefix(50).description))
-            }
+            categorizeMember(member, memberDesc: memberDesc, categories: &memberCategories)
         }
 
         // Check order violations
@@ -157,47 +171,8 @@ public enum ViewStructureRules {
         }
 
         // If there's exactly 1 top-level child, check if it's an allowed exception
-        if topLevelCount == 1 {
-            let firstItem = statements.first!
-            let itemNode = firstItem.item
-
-            // The item can be either a direct expression (functionCallExpr, memberAccessExpr, etc.)
-            // or wrapped in an ExpressionStmtSyntax (for if/switch expressions)
-            var expr: (any ExprSyntaxProtocol)?
-
-            if let exprStmt = itemNode.as(ExpressionStmtSyntax.self) {
-                expr = exprStmt.expression
-            } else if let directExpr = itemNode.as(ExprSyntax.self) {
-                expr = directExpr
-            }
-
-            guard let expr else {
-                return // Can't determine expression type
-            }
-
-            // Allow ForEach as single child
-            if let functionCall = expr.as(FunctionCallExprSyntax.self) {
-                let funcName = functionCall.calledExpression.trimmedDescription
-                if funcName == "ForEach" || funcName.hasSuffix(".ForEach") {
-                    return // ForEach is allowed as single child
-                }
-            }
-
-            // Check if it's an if/else expression
-            if let ifExpr = expr.as(IfExprSyntax.self) {
-                // Check if any branch has 2+ views
-                if anyBranchHasMultipleViews(ifExpr) {
-                    return // Allowed because at least one branch has multiple children
-                }
-            }
-
-            // Check if it's a switch expression
-            if let switchExpr = expr.as(SwitchExprSyntax.self) {
-                // Check if any case has 2+ views
-                if anyCaseHasMultipleViews(switchExpr) {
-                    return // Allowed because at least one case has multiple children
-                }
-            }
+        if topLevelCount == 1, isSingleChildAllowed(statements.first!) {
+            return
         }
 
         // If we get here, it's a violation
@@ -206,35 +181,62 @@ public enum ViewStructureRules {
         print(violation)
     }
 
-    private static func anyBranchHasMultipleViews(_ ifExpr: IfExprSyntax) -> Bool {
-        // Check the main 'then' branch
-        if ifExpr.body.statements.count >= 2 {
-            return true
+    private static func isSingleChildAllowed(_ statement: CodeBlockItemSyntax) -> Bool {
+        let itemNode = statement.item
+
+        // Extract expression from either ExpressionStmtSyntax or direct ExprSyntax
+        var expr: (any ExprSyntaxProtocol)?
+        if let exprStmt = itemNode.as(ExpressionStmtSyntax.self) {
+            expr = exprStmt.expression
+        } else if let directExpr = itemNode.as(ExprSyntax.self) {
+            expr = directExpr
         }
 
-        // Check the 'else' branch if it exists
-        if let elseBody = ifExpr.elseBody {
-            if let elseIfExpr = elseBody.as(IfExprSyntax.self) {
-                // Recursive check for else-if
-                return anyBranchHasMultipleViews(elseIfExpr)
-            } else if let codeBlock = elseBody.as(CodeBlockSyntax.self) {
-                if codeBlock.statements.count >= 2 {
-                    return true
-                }
+        guard let expr else { return false }
+
+        // Allow ForEach as single child
+        if let functionCall = expr.as(FunctionCallExprSyntax.self) {
+            let funcName = functionCall.calledExpression.trimmedDescription
+            if funcName == "ForEach" || funcName.hasSuffix(".ForEach") {
+                return true
             }
+        }
+
+        // Check if it's an if/else expression with any branch having 2+ views
+        if let ifExpr = expr.as(IfExprSyntax.self) {
+            return anyBranchHasMultipleViews(ifExpr)
+        }
+
+        // Check if it's a switch expression with any case having 2+ views
+        if let switchExpr = expr.as(SwitchExprSyntax.self) {
+            return anyCaseHasMultipleViews(switchExpr)
+        }
+
+        return false
+    }
+
+    private static func anyBranchHasMultipleViews(_ ifExpr: IfExprSyntax) -> Bool {
+        // Check the main 'then' branch
+        if ifExpr.body.statements.count >= 2 { return true }
+
+        // Check the 'else' branch if it exists
+        guard let elseBody = ifExpr.elseBody else { return false }
+
+        if let elseIfExpr = elseBody.as(IfExprSyntax.self) {
+            return anyBranchHasMultipleViews(elseIfExpr)
+        }
+
+        if let codeBlock = elseBody.as(CodeBlockSyntax.self) {
+            return codeBlock.statements.count >= 2
         }
 
         return false
     }
 
     private static func anyCaseHasMultipleViews(_ switchExpr: SwitchExprSyntax) -> Bool {
-        for caseItem in switchExpr.cases {
-            if let switchCase = caseItem.as(SwitchCaseSyntax.self) {
-                if switchCase.statements.count >= 2 {
-                    return true
-                }
-            }
+        switchExpr.cases.contains { caseItem in
+            guard let switchCase = caseItem.as(SwitchCaseSyntax.self) else { return false }
+            return switchCase.statements.count >= 2
         }
-        return false
     }
 }

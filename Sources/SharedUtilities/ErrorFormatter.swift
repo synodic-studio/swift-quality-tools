@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import Foundation
 
 /// Self-healing error formatter following CLAUDE.md pattern

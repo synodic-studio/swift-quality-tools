@@ -1676,3 +1676,27 @@ new: |
       }
   }
 
+---
+# Edit 2025-11-19T08:07:57.153532
+time: 2025-11-19T08:07:57.153543
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  There's still a conflict in the Claude file 
+old: |
+  Examples:
+  ```
+  <<<<<<< HEAD
+  ⚠️ [excessive_indentation] Line 42 has excessive indentation (20 spaces, maximum: 16) - refactor code to reduce nesting depth
+  ⚠️ [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ _, newValue in ...' with '{ ... }' and reference the observed value directly
+  =======
+  ⚠️ [excessive_nesting] Line 42 has excessive nesting (level 4, maximum: 3) - refactor code to reduce nesting depth
+  >>>>>>> 1ac9d5c (Replace physical indentation rule with AST-based nesting depth limit)
+  ```
+new: |
+  Examples:
+  ```
+  ⚠️ [excessive_nesting] Line 42 has excessive nesting (level 4, maximum: 3) - refactor code to reduce nesting depth
+  ⚠️ [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ _, newValue in ...' with '{ ... }' and reference the observed value directly
+  ```
+

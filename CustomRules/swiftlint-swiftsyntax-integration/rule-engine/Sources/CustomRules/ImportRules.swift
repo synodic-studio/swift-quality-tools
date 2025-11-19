@@ -3,6 +3,22 @@ import SwiftSyntax
 /// Rules related to import organization
 /// - blank_line_import_separation: Blank line between regular and @testable imports
 public enum ImportRules {
+    private static func classifyImport(
+        _ importDecl: ImportDeclSyntax,
+        regularImports: inout [ImportDeclSyntax],
+        testableImports: inout [ImportDeclSyntax],
+    ) {
+        let isTestable = importDecl.attributes.contains { attr in
+            attr.as(AttributeSyntax.self)?.attributeName.description.contains("testable") ?? false
+        }
+
+        if isTestable {
+            testableImports.append(importDecl)
+        } else {
+            regularImports.append(importDecl)
+        }
+    }
+
     public static func checkBlankLineImportSeparation(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
         // Enforce blank line between regular imports and @testable imports:
         // import Foundation
@@ -16,15 +32,7 @@ public enum ImportRules {
         // Collect imports
         for statement in sourceFile.statements {
             if let importDecl = statement.item.as(ImportDeclSyntax.self) {
-                let isTestable = importDecl.attributes.contains { attr in
-                    attr.as(AttributeSyntax.self)?.attributeName.description.contains("testable") ?? false
-                }
-
-                if isTestable {
-                    testableImports.append(importDecl)
-                } else {
-                    regularImports.append(importDecl)
-                }
+                classifyImport(importDecl, regularImports: &regularImports, testableImports: &testableImports)
             }
         }
 
@@ -32,9 +40,7 @@ public enum ImportRules {
         guard !regularImports.isEmpty, !testableImports.isEmpty else { return }
 
         // Check if there's a blank line between the last regular import and first testable import
-        if let lastRegular = regularImports.last,
-           let firstTestable = testableImports.first
-        {
+        if let firstTestable = testableImports.first {
             // Check the leading trivia of the first testable import for blank lines
             let leadingTrivia = firstTestable.leadingTrivia.description
 

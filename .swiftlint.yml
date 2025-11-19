@@ -24,3 +24,5 @@ excluded:
 disabled_rules:
   - line_length
   - function_body_length
+  - no_magic_numbers
+  - blanket_disable_command  # Test files legitimately need file-wide disables

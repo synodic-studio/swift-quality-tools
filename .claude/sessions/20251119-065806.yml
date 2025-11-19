@@ -1,0 +1,269 @@
+---
+# Session Metadata
+session_id: claude-20251119-065806
+started: 2025-11-19T06:58:06.155785
+repo: /Users/bryancostanza/Developer/swift-quality-tools
+branch: claude/stack-minimum-children-rule
+edit_count: 0
+---
+
+---
+# Edit 2025-11-19T06:58:06.156198
+time: 2025-11-19T06:58:06.156200
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_indentation: Max 16 spaces of physical indentation (4 tabs)
+  public enum CodeQualityRules {
+new: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+  public enum CodeQualityRules {
+
+---
+# Edit 2025-11-19T06:58:09.578413
+time: 2025-11-19T06:58:09.578422
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      public static func checkExcessiveIndentation(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let sourceText = sourceFile.description
+          let lines = sourceText.components(separatedBy: .newlines)
+  
+          for (lineNumber, line) in lines.enumerated() {
+              // Count leading spaces
+              let leadingSpaces = line.prefix(while: { $0 == " " }).count
+  
+              // Skip empty lines and lines with only whitespace
+              if line.trimmingCharacters(in: .whitespaces).isEmpty {
+                  continue
+              }
+  
+              // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
+              if leadingSpaces > 16 {
+                  let violation = "⚠️  [excessive_indentation] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - refactor code to reduce nesting depth"
+                  violations.append(violation)
+                  print(violation)
+              }
+          }
+      }
+new: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let visitor = NestingDepthVisitor()
+          visitor.walk(sourceFile)
+  
+          for violation in visitor.violations {
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  }
+  
+  /// Visitor to track nesting depth in code
+  private final class NestingDepthVisitor: SyntaxVisitor {
+      private var currentDepth = 0
+      private let maxDepth = 3
+      fileprivate var violations: [String] = []
+  
+      override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+  
+          if currentDepth > maxDepth {
+              let position = node.position
+              let line = position.line(in: node.root)
+              let violation = "⚠️  [excessive_nesting] Line \(line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+              violations.append(violation)
+          }
+  
+          return .visitChildren
+      }
+  
+      override func visitPost(_ node: CodeBlockSyntax) {
+          currentDepth -= 1
+      }
+
+---
+# Edit 2025-11-19T06:58:28.566006
+time: 2025-11-19T06:58:28.566015
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (10 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - excessive_indentation: Physical indentation limit (max 16 spaces / 4 tabs)
+  /// - view_structure_order: Enforce View property ordering (DISABLED)
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+  /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
+new: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (10 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - view_structure_order: Enforce View property ordering (DISABLED)
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+  /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
+
+---
+# Edit 2025-11-19T06:58:31.524627
+time: 2025-11-19T06:58:31.524637
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          // CodeQualityRules: Excessive indentation (physical spaces check)
+          CodeQualityRules.checkExcessiveIndentation(node, violations: &violations)
+new: |
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          // CodeQualityRules: Excessive nesting (AST-based depth check)
+          CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+
+---
+# Edit 2025-11-19T06:58:55.435694
+time: 2025-11-19T06:58:55.435706
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:proceed 
+old: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `excessive_indentation`: Physical indentation limit (16 spaces / 4 tabs max)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+  - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
+new: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `excessive_nesting`: AST-based nesting depth limit (3 levels max - allows modifier chains up to 16 spaces)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+  - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
+
+---
+# Edit 2025-11-19T06:58:56.106987
+time: 2025-11-19T06:58:56.106999
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:proceed 
+old: |
+  Example:
+  ```
+  ⚠️ [excessive_indentation] Line 42 has excessive indentation (20 spaces, maximum: 16) - refactor code to reduce nesting depth
+  ```
+new: |
+  Example:
+  ```
+  ⚠️ [excessive_nesting] Line 42 has excessive nesting (level 4, maximum: 3) - refactor code to reduce nesting depth
+  ```
+
+---
+# Edit 2025-11-19T06:59:35.656933
+time: 2025-11-19T06:59:35.656949
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let visitor = NestingDepthVisitor()
+          visitor.walk(sourceFile)
+new: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+          let visitor = NestingDepthVisitor(converter: converter)
+          visitor.walk(sourceFile)
+
+---
+# Edit 2025-11-19T06:59:38.664774
+time: 2025-11-19T06:59:38.664784
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  /// Visitor to track nesting depth in code
+  private final class NestingDepthVisitor: SyntaxVisitor {
+      private var currentDepth = 0
+      private let maxDepth = 3
+      fileprivate var violations: [String] = []
+  
+      override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+  
+          if currentDepth > maxDepth {
+              let position = node.position
+              let line = position.line(in: node.root)
+              let violation = "⚠️  [excessive_nesting] Line \(line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+              violations.append(violation)
+          }
+new: |
+  /// Visitor to track nesting depth in code
+  private final class NestingDepthVisitor: SyntaxVisitor {
+      private var currentDepth = 0
+      private let maxDepth = 3
+      private let converter: SourceLocationConverter
+      fileprivate var violations: [String] = []
+  
+      init(converter: SourceLocationConverter) {
+          self.converter = converter
+          super.init(viewMode: .sourceAccurate)
+      }
+  
+      override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+  
+          if currentDepth > maxDepth {
+              let location = converter.location(for: node.position)
+              let violation = "⚠️  [excessive_nesting] Line \(location.line ?? 0) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+              violations.append(violation)
+          }
+
+---
+# Edit 2025-11-19T06:59:57.329820
+time: 2025-11-19T06:59:57.329830
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+          if currentDepth > maxDepth {
+              let location = converter.location(for: node.position)
+              let violation = "⚠️  [excessive_nesting] Line \(location.line ?? 0) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+              violations.append(violation)
+          }
+new: |
+          if currentDepth > maxDepth {
+              let location = converter.location(for: node.position)
+              let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+              violations.append(violation)
+          }
+
