@@ -5,7 +5,7 @@ import SwiftSyntax
 ///
 /// Rule identifiers (11 total):
 /// - skimmable_body: View body line count limit (max 15 lines)
-/// - no_group_body: Prohibit top-level Group in View bodies
+/// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
 /// - view_structure_order: Enforce View property ordering (DISABLED)
@@ -97,6 +97,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     // }
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // ViewBodyRules: Check for Group without modifiers
+        ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+
         // ViewStructureRules: Check stack minimum children
         ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
 
