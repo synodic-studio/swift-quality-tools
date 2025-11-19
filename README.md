@@ -192,8 +192,16 @@ The tools will automatically discover and use project-specific configs when pres
 SwiftSyntax-based rules in `CustomRules/swiftlint-swiftsyntax-integration/`:
 
 **Current Rules:**
-1. **Skimmable SwiftUI body** - Maximum 10 lines in `body` properties
-2. **Single top-level view** - Exactly one view at top level (no `Group` wrappers)
+1. **`skimmable_body`** - SwiftUI View body line count limit (15 lines max)
+2. **`no_group_body`** - Prohibit top-level Group in View bodies (unless it has modifiers)
+3. **`one_top_level_view`** - Enforce single top-level view in View bodies
+4. **`excessive_indentation`** - Physical indentation limit (16 spaces / 4 tabs max)
+5. **`stack_minimum_children`** - VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+6. **`view_structure_order`** - Enforce View property ordering (DISABLED - has bugs)
+7. **`no_wrapper_body`** - Detect pointless wrapper body properties
+8. **`constants_enum_usage`** - Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
+9. **`blank_line_import_separation`** - Enforce blank line between regular and @testable imports
+10. **`preview_required`** - Every file with View/ViewModifier must have at least one #Preview
 
 **To add new rules:**
 1. Edit `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/test-custom-rule.swift`
