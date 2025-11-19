@@ -15,7 +15,8 @@ Swift Quality Tools is a centralized Swift code quality tooling package with sma
 - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
 - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
-- `excessive_nesting`: Indentation depth limit (4 levels max) for all functions, closures, and initializers
+- `excessive_indentation`: Physical indentation limit (16 spaces / 4 tabs max)
+- `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
 
 ### Violation Format
 
@@ -26,7 +27,7 @@ All violations follow this format:
 
 Example:
 ```
-⚠️ [excessive_nesting] Function 'processData' has excessive indentation depth (7 levels, maximum: 4) - consider refactoring
+⚠️ [excessive_indentation] Line 42 has excessive indentation (20 spaces, maximum: 16) - refactor code to reduce nesting depth
 ```
 
 ### Adding New Rules
