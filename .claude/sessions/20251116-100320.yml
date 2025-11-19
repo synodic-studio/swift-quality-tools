@@ -1700,3 +1700,39 @@ new: |
   ⚠️ [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ _, newValue in ...' with '{ ... }' and reference the observed value directly
   ```
 
+---
+# Edit 2025-11-19T08:35:20.724652
+time: 2025-11-19T08:35:20.724660
+file: /Users/bryancostanza/Developer/worktrees/swift-quality-tools-remove-indentation/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  1 that is a bit of a strange name but fine if that's the best we've got
+  
+  after that create a new branch for the .if rule
+  
+  and another branch to try fixing the view structure
+  
+  another banch to remove excessive_indentation
+  
+  make a PR for each of these ^ branches too
+old: |
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          // CodeQualityRules: Excessive nesting (AST-based depth check)
+          CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+  
+          return .visitChildren
+      }
+new: |
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          // DISABLED: Excessive nesting rule
+          // Rationale: SwiftFormat handles indentation, other architectural rules (body line count,
+          // no Group wrappers) provide better signals, and the rule may be too strict for legitimate patterns
+          // CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+  
+          return .visitChildren
+      }
+
