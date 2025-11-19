@@ -1,0 +1,384 @@
+---
+# Session Metadata
+session_id: claude-20251116-214753
+started: 2025-11-16T21:47:53.928838
+repo: /Users/bryancostanza/Developer/swift-quality-tools
+branch: develop
+edit_count: 0
+---
+
+---
+# Edit 2025-11-16T21:47:53.929371
+time: 2025-11-16T21:47:53.929374
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers
+  /// - excessive_nesting: Max 4 indentation levels
+  public enum CodeQualityRules {
+      public static func checkMagicNumber(_ node: IntegerLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
+          let value = node.literal.text
+  
+          // Ignore common safe values (0, 1, 2) and array indices
+          let safeValues = ["0", "1", "2"]
+          if safeValues.contains(value) {
+              return
+          }
+  
+          // Only flag if we're in a SwiftUI View context
+          guard isInSwiftUIView else { return }
+  
+          let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
+          violations.append(violation)
+          print(violation)
+      }
+  
+      public static func checkMagicFloatNumber(_ node: FloatLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
+          let value = node.literal.text
+  
+          // Ignore common safe values (0.0, 1.0, 0.5)
+          let safeValues = ["0.0", "1.0", "0.5", "0", "1"]
+          if safeValues.contains(value) {
+              return
+          }
+  
+          // Only flag if we're in a SwiftUI View context
+          guard isInSwiftUIView else { return }
+  
+          let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
+          violations.append(violation)
+          print(violation)
+      }
+  
+      public static func checkExcessiveIndentationInCodeBlock(_ block: CodeBlockSyntax, context: String, violations: inout [String]) {
+          let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+          depthTracker.walk(block)
+  
+          if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+              let violation = "⚠️  [excessive_nesting] \(context) has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  
+      public static func checkExcessiveIndentationInClosure(_ closure: ClosureExprSyntax, violations: inout [String]) {
+          let depthTracker = IndentationDepthTracker(viewMode: .sourceAccurate)
+          depthTracker.walk(closure)
+  
+          if let maxDepth = depthTracker.maxDepth, maxDepth > 4 {
+              let violation = "⚠️  [excessive_nesting] Closure has excessive indentation depth (\(maxDepth) levels, maximum: 4) - consider refactoring"
+              violations.append(violation)
+              print(violation)
+          }
+      }
+  }
+  
+  /// Tracks indentation depth through syntax tree
+  final class IndentationDepthTracker: SyntaxVisitor {
+      private(set) var maxDepth: Int?
+      private var currentDepth = 0
+  
+      override func visit(_: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: CodeBlockSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: ClosureExprSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: IfExprSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: IfExprSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: SwitchExprSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: SwitchExprSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: ForStmtSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: ForStmtSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: WhileStmtSyntax) {
+          currentDepth -= 1
+      }
+  
+      override func visit(_: GuardStmtSyntax) -> SyntaxVisitorContinueKind {
+          currentDepth += 1
+          maxDepth = max(maxDepth ?? 0, currentDepth)
+          return .visitChildren
+      }
+  
+      override func visitPost(_: GuardStmtSyntax) {
+          currentDepth -= 1
+      }
+  }
+new: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers
+  /// - excessive_nesting: Max 16 spaces of physical indentation (4 tabs)
+  public enum CodeQualityRules {
+      public static func checkMagicNumber(_ node: IntegerLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
+          let value = node.literal.text
+  
+          // Ignore common safe values (0, 1, 2) and array indices
+          let safeValues = ["0", "1", "2"]
+          if safeValues.contains(value) {
+              return
+          }
+  
+          // Only flag if we're in a SwiftUI View context
+          guard isInSwiftUIView else { return }
+  
+          let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
+          violations.append(violation)
+          print(violation)
+      }
+  
+      public static func checkMagicFloatNumber(_ node: FloatLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
+          let value = node.literal.text
+  
+          // Ignore common safe values (0.0, 1.0, 0.5)
+          let safeValues = ["0.0", "1.0", "0.5", "0", "1"]
+          if safeValues.contains(value) {
+              return
+          }
+  
+          // Only flag if we're in a SwiftUI View context
+          guard isInSwiftUIView else { return }
+  
+          let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
+          violations.append(violation)
+          print(violation)
+      }
+  
+      public static func checkExcessiveIndentation(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let sourceText = sourceFile.description
+          let lines = sourceText.components(separatedBy: .newlines)
+  
+          for (lineNumber, line) in lines.enumerated() {
+              // Count leading spaces
+              let leadingSpaces = line.prefix(while: { $0 == " " }).count
+  
+              // Skip empty lines and lines with only whitespace
+              if line.trimmingCharacters(in: .whitespaces).isEmpty {
+                  continue
+              }
+  
+              // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
+              if leadingSpaces > 16 {
+                  let violation = "⚠️  [excessive_nesting] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - consider refactoring"
+                  violations.append(violation)
+                  print(violation)
+              }
+          }
+      }
+  }
+
+---
+# Edit 2025-11-16T21:48:09.787975
+time: 2025-11-16T21:48:09.787985
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      override public func visit(_ node: SourceFileSyntax) -> SyntaxVisitorContinueKind {
+          // ImportRules
+          ImportRules.checkBlankLineImportSeparation(node, violations: &violations)
+  
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: IntegerLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Magic numbers
+          CodeQualityRules.checkMagicNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: FloatLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Magic float numbers
+          CodeQualityRules.checkMagicFloatNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Excessive indentation in functions
+          if let body = node.body {
+              CodeQualityRules.checkExcessiveIndentationInCodeBlock(body, context: "Function '\(node.name.text)'", violations: &violations)
+          }
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Excessive indentation in initializers
+          if let body = node.body {
+              CodeQualityRules.checkExcessiveIndentationInCodeBlock(body, context: "Initializer", violations: &violations)
+          }
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Excessive indentation in closures
+          CodeQualityRules.checkExcessiveIndentationInClosure(node, violations: &violations)
+          return .visitChildren
+      }
+new: |
+      override public func visit(_ node: SourceFileSyntax) -> SyntaxVisitorContinueKind {
+          // ImportRules
+          ImportRules.checkBlankLineImportSeparation(node, violations: &violations)
+  
+          // PreviewRules
+          PreviewRules.checkPreviewRequired(node, violations: &violations)
+  
+          // CodeQualityRules: Excessive indentation (physical spaces check)
+          CodeQualityRules.checkExcessiveIndentation(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: IntegerLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Magic numbers
+          CodeQualityRules.checkMagicNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: FloatLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Magic float numbers
+          CodeQualityRules.checkMagicFloatNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
+          return .visitChildren
+      }
+
+---
+# Edit 2025-11-16T21:48:19.223698
+time: 2025-11-16T21:48:19.223710
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+              // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
+              if leadingSpaces > 16 {
+                  let violation = "⚠️  [excessive_nesting] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - consider refactoring"
+                  violations.append(violation)
+                  print(violation)
+              }
+new: |
+              // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
+              if leadingSpaces > 16 {
+                  let violation = "⚠️  [excessive_nesting] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - refactor code to reduce nesting depth"
+                  violations.append(violation)
+                  print(violation)
+              }
+
+---
+# Edit 2025-11-16T21:48:51.909282
+time: 2025-11-16T21:48:51.909292
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (9 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - excessive_nesting: Indentation depth limit for all code (max 4 levels)
+  /// - view_structure_order: Enforce View property ordering
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+new: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (9 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit top-level Group in View bodies
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - excessive_nesting: Physical indentation limit (max 16 spaces / 4 tabs)
+  /// - view_structure_order: Enforce View property ordering
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+
+---
+# Edit 2025-11-16T21:49:03.145448
+time: 2025-11-16T21:49:03.145460
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:proceed 
+old: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `excessive_nesting`: Indentation depth limit (4 levels max) for all functions, closures, and initializers
+new: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+  - `no_group_body`: Prohibit top-level Group in View bodies (unless it has modifiers)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `excessive_nesting`: Physical indentation limit (16 spaces / 4 tabs max)
+
+---
+# Edit 2025-11-16T21:49:07.620127
+time: 2025-11-16T21:49:07.620136
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:proceed 
+old: |
+  Example:
+  ```
+  ⚠️ [excessive_nesting] Function 'processData' has excessive indentation depth (7 levels, maximum: 4) - consider refactoring
+  ```
+new: |
+  Example:
+  ```
+  ⚠️ [excessive_nesting] Line 42 has excessive indentation (20 spaces, maximum: 16) - refactor code to reduce nesting depth
+  ```
+
