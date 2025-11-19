@@ -1,5 +1,8 @@
+// swiftlint:disable file_length type_body_length
+
 import Foundation
 import Testing
+
 @testable import SharedUtilities
 
 @Suite("Custom SwiftSyntax Rules Tests")

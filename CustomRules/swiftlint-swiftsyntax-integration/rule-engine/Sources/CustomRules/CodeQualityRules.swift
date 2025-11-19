@@ -2,7 +2,7 @@ import SwiftSyntax
 
 /// Rules related to general code quality
 /// - constants_enum_usage: No magic numbers (DISABLED)
-/// - excessive_indentation: Max 16 spaces of physical indentation (4 tabs)
+/// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
 public enum CodeQualityRules {
     public static func checkMagicNumber(_ node: IntegerLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
         let value = node.literal.text
@@ -38,25 +38,43 @@ public enum CodeQualityRules {
         print(violation)
     }
 
-    public static func checkExcessiveIndentation(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
-        let sourceText = sourceFile.description
-        let lines = sourceText.components(separatedBy: .newlines)
+    public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+        let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+        let visitor = NestingDepthVisitor(converter: converter)
+        visitor.walk(sourceFile)
 
-        for (lineNumber, line) in lines.enumerated() {
-            // Count leading spaces
-            let leadingSpaces = line.prefix(while: { $0 == " " }).count
-
-            // Skip empty lines and lines with only whitespace
-            if line.trimmingCharacters(in: .whitespaces).isEmpty {
-                continue
-            }
-
-            // Check if indentation exceeds 16 spaces (4 tabs × 4 spaces)
-            if leadingSpaces > 16 {
-                let violation = "⚠️  [excessive_indentation] Line \(lineNumber + 1) has excessive indentation (\(leadingSpaces) spaces, maximum: 16) - refactor code to reduce nesting depth"
-                violations.append(violation)
-                print(violation)
-            }
+        for violation in visitor.violations {
+            violations.append(violation)
+            print(violation)
         }
+    }
+}
+
+/// Visitor to track nesting depth in code
+private final class NestingDepthVisitor: SyntaxVisitor {
+    private var currentDepth = 0
+    private let maxDepth = 3
+    private let converter: SourceLocationConverter
+    fileprivate var violations: [String] = []
+
+    init(converter: SourceLocationConverter) {
+        self.converter = converter
+        super.init(viewMode: .sourceAccurate)
+    }
+
+    override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+
+        if currentDepth > maxDepth {
+            let location = converter.location(for: node.position)
+            let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+            violations.append(violation)
+        }
+
+        return .visitChildren
+    }
+
+    override func visitPost(_: CodeBlockSyntax) {
+        currentDepth -= 1
     }
 }

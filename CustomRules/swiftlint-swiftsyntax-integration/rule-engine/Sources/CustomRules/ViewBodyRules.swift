@@ -5,6 +5,24 @@ import SwiftSyntax
 /// - no_group_body: No top-level Group without modifiers
 /// - one_top_level_view: Exactly one top-level view
 public enum ViewBodyRules {
+    private static func isRelevantBodyLine(_ trimmed: String) -> Bool {
+        !trimmed.isEmpty && !trimmed.contains("get") && !trimmed.contains("var body") && trimmed != "{" && trimmed != "}"
+    }
+
+    private static func findFirstGroupView(in lines: [Substring]) -> Int {
+        for (index, line) in lines.enumerated() {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard isRelevantBodyLine(trimmed) else { continue }
+
+            if trimmed.hasPrefix("Group {") || trimmed.hasPrefix("Group(") || trimmed == "Group {" {
+                return index
+            } else {
+                return -1 // Found a different view type
+            }
+        }
+        return -1
+    }
+
     public static func checkSkimmableBody(_ node: VariableDeclSyntax, violations: inout [String]) {
         // Count lines in the body
         let bodyText = node.description
@@ -33,23 +51,7 @@ public enum ViewBodyRules {
         let lines = bodyText.split(separator: "\n")
 
         // Look for Group as the first view in the body
-        var foundFirstView = false
-        var groupLineIndex = -1
-
-        for (index, line) in lines.enumerated() {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty, !trimmed.contains("get"), !trimmed.contains("var body"), trimmed != "{", trimmed != "}" {
-                if !foundFirstView {
-                    if trimmed.hasPrefix("Group {") || trimmed.hasPrefix("Group(") || trimmed == "Group {" {
-                        groupLineIndex = index
-                        foundFirstView = true
-                    } else {
-                        // Found a different view type, no Group violation
-                        break
-                    }
-                }
-            }
-        }
+        let groupLineIndex = findFirstGroupView(in: lines)
 
         // If we found a Group, check if it has view modifiers
         if groupLineIndex >= 0 {
@@ -74,28 +76,45 @@ public enum ViewBodyRules {
             if trimmed.contains("Group {") {
                 inGroupBody = true
                 braceCount += 1
-            } else if inGroupBody {
-                braceCount += trimmed.count(where: { $0 == "{" })
-                braceCount -= trimmed.count(where: { $0 == "}" })
+                continue
+            }
 
-                // When we close the Group body, check the next lines for modifiers
-                if braceCount == 0 {
-                    // Check if the next non-empty line starts with a dot (view modifier)
-                    for j in (i + 1) ..< lines.count {
-                        let nextTrimmed = lines[j].trimmingCharacters(in: .whitespaces)
-                        if !nextTrimmed.isEmpty {
-                            if nextTrimmed.hasPrefix(".") {
-                                return true // Found a view modifier
-                            } else {
-                                return false // Found something else, no modifier
-                            }
-                        }
-                    }
-                    return false // No more lines after Group
-                }
+            guard inGroupBody else { continue }
+
+            braceCount += trimmed.count(where: { $0 == "{" })
+            braceCount -= trimmed.count(where: { $0 == "}" })
+
+            // When we close the Group body, check the next lines for modifiers
+            if braceCount == 0 {
+                return checkNextLineForModifier(lines: lines, afterIndex: i)
             }
         }
         return false
+    }
+
+    private static func checkNextLineForModifier(lines: [Substring], afterIndex: Int) -> Bool {
+        // Check if the next non-empty line starts with a dot (view modifier)
+        for j in (afterIndex + 1) ..< lines.count {
+            let nextTrimmed = lines[j].trimmingCharacters(in: .whitespaces)
+            if !nextTrimmed.isEmpty {
+                return nextTrimmed.hasPrefix(".")
+            }
+        }
+        return false // No more lines after Group
+    }
+
+    private static func isViewStatement(_ trimmed: String) -> Bool {
+        // Check if this line starts a view statement (not a property or modifier)
+        guard !trimmed.hasPrefix(".") else { return false } // Not a view modifier
+
+        return trimmed.first?.isUppercase == true ||
+            trimmed.contains("Text(") ||
+            trimmed.contains("Button(") ||
+            trimmed.contains("Image(") ||
+            trimmed.contains("Color.") ||
+            trimmed.contains("Stack") ||
+            trimmed.contains("Group") ||
+            trimmed.contains("Spacer(")
     }
 
     public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
@@ -132,20 +151,8 @@ public enum ViewBodyRules {
             }
 
             // Only count statements at the immediate top level (braceLevel == 1)
-            if inBodyContent, braceLevel == 1 {
-                // Check if this line starts a view statement (not a property or modifier)
-                if trimmed.first?.isUppercase == true ||
-                    trimmed.contains("Text(") ||
-                    trimmed.contains("Button(") ||
-                    trimmed.contains("Image(") ||
-                    trimmed.contains("Color.") ||
-                    trimmed.contains("Stack") ||
-                    trimmed.contains("Group") ||
-                    trimmed.contains("Spacer("),
-                    !trimmed.hasPrefix(".")
-                { // Not a view modifier
-                    viewStatements += 1
-                }
+            if inBodyContent, braceLevel == 1, isViewStatement(trimmed) {
+                viewStatements += 1
             }
         }
 
