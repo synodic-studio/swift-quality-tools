@@ -77,16 +77,22 @@ public enum CustomRulesChecker {
 
     /// Extract line number and message from violation text
     private static func extractLineAndMessage(from line: String) -> (Int, String)? {
-        guard let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) else {
+        // Match two formats:
+        // 1. "Line N: message" (new format from view_structure_order)
+        // 2. "Line N message" (existing format from other rules)
+        guard let lineNumberRange = line.range(of: #"Line (\d+):?"#, options: .regularExpression) else {
             return nil
         }
 
         let lineNumberMatch = line[lineNumberRange]
-        guard let lineNumber = lineNumberMatch.split(separator: " ").last.flatMap({ Int($0) }) else {
+        guard let lineNumberStr = lineNumberMatch.split(separator: " ").last,
+              let lineNumber = Int(lineNumberStr.replacingOccurrences(of: ":", with: ""))
+        else {
             return nil
         }
 
-        guard let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound else {
+        // Find where the message starts (after "Line N:" or "Line N ")
+        guard let messageStart = line.range(of: #"Line \d+:? "#, options: .regularExpression)?.upperBound else {
             return nil
         }
 
