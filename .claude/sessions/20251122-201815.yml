@@ -2104,3 +2104,124 @@ new: |
           return (lineNumber, message)
       }
 
+---
+# Edit 2025-11-23T12:55:06.681898
+time: 2025-11-23T12:55:06.681914
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  OMG how can this be? I think this has happened before. What can we do to improve our process such that release gets rebuilt at the right time instead of being forgotten?
+  
+  Also, would it be better for gravwell to use the enviro-provided lint commands instead of referencing the build file directly?
+old: |
+  # CLAUDE.md
+  
+  This file provides guidance to Claude Code when working with the swift-quality-tools project.
+  
+  ## Project Overview
+  
+  Swift Quality Tools is a centralized Swift code quality tooling package with smart configuration discovery. It provides unified interfaces for SwiftFormat, SwiftLint, and custom SwiftSyntax-based rules.
+new: |
+  # CLAUDE.md
+  
+  This file provides guidance to Claude Code when working with the swift-quality-tools project.
+  
+  ## Project Overview
+  
+  Swift Quality Tools is a centralized Swift code quality tooling package with smart configuration discovery. It provides unified interfaces for SwiftFormat, SwiftLint, and custom SwiftSyntax-based rules.
+  
+  ## CRITICAL: Release Mode Required
+  
+  **ALWAYS build in release mode when making changes to swift-quality-tools:**
+  
+  ```bash
+  swift build -c release
+  cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c release
+  ```
+  
+  **Why:** Xcode build phases in other projects (gravity-well, etc.) reference `.build/release/` binaries. Building in debug mode leaves those binaries stale, causing Xcode to show outdated lint results or no warnings at all.
+  
+  **Workflow:**
+  1. Make changes to source code
+  2. Build in **release** mode (both main package and rule engine)
+  3. Test with `swiftlintcustom-smart` to verify changes work
+  4. Commit changes
+  
+  **Never** return control to the user after modifying swift-quality-tools without building in release mode.
+
+---
+# Edit 2025-11-23T12:57:20.096054
+time: 2025-11-23T12:57:20.096069
+file: /Users/bryancostanza/Developer/swift-quality-tools/README.md
+change_type: docs
+user_prompt: |
+  OMG how can this be? I think this has happened before. What can we do to improve our process such that release gets rebuilt at the right time instead of being forgotten?
+  
+  Also, would it be better for gravwell to use the enviro-provided lint commands instead of referencing the build file directly?
+old: |
+  ### Xcode Build Phases
+  
+  Add to your Xcode project's Build Phases for in-IDE warnings:
+  
+  **Build Phase Script:**
+  ```bash
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" "${SRCROOT}"
+  fi
+  ```
+  
+  **Note:** `swiftlintcustom-smart` automatically detects when running in Xcode (via `XCODE_VERSION_ACTUAL` environment variable) and formats violations as Xcode-compatible warnings that are clickable in the Issue Navigator.
+  
+  This provides:
+  - ✅ In-Xcode error/warning display with clickable file locations
+  - ✅ Consistent quality checks across all projects
+  - ✅ Automatic config discovery per project
+  - ✅ Auto-detection of Xcode environment (no flags needed)
+new: |
+  ### Xcode Build Phases
+  
+  Add to your Xcode project's Build Phases for in-IDE warnings.
+  
+  **Recommended: Single Script Approach**
+  
+  Add a "Run Script" build phase with:
+  ```bash
+  "${HOME}/Developer/swift-quality-tools/Scripts/xcode-lint.sh"
+  ```
+  
+  This single script runs all three tools (SwiftFormat, SwiftLint, custom rules) and automatically detects the Xcode environment.
+  
+  **Alternative: Direct Tool Invocation**
+  
+  If you prefer explicit control, you can invoke tools individually:
+  ```bash
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}" || true
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}" || true
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" "${SRCROOT}"
+  fi
+  ```
+  
+  **Note:** `swiftlintcustom-smart` automatically detects when running in Xcode (via `XCODE_VERSION_ACTUAL` environment variable) and formats violations as Xcode-compatible warnings that are clickable in the Issue Navigator.
+  
+  This provides:
+  - ✅ In-Xcode error/warning display with clickable file locations
+  - ✅ Consistent quality checks across all projects
+  - ✅ Automatic config discovery per project
+  - ✅ Auto-detection of Xcode environment (no flags needed)
+  - ✅ Single script for easy maintenance
+

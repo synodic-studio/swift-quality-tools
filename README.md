@@ -135,16 +135,27 @@ When you edit Swift files in Claude Code, these tools run automatically.
 
 ### Xcode Build Phases
 
-Add to your Xcode project's Build Phases for in-IDE warnings:
+Add to your Xcode project's Build Phases for in-IDE warnings.
 
-**Build Phase Script:**
+**Recommended: Single Script Approach**
+
+Add a "Run Script" build phase with:
+```bash
+"${HOME}/Developer/swift-quality-tools/Scripts/xcode-lint.sh"
+```
+
+This single script runs all three tools (SwiftFormat, SwiftLint, custom rules) and automatically detects the Xcode environment.
+
+**Alternative: Direct Tool Invocation**
+
+If you prefer explicit control, you can invoke tools individually:
 ```bash
 if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
-    "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}"
+    "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}" || true
 fi
 
 if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
-    "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}"
+    "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}" || true
 fi
 
 if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
@@ -159,6 +170,7 @@ This provides:
 - ✅ Consistent quality checks across all projects
 - ✅ Automatic config discovery per project
 - ✅ Auto-detection of Xcode environment (no flags needed)
+- ✅ Single script for easy maintenance
 
 ### Manual Command Line
 

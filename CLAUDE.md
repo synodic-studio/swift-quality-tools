@@ -6,6 +6,25 @@ This file provides guidance to Claude Code when working with the swift-quality-t
 
 Swift Quality Tools is a centralized Swift code quality tooling package with smart configuration discovery. It provides unified interfaces for SwiftFormat, SwiftLint, and custom SwiftSyntax-based rules.
 
+## CRITICAL: Release Mode Required
+
+**ALWAYS build in release mode when making changes to swift-quality-tools:**
+
+```bash
+swift build -c release
+cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c release
+```
+
+**Why:** Xcode build phases in other projects (gravity-well, etc.) reference `.build/release/` binaries. Building in debug mode leaves those binaries stale, causing Xcode to show outdated lint results or no warnings at all.
+
+**Workflow:**
+1. Make changes to source code
+2. Build in **release** mode (both main package and rule engine)
+3. Test with `swiftlintcustom-smart` to verify changes work
+4. Commit changes
+
+**Never** return control to the user after modifying swift-quality-tools without building in release mode.
+
 ## Custom SwiftLint Rule Identifiers
 
 **All custom SwiftSyntax rules MUST have unique identifiers** for tracking and future line-level disabling.
