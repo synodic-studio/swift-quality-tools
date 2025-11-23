@@ -18,7 +18,6 @@ public enum CodeQualityRules {
 
         let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
         violations.append(violation)
-        print(violation)
     }
 
     public static func checkMagicFloatNumber(_ node: FloatLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
@@ -35,7 +34,6 @@ public enum CodeQualityRules {
 
         let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
         violations.append(violation)
-        print(violation)
     }
 
     public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
@@ -45,7 +43,6 @@ public enum CodeQualityRules {
 
         for violation in visitor.violations {
             violations.append(violation)
-            print(violation)
         }
     }
 }

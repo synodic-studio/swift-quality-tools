@@ -36,7 +36,6 @@ public enum ViewBodyRules {
         if contentLines.count > 15 {
             let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
             violations.append(violation)
-            print(violation)
         }
     }
 
@@ -60,7 +59,6 @@ public enum ViewBodyRules {
             if !hasModifiers {
                 let violation = "⚠️  [no_group_body] SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
                 violations.append(violation)
-                print(violation)
             }
         }
     }
@@ -160,7 +158,6 @@ public enum ViewBodyRules {
         if !groupHasModifiers(node) {
             let violation = "⚠️  [no_group_body] Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
             violations.append(violation)
-            print(violation)
         }
     }
 
@@ -206,7 +203,6 @@ public enum ViewBodyRules {
         if viewStatements > 1 {
             let violation = "⚠️  [one_top_level_view] SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
             violations.append(violation)
-            print(violation)
         }
     }
 
@@ -227,6 +223,5 @@ public enum ViewBodyRules {
            • Rationale: .if bypasses SwiftUI's view identity system
         """
         violations.append(violation)
-        print(violation)
     }
 }

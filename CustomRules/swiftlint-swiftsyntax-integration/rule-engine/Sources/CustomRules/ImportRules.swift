@@ -51,7 +51,6 @@ public enum ImportRules {
             if newlineCount < 2 {
                 let violation = "⚠️  [blank_line_import_separation] Missing blank line between regular imports and @testable imports"
                 violations.append(violation)
-                print(violation)
             }
         }
     }

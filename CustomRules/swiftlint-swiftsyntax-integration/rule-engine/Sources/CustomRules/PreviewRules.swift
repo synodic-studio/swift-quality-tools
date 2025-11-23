@@ -66,7 +66,6 @@ public enum PreviewRules {
             let viewList = viewNames.joined(separator: ", ")
             let violation = "⚠️  [preview_required] File declares View/ViewModifier (\(viewList)) but has no #Preview - add at least one preview for development workflow"
             violations.append(violation)
-            print(violation)
         }
     }
 }

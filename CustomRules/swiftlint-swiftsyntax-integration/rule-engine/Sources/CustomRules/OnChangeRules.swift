@@ -34,7 +34,6 @@ public enum OnChangeRules {
 
             let violation = "⚠️  [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ \(firstName), \(secondName) in ...' with '{ ... }' and reference the observed value directly"
             violations.append(violation)
-            print(violation)
 
         case .parameterClause, .none:
             return

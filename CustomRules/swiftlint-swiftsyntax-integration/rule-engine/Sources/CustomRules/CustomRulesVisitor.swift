@@ -38,7 +38,6 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         guard let converter = locationConverter else {
             // Fallback if converter not set
             violations.append("⚠️  [\(ruleID)] \(message)")
-            print("⚠️  [\(ruleID)] \(message)")
             return
         }
 
@@ -55,7 +54,6 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             : "⚠️  [\(ruleID)] \(message)"
 
         violations.append(violation)
-        print(violation)
     }
 
     /// Add file-level violation (no line number)
@@ -67,7 +65,6 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
         let violation = "⚠️  [\(ruleID)] \(message)"
         violations.append(violation)
-        print(violation)
     }
 
     override public func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
