@@ -3,7 +3,7 @@ import Foundation
 import SharedUtilities
 
 @main
-struct SwiftLintCustomSmart: ParsableCommand {
+struct SwiftLintCustomSmart: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
@@ -11,13 +11,18 @@ struct SwiftLintCustomSmart: ParsableCommand {
         • SwiftUI View body properties limited to 15 lines maximum
         • SwiftUI View body properties must have exactly one top-level view (never Group)
         • Indentation depth limited to 4 levels maximum for all functions, closures, and initializers
+
+        Performance: Files are processed in parallel using all available CPU cores for optimal speed.
         """,
     )
 
     @Argument(help: "File or directory to check (default: current directory)")
     var target: String = "."
 
-    mutating func run() throws {
+    @Flag(name: .long, help: "Disable parallel processing (useful for debugging)")
+    var sequential = false
+
+    mutating func run() async throws {
         let targetURL = URL(fileURLWithPath: target)
         try ConfigDiscovery.validateTarget(targetURL)
 
@@ -34,7 +39,28 @@ struct SwiftLintCustomSmart: ParsableCommand {
         let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
         let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
 
-        let results = try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode) }
+        // Process files in parallel or sequentially based on flag
+        let results: [CheckResult] = if sequential {
+            // Sequential processing (for debugging or when order matters)
+            try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode) }
+        } else {
+            // Parallel processing using TaskGroup for optimal performance
+            try await withThrowingTaskGroup(of: CheckResult.self) { group in
+                for fileURL in filesToCheck {
+                    group.addTask {
+                        try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEnginePath, xcodeFormat: isXcode)
+                    }
+                }
+
+                // Collect results as tasks complete
+                var collectedResults: [CheckResult] = []
+                for try await result in group {
+                    collectedResults.append(result)
+                }
+                return collectedResults
+            }
+        }
+
         let violationCount = results.filter(\.hasViolations).count
 
         if !isXcode {
