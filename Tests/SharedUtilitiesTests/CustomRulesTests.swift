@@ -180,6 +180,192 @@ struct CustomRulesTests {
         #expect(!output.contains("[no_group_body]"))
     }
 
+    @Test("no_group_body: Detects Group in computed property")
+    func noGroupBodyInComputedProperty() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    contentView
+                }
+            }
+
+            private var contentView: some View {
+                Group {
+                    Text("One")
+                    Text("Two")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_group_body]"))
+    }
+
+    @Test("no_group_body: Detects Group in extension")
+    func noGroupBodyInExtension() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Main")
+            }
+        }
+
+        extension TestView {
+            var extraContent: some View {
+                Group {
+                    Text("Extra 1")
+                    Text("Extra 2")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_group_body]"))
+    }
+
+    @Test("no_group_body: Detects multiple Group instances")
+    func noGroupBodyMultipleInstances() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    content1
+                    content2
+                }
+            }
+
+            private var content1: some View {
+                Group {
+                    Text("First")
+                }
+            }
+
+            private var content2: some View {
+                Group {
+                    Text("Second")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        // Should detect both violations
+        let violationCount = output.components(separatedBy: "[no_group_body]").count - 1
+        #expect(violationCount == 2)
+    }
+
+    @Test("no_group_body: Detects Group in function returning some View")
+    func noGroupBodyInFunction() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                makeContent()
+            }
+
+            func makeContent() -> some View {
+                Group {
+                    Text("Function Content")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_group_body]"))
+    }
+
+    @Test("no_group_body: Detects Group in conditional branches")
+    func noGroupBodyInConditional() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let condition = true
+
+            var body: some View {
+                contentView
+            }
+
+            private var contentView: some View {
+                if condition {
+                    Group {
+                        Text("True Branch")
+                    }
+                } else {
+                    Text("False")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_group_body]"))
+    }
+
+    @Test("no_group_body: Accepts Group in switch expression with modifier")
+    func noGroupBodySwitchWithModifier() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            enum DisplayMode {
+                case compact, expanded
+            }
+
+            let mode: DisplayMode = .compact
+
+            var body: some View {
+                switch mode {
+                case .compact:
+                    Group {
+                        Text("Compact")
+                    }
+                    .padding(.small)
+                case .expanded:
+                    Text("Expanded")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_group_body]"))
+    }
+
     // MARK: - One Top Level View Rule Tests
 
     @Test("one_top_level_view: Detects multiple top-level views")
@@ -249,10 +435,10 @@ struct CustomRulesTests {
         #expect(!output.contains("[one_top_level_view]"))
     }
 
-    // MARK: - Excessive Indentation Rule Tests
+    // MARK: - Excessive Nesting Rule Tests
 
-    @Test("excessive_indentation: Detects more than 16 spaces")
-    func excessiveIndentationViolation() throws {
+    @Test("excessive_nesting: Detects nesting level over 3")
+    func excessiveNestingViolation() throws {
         let code = """
         import SwiftUI
 
@@ -276,20 +462,18 @@ struct CustomRulesTests {
 
         let output = try runRuleEngine(on: file)
         #expect(output.contains("⚠️"))
-        #expect(output.contains("[excessive_indentation]"))
+        #expect(output.contains("[excessive_nesting]"))
     }
 
-    @Test("excessive_indentation: Accepts up to 16 spaces")
-    func excessiveIndentationNoViolation() throws {
+    @Test("excessive_nesting: Accepts nesting level up to 3")
+    func excessiveNestingNoViolation() throws {
         let code = """
         import SwiftUI
 
         func test() {
             if true {
                 if true {
-                    if true {
-                        print("Acceptable")
-                    }
+                    print("Acceptable")
                 }
             }
         }
@@ -299,7 +483,7 @@ struct CustomRulesTests {
         defer { cleanup(file) }
 
         let output = try runRuleEngine(on: file)
-        #expect(!output.contains("[excessive_indentation]"))
+        #expect(!output.contains("[excessive_nesting]"))
     }
 
     // MARK: - OnChange Ignored Old Value Rule Tests
@@ -404,5 +588,349 @@ struct CustomRulesTests {
 
         let output = try runRuleEngine(on: file)
         #expect(!output.contains("[onchange_ignored_old_value]"))
+    }
+
+    // MARK: - Stack Minimum Children Rule Tests
+
+    @Test("stack_minimum_children: Detects VStack with single child")
+    func stackMinimumChildrenVStack() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    Text("Only one")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[stack_minimum_children]"))
+    }
+
+    @Test("stack_minimum_children: Accepts VStack with ForEach as single child")
+    func stackMinimumChildrenForEach() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let items = ["A", "B", "C"]
+
+            var body: some View {
+                VStack {
+                    ForEach(items, id: \\.self) { item in
+                        Text(item)
+                    }
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[stack_minimum_children]"))
+    }
+
+    @Test("stack_minimum_children: Accepts VStack with if/else containing multiple views")
+    func stackMinimumChildrenIfElse() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let condition = true
+
+            var body: some View {
+                VStack {
+                    if condition {
+                        Text("First")
+                        Text("Second")
+                    } else {
+                        Text("Alternative")
+                    }
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[stack_minimum_children]"))
+    }
+
+    @Test("stack_minimum_children: Detects HStack and ZStack violations")
+    func stackMinimumChildrenAllTypes() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    HStack {
+                        Text("Only one")
+                    }
+                    ZStack {
+                        Text("Also one")
+                    }
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        // Should detect violations for both HStack and ZStack
+        let violationCount = output.components(separatedBy: "[stack_minimum_children]").count - 1
+        #expect(violationCount == 2)
+    }
+
+    // MARK: - No If Modifier Rule Tests
+
+    @Test("no_if_modifier: Detects custom .if modifier usage")
+    func noIfModifierViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let condition = true
+
+            var body: some View {
+                Text("Hello")
+                    .if(condition) { view in
+                        view.padding()
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_if_modifier]"))
+    }
+
+    @Test("no_if_modifier: Accepts standard if statement")
+    func noIfModifierStandardIf() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let condition = true
+
+            var body: some View {
+                if condition {
+                    Text("Hello").padding()
+                } else {
+                    Text("Goodbye")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_modifier]"))
+    }
+
+    // MARK: - View Structure Order Rule Tests
+
+    @Test("view_structure_order: Detects properties out of order")
+    func viewStructureOrderViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var counter = 0
+            @Environment(\\.colorScheme) var colorScheme
+
+            var body: some View {
+                Text("Count: \\(counter)")
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[view_structure_order]"))
+    }
+
+    @Test("view_structure_order: Accepts correct property order")
+    func viewStructureOrderNoViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @Environment(\\.colorScheme) var colorScheme
+            @State private var counter = 0
+
+            var body: some View {
+                Text("Count: \\(counter)")
+            }
+
+            private var formattedCount: String {
+                "\\(counter)"
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[view_structure_order]"))
+    }
+
+    @Test("view_structure_order: Detects init not immediately before body")
+    func viewStructureOrderInitPlacement() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let title: String
+
+            init(title: String) {
+                self.title = title
+            }
+
+            private var subtitle: String {
+                "Subtitle"
+            }
+
+            var body: some View {
+                Text(title)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[view_structure_order]"))
+    }
+
+    // MARK: - Comprehensive Edge Case Tests
+
+    @Test("skimmable_body: Counts content lines accurately")
+    func skimmableBodyLineCountAccuracy() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    Text("1")
+                    Text("2")
+                    Text("3")
+                    Text("4")
+                    Text("5")
+                    Text("6")
+                    Text("7")
+                    Text("8")
+                    Text("9")
+                    Text("10")
+                    Text("11")
+                    Text("12")
+                    Text("13")
+                    Text("14")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        // Should not violate - 14 content lines is within limit
+        #expect(!output.contains("[skimmable_body]"))
+    }
+
+    @Test("excessive_nesting: Allows modifier chains without counting as nesting")
+    func excessiveNestingModifierChains() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Hello")
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .shadow(radius: 2)
+                    .padding()
+                    .background(Color.white)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[excessive_nesting]"))
+    }
+
+    @Test("Multiple rules: File with multiple different violations")
+    func multipleRuleViolations() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    Text("Line 1")
+                    Text("Line 2")
+                    Text("Line 3")
+                    Text("Line 4")
+                    Text("Line 5")
+                    Text("Line 6")
+                    Text("Line 7")
+                    Text("Line 8")
+                    Text("Line 9")
+                    Text("Line 10")
+                    Text("Line 11")
+                    Text("Line 12")
+                    Text("Line 13")
+                    Text("Line 14")
+                    Text("Line 15")
+                    Text("Line 16")
+                }
+            }
+
+            private var content: some View {
+                Group {
+                    Text("Content")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("[skimmable_body]"))
+        #expect(output.contains("[no_group_body]"))
     }
 }
