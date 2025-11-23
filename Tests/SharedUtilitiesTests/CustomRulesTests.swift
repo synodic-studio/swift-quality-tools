@@ -180,6 +180,35 @@ struct CustomRulesTests {
         #expect(!output.contains("[no_group_body]"))
     }
 
+    @Test("no_group_body: Detects Group in computed property")
+    func noGroupBodyInComputedProperty() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack {
+                    contentView
+                }
+            }
+
+            private var contentView: some View {
+                Group {
+                    Text("One")
+                    Text("Two")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_group_body]"))
+    }
+
     // MARK: - One Top Level View Rule Tests
 
     @Test("one_top_level_view: Detects multiple top-level views")
@@ -249,10 +278,10 @@ struct CustomRulesTests {
         #expect(!output.contains("[one_top_level_view]"))
     }
 
-    // MARK: - Excessive Indentation Rule Tests
+    // MARK: - Excessive Nesting Rule Tests
 
-    @Test("excessive_indentation: Detects more than 16 spaces")
-    func excessiveIndentationViolation() throws {
+    @Test("excessive_nesting: Detects nesting level over 3")
+    func excessiveNestingViolation() throws {
         let code = """
         import SwiftUI
 
@@ -276,20 +305,18 @@ struct CustomRulesTests {
 
         let output = try runRuleEngine(on: file)
         #expect(output.contains("⚠️"))
-        #expect(output.contains("[excessive_indentation]"))
+        #expect(output.contains("[excessive_nesting]"))
     }
 
-    @Test("excessive_indentation: Accepts up to 16 spaces")
-    func excessiveIndentationNoViolation() throws {
+    @Test("excessive_nesting: Accepts nesting level up to 3")
+    func excessiveNestingNoViolation() throws {
         let code = """
         import SwiftUI
 
         func test() {
             if true {
                 if true {
-                    if true {
-                        print("Acceptable")
-                    }
+                    print("Acceptable")
                 }
             }
         }
@@ -299,7 +326,7 @@ struct CustomRulesTests {
         defer { cleanup(file) }
 
         let output = try runRuleEngine(on: file)
-        #expect(!output.contains("[excessive_indentation]"))
+        #expect(!output.contains("[excessive_nesting]"))
     }
 
     // MARK: - OnChange Ignored Old Value Rule Tests

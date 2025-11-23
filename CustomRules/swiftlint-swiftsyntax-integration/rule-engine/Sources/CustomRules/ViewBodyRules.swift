@@ -150,7 +150,7 @@ public enum ViewBodyRules {
     /// If Group has no modifiers, suggest using @ViewBuilder instead
     public static func checkGroupWithoutModifiers(_ node: FunctionCallExprSyntax, violations: inout [String]) {
         // Check if this is a Group initializer
-        let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespaces)
+        let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard calledExpr == "Group" else {
             return
