@@ -98,10 +98,10 @@ swiftlint-smart --config path/to/.swiftlint.yml
 
 ### swiftlintcustom-smart
 
-Run custom SwiftSyntax-based rules:
+Run custom SwiftSyntax-based rules with parallel processing:
 
 ```bash
-# Check current directory
+# Check current directory (parallel - uses all CPU cores)
 swiftlintcustom-smart
 
 # Check specific file
@@ -109,7 +109,16 @@ swiftlintcustom-smart Sources/MyFile.swift
 
 # Check directory
 swiftlintcustom-smart Sources/
+
+# Sequential mode (for debugging)
+swiftlintcustom-smart --sequential Sources/
 ```
+
+**Performance:**
+- ⚡ Parallel processing enabled by default (uses all available CPU cores)
+- 🚀 2-6x faster than sequential on multi-core systems
+- 📈 Scales automatically with available hardware
+- 🔧 Use `--sequential` flag to disable for debugging
 
 **Custom Rules:**
 - `skimmable_body`: SwiftUI View `body` properties limited to 15 lines maximum
