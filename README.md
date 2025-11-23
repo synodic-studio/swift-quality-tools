@@ -146,7 +146,9 @@ Add a "Run Script" build phase with:
 "${HOME}/Developer/swift-quality-tools/Scripts/xcode-lint.sh"
 ```
 
-This script runs both linters (SwiftLint + custom rules) and automatically detects the Xcode environment for proper warning formatting.
+This script runs both linters and works around Xcode's subprocess output suppression by parsing and re-echoing warnings.
+
+**Known Limitation:** Xcode's build phase sandbox suppresses subprocess output. The script works around this by running swiftlintcustom-smart in terminal mode, parsing the output, and re-echoing warnings directly.
 
 **Alternative: Direct Tool Invocation**
 
