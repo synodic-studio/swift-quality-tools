@@ -24,15 +24,23 @@ struct SwiftLintCustomSmart: ParsableCommand {
         let ruleEnginePath = ConfigDiscovery.customRuleEnginePath
         try RuleEngineBuildHelper.ensureBuilt(ruleEnginePath)
 
-        Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
+        // Auto-detect Xcode environment via XCODE_VERSION_ACTUAL
+        let isXcode = ProcessInfo.processInfo.environment["XCODE_VERSION_ACTUAL"] != nil
+
+        if !isXcode {
+            Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
+        }
 
         let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
         let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
 
-        let results = try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath) }
+        let results = try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode) }
         let violationCount = results.filter(\.hasViolations).count
 
-        CustomRulesChecker.printSummary(totalFiles: filesToCheck.count, violations: violationCount)
+        if !isXcode {
+            CustomRulesChecker.printSummary(totalFiles: filesToCheck.count, violations: violationCount)
+        }
+
         if violationCount > 0 {
             throw ExitCode.failure
         }

@@ -152,10 +152,13 @@ if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-sm
 fi
 ```
 
+**Note:** `swiftlintcustom-smart` automatically detects when running in Xcode (via `XCODE_VERSION_ACTUAL` environment variable) and formats violations as Xcode-compatible warnings that are clickable in the Issue Navigator.
+
 This provides:
-- ✅ In-Xcode error/warning display
+- ✅ In-Xcode error/warning display with clickable file locations
 - ✅ Consistent quality checks across all projects
 - ✅ Automatic config discovery per project
+- ✅ Auto-detection of Xcode environment (no flags needed)
 
 ### Manual Command Line
 

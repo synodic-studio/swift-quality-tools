@@ -1429,3 +1429,678 @@ new: |
   - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
   - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
 
+---
+# Edit 2025-11-23T12:12:49.928464
+time: 2025-11-23T12:12:49.928476
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: style
+user_prompt: |
+  ya know, something seems wrong. Could you try running the custom lint on gravity well with the version of custom lint that we had two days ago?
+old: |
+  private final class NestingDepthVisitor: SyntaxVisitor {
+      private var currentDepth = 0
+      private let maxDepth = 2 // Triggers at depth 3 (e.g., ScrollView -> VStack -> if)
+      private let converter: SourceLocationConverter
+new: |
+  private final class NestingDepthVisitor: SyntaxVisitor {
+      private var currentDepth = 0
+      private let maxDepth = 3 // Triggers at depth 4, matching ~16 spaces physical indentation
+      private let converter: SourceLocationConverter
+
+---
+# Edit 2025-11-23T12:14:53.237336
+time: 2025-11-23T12:14:53.237347
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  ya know, something seems wrong. Could you try running the custom lint on gravity well with the version of custom lint that we had two days ago?
+old: |
+  - `excessive_nesting`: AST-based nesting depth limit (triggers at depth 3+, tracks both closures and code blocks)
+new: |
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+
+---
+# Edit 2025-11-23T12:34:14.696368
+time: 2025-11-23T12:34:14.696384
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  import Foundation
+  
+  /// Utility for running custom rules checks on files
+  public enum CustomRulesChecker {
+      /// Check a single file for violations
+      /// - Parameters:
+      ///   - fileURL: URL of file to check
+      ///   - ruleEngine: URL of rule engine executable
+      /// - Returns: CheckResult with violation status and relative path
+      public static func checkFile(_ fileURL: URL, ruleEngine: URL) throws -> CheckResult {
+new: |
+  import Foundation
+  
+  /// Utility for running custom rules checks on files
+  public enum CustomRulesChecker {
+      /// Check a single file for violations
+      /// - Parameters:
+      ///   - fileURL: URL of file to check
+      ///   - ruleEngine: URL of rule engine executable
+      ///   - xcodeFormat: Whether to output in Xcode-compatible format
+      /// - Returns: CheckResult with violation status and relative path
+      public static func checkFile(_ fileURL: URL, ruleEngine: URL, xcodeFormat: Bool = false) throws -> CheckResult {
+
+---
+# Edit 2025-11-23T12:36:13.845386
+time: 2025-11-23T12:36:13.845398
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CheckResult.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  import Foundation
+  
+  /// Result of checking a single file
+  public struct CheckResult {
+      public let hasViolations: Bool
+      public let relativePath: String
+  
+      public init(hasViolations: Bool, relativePath: String) {
+          self.hasViolations = hasViolations
+          self.relativePath = relativePath
+      }
+  }
+new: |
+  import Foundation
+  
+  /// Result of checking a single file
+  public struct CheckResult {
+      public let hasViolations: Bool
+      public let relativePath: String
+      public let violations: [Violation]
+  
+      public init(hasViolations: Bool, relativePath: String, violations: [Violation] = []) {
+          self.hasViolations = hasViolations
+          self.relativePath = relativePath
+          self.violations = violations
+      }
+  }
+  
+  /// A single violation found during linting
+  public struct Violation {
+      public let line: Int
+      public let ruleId: String
+      public let message: String
+  
+      public init(line: Int, ruleId: String, message: String) {
+          self.line = line
+          self.ruleId = ruleId
+          self.message = message
+      }
+  }
+
+---
+# Edit 2025-11-23T12:37:03.358726
+time: 2025-11-23T12:37:03.358741
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Check a single file for violations
+      /// - Parameters:
+      ///   - fileURL: URL of file to check
+      ///   - ruleEngine: URL of rule engine executable
+      ///   - xcodeFormat: Whether to output in Xcode-compatible format
+      /// - Returns: CheckResult with violation status and relative path
+      public static func checkFile(_ fileURL: URL, ruleEngine: URL, xcodeFormat _: Bool = false) throws -> CheckResult {
+          let process = Process()
+          process.executableURL = ruleEngine
+          process.arguments = [fileURL.path]
+  
+          let pipe = Pipe()
+          process.standardOutput = pipe
+          process.standardError = pipe
+  
+          try process.run()
+          process.waitUntilExit()
+  
+          let data = pipe.fileHandleForReading.readDataToEndOfFile()
+          let output = String(data: data, encoding: .utf8) ?? ""
+  
+          let relativePath = fileURL.path.replacingOccurrences(of: FileManager.default.currentDirectoryPath + "/", with: "")
+  
+          // Check if there are violations
+          if output.contains("⚠️") {
+              printViolations(output: output, relativePath: relativePath)
+              return CheckResult(hasViolations: true, relativePath: relativePath)
+          }
+  
+          return CheckResult(hasViolations: false, relativePath: relativePath)
+      }
+new: |
+      /// Check a single file for violations
+      /// - Parameters:
+      ///   - fileURL: URL of file to check
+      ///   - ruleEngine: URL of rule engine executable
+      ///   - xcodeFormat: Whether to output in Xcode-compatible format
+      /// - Returns: CheckResult with violation status and relative path
+      public static func checkFile(_ fileURL: URL, ruleEngine: URL, xcodeFormat: Bool = false) throws -> CheckResult {
+          let process = Process()
+          process.executableURL = ruleEngine
+          process.arguments = [fileURL.path]
+  
+          let pipe = Pipe()
+          process.standardOutput = pipe
+          process.standardError = pipe
+  
+          try process.run()
+          process.waitUntilExit()
+  
+          let data = pipe.fileHandleForReading.readDataToEndOfFile()
+          let output = String(data: data, encoding: .utf8) ?? ""
+  
+          let relativePath = fileURL.path.replacingOccurrences(of: FileManager.default.currentDirectoryPath + "/", with: "")
+          let absolutePath = fileURL.path
+  
+          // Parse violations from output
+          let violations = parseViolations(from: output)
+  
+          // Print violations in appropriate format
+          if !violations.isEmpty {
+              if xcodeFormat {
+                  printXcodeViolations(violations: violations, absolutePath: absolutePath)
+              } else {
+                  printTerminalViolations(violations: violations, relativePath: relativePath)
+              }
+          }
+  
+          return CheckResult(hasViolations: !violations.isEmpty, relativePath: relativePath, violations: violations)
+      }
+
+---
+# Edit 2025-11-23T12:37:55.958725
+time: 2025-11-23T12:37:55.958739
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Print summary of linting results
+      public static func printSummary(totalFiles: Int, violations: Int) {
+          print("")
+          if violations == 0 {
+              Console.success("✓ \(totalFiles) files checked, no violations")
+          } else {
+              Console.warning("\(violations)/\(totalFiles) files with violations")
+          }
+      }
+  }
+new: |
+      /// Parse violations from rule engine output
+      /// Expects format: "⚠️  [rule_id] Line X has message"
+      private static func parseViolations(from output: String) -> [Violation] {
+          let lines = output.components(separatedBy: .newlines)
+          var violations: [Violation] = []
+  
+          for line in lines {
+              guard line.contains("⚠️") else { continue }
+  
+              // Extract rule ID from [rule_id]
+              guard let ruleIDRange = line.range(of: #"\[([^\]]+)\]"#, options: .regularExpression),
+                    let ruleID = line[ruleIDRange].dropFirst().dropLast().split(separator: " ").first.map(String.init)
+              else { continue }
+  
+              // Extract line number from "Line X"
+              guard let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) else { continue }
+              let lineNumberMatch = line[lineNumberRange]
+              guard let lineNumber = lineNumberMatch.split(separator: " ").last.flatMap({ Int($0) }) else { continue }
+  
+              // Extract message (everything after the line number)
+              guard let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound else { continue }
+              let message = String(line[messageStart...])
+  
+              violations.append(Violation(line: lineNumber, ruleID: ruleID, message: message))
+          }
+  
+          return violations
+      }
+  
+      /// Print violations in Xcode-compatible format
+      /// Format: /absolute/path/file.swift:42: warning: [rule_id] message
+      private static func printXcodeViolations(violations: [Violation], absolutePath: String) {
+          for violation in violations {
+              print("\(absolutePath):\(violation.line): warning: [\(violation.ruleID)] \(violation.message)")
+          }
+      }
+  
+      /// Print violations in terminal format with colors
+      private static func printTerminalViolations(violations: [Violation], relativePath: String) {
+          print("\(ANSIColor.red.rawValue)\(relativePath):\(ANSIColor.reset.rawValue)")
+  
+          for violation in violations {
+              print("    • [\(violation.ruleID)] Line \(violation.line): \(violation.message)")
+          }
+          print("")
+      }
+  
+      /// Print summary of linting results
+      public static func printSummary(totalFiles: Int, violations: Int) {
+          print("")
+          if violations == 0 {
+              Console.success("✓ \(totalFiles) files checked, no violations")
+          } else {
+              Console.warning("\(violations)/\(totalFiles) files with violations")
+          }
+      }
+  }
+
+---
+# Edit 2025-11-23T12:38:53.040097
+time: 2025-11-23T12:38:53.040111
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SwiftLintCustomSmart/main.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      mutating func run() throws {
+          let targetURL = URL(fileURLWithPath: target)
+          try ConfigDiscovery.validateTarget(targetURL)
+  
+          let ruleEnginePath = ConfigDiscovery.customRuleEnginePath
+          try RuleEngineBuildHelper.ensureBuilt(ruleEnginePath)
+  
+          Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
+  
+          let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
+          let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
+  
+          let results = try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath) }
+          let violationCount = results.filter(\.hasViolations).count
+  
+          CustomRulesChecker.printSummary(totalFiles: filesToCheck.count, violations: violationCount)
+          if violationCount > 0 {
+              throw ExitCode.failure
+          }
+      }
+new: |
+      mutating func run() throws {
+          let targetURL = URL(fileURLWithPath: target)
+          try ConfigDiscovery.validateTarget(targetURL)
+  
+          let ruleEnginePath = ConfigDiscovery.customRuleEnginePath
+          try RuleEngineBuildHelper.ensureBuilt(ruleEnginePath)
+  
+          // Auto-detect Xcode environment via XCODE_VERSION_ACTUAL
+          let isXcode = ProcessInfo.processInfo.environment["XCODE_VERSION_ACTUAL"] != nil
+  
+          if !isXcode {
+              Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
+          }
+  
+          let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
+          let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
+  
+          let results = try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode) }
+          let violationCount = results.filter(\.hasViolations).count
+  
+          if !isXcode {
+              CustomRulesChecker.printSummary(totalFiles: filesToCheck.count, violations: violationCount)
+          }
+  
+          if violationCount > 0 {
+              throw ExitCode.failure
+          }
+      }
+
+---
+# Edit 2025-11-23T12:40:49.762910
+time: 2025-11-23T12:40:49.762935
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Parse violations from rule engine output
+      /// Expects format: "⚠️  [rule_id] Line X has message"
+      private static func parseViolations(from output: String) -> [Violation] {
+          let lines = output.components(separatedBy: .newlines)
+          var violations: [Violation] = []
+  
+          for line in lines {
+              guard line.contains("⚠️") else { continue }
+  
+              // Extract rule ID from [rule_id]
+              guard let ruleIDRange = line.range(of: #"\[([^\]]+)\]"#, options: .regularExpression),
+                    let ruleID = line[ruleIDRange].dropFirst().dropLast().split(separator: " ").first.map(String.init)
+              else { continue }
+  
+              // Extract line number from "Line X"
+              guard let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) else { continue }
+              let lineNumberMatch = line[lineNumberRange]
+              guard let lineNumber = lineNumberMatch.split(separator: " ").last.flatMap({ Int($0) }) else { continue }
+  
+              // Extract message (everything after the line number)
+              guard let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound else { continue }
+              let message = String(line[messageStart...])
+  
+              violations.append(Violation(line: lineNumber, ruleID: ruleID, message: message))
+          }
+  
+          return violations
+      }
+new: |
+      /// Parse violations from rule engine output
+      /// Expects formats:
+      /// - "⚠️  [rule_id] Line X has message"
+      /// - "⚠️  [rule_id] message" (for file-level violations)
+      private static func parseViolations(from output: String) -> [Violation] {
+          let lines = output.components(separatedBy: .newlines)
+          var violations: [Violation] = []
+  
+          for line in lines {
+              guard line.contains("⚠️") else { continue }
+  
+              // Extract rule ID from [rule_id]
+              guard let ruleIDRange = line.range(of: #"\[([^\]]+)\]"#, options: .regularExpression) else { continue }
+              let ruleIDMatch = line[ruleIDRange]
+              let ruleID = String(ruleIDMatch.dropFirst().dropLast())
+  
+              // Try to extract line number from "Line X"
+              var lineNumber = 0
+              var message = ""
+  
+              if let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) {
+                  let lineNumberMatch = line[lineNumberRange]
+                  lineNumber = lineNumberMatch.split(separator: " ").last.flatMap({ Int($0) }) ?? 0
+  
+                  // Extract message (everything after the line number)
+                  if let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound {
+                      message = String(line[messageStart...])
+                  }
+              } else {
+                  // No line number - file-level violation
+                  // Extract message (everything after [rule_id])
+                  if let messageStart = ruleIDRange.upperBound.samePosition(in: line) {
+                      message = String(line[messageStart...]).trimmingCharacters(in: .whitespaces)
+                  }
+              }
+  
+              violations.append(Violation(line: lineNumber, ruleID: ruleID, message: message))
+          }
+  
+          return violations
+      }
+
+---
+# Edit 2025-11-23T12:41:18.017165
+time: 2025-11-23T12:41:18.017195
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Print violations in Xcode-compatible format
+      /// Format: /absolute/path/file.swift:42: warning: [rule_id] message
+      private static func printXcodeViolations(violations: [Violation], absolutePath: String) {
+          for violation in violations {
+              print("\(absolutePath):\(violation.line): warning: [\(violation.ruleID)] \(violation.message)")
+          }
+      }
+new: |
+      /// Print violations in Xcode-compatible format
+      /// Format: /absolute/path/file.swift:42: warning: [rule_id] message
+      /// File-level violations use line 1 for Xcode clickability
+      private static func printXcodeViolations(violations: [Violation], absolutePath: String) {
+          for violation in violations {
+              let line = violation.line == 0 ? 1 : violation.line
+              print("\(absolutePath):\(line): warning: [\(violation.ruleID)] \(violation.message)")
+          }
+      }
+
+---
+# Edit 2025-11-23T12:41:46.421909
+time: 2025-11-23T12:41:46.421958
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Print violations in terminal format with colors
+      private static func printTerminalViolations(violations: [Violation], relativePath: String) {
+          print("\(ANSIColor.red.rawValue)\(relativePath):\(ANSIColor.reset.rawValue)")
+  
+          for violation in violations {
+              print("    • [\(violation.ruleID)] Line \(violation.line): \(violation.message)")
+          }
+          print("")
+      }
+new: |
+      /// Print violations in terminal format with colors
+      private static func printTerminalViolations(violations: [Violation], relativePath: String) {
+          print("\(ANSIColor.red.rawValue)\(relativePath):\(ANSIColor.reset.rawValue)")
+  
+          for violation in violations {
+              if violation.line == 0 {
+                  // File-level violation
+                  print("    • [\(violation.ruleID)] \(violation.message)")
+              } else {
+                  print("    • [\(violation.ruleID)] Line \(violation.line): \(violation.message)")
+              }
+          }
+          print("")
+      }
+
+---
+# Edit 2025-11-23T12:43:50.433276
+time: 2025-11-23T12:43:50.433293
+file: /Users/bryancostanza/Developer/swift-quality-tools/README.md
+change_type: docs
+user_prompt: |
+  /sy:proceed 
+old: |
+  ### Xcode Build Phases
+  
+  Add to your Xcode project's Build Phases for in-IDE warnings:
+  
+  **Build Phase Script:**
+  ```bash
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" "${SRCROOT}"
+  fi
+  ```
+  
+  This provides:
+  - ✅ In-Xcode error/warning display
+  - ✅ Consistent quality checks across all projects
+  - ✅ Automatic config discovery per project
+new: |
+  ### Xcode Build Phases
+  
+  Add to your Xcode project's Build Phases for in-IDE warnings:
+  
+  **Build Phase Script:**
+  ```bash
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}"
+  fi
+  
+  if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
+      "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" "${SRCROOT}"
+  fi
+  ```
+  
+  **Note:** `swiftlintcustom-smart` automatically detects when running in Xcode (via `XCODE_VERSION_ACTUAL` environment variable) and formats violations as Xcode-compatible warnings that are clickable in the Issue Navigator.
+  
+  This provides:
+  - ✅ In-Xcode error/warning display with clickable file locations
+  - ✅ Consistent quality checks across all projects
+  - ✅ Automatic config discovery per project
+  - ✅ Auto-detection of Xcode environment (no flags needed)
+
+---
+# Edit 2025-11-23T12:45:08.923028
+time: 2025-11-23T12:45:08.923044
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CheckResult.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+  import Foundation
+  
+  /// Result of checking a single file
+  public struct CheckResult {
+      public let hasViolations: Bool
+      public let relativePath: String
+      public let violations: [Violation]
+  
+      public init(hasViolations: Bool, relativePath: String, violations: [Violation] = []) {
+          self.hasViolations = hasViolations
+          self.relativePath = relativePath
+          self.violations = violations
+      }
+  }
+  
+  /// A single violation found during linting
+  public struct Violation {
+      public let line: Int
+      public let ruleID: String
+      public let message: String
+  
+      public init(line: Int, ruleID: String, message: String) {
+          self.line = line
+          self.ruleID = ruleID
+          self.message = message
+      }
+  }
+new: |
+  import Foundation
+  
+  /// Result of checking a single file
+  public struct CheckResult {
+      public let hasViolations: Bool
+      public let relativePath: String
+      public let violations: [Violation]
+  
+      public init(hasViolations: Bool, relativePath: String, violations: [Violation] = []) {
+          self.hasViolations = hasViolations
+          self.relativePath = relativePath
+          self.violations = violations
+      }
+  }
+
+---
+# Edit 2025-11-23T12:47:06.753799
+time: 2025-11-23T12:47:06.753816
+file: /Users/bryancostanza/Developer/swift-quality-tools/Sources/SharedUtilities/CustomRulesChecker.swift
+change_type: unknown
+user_prompt: |
+  /sy:proceed 
+old: |
+      /// Parse violations from rule engine output
+      /// Expects formats:
+      /// - "⚠️  [rule_id] Line X has message"
+      /// - "⚠️  [rule_id] message" (for file-level violations)
+      private static func parseViolations(from output: String) -> [Violation] {
+          let lines = output.components(separatedBy: .newlines)
+          var violations: [Violation] = []
+  
+          for line in lines {
+              guard line.contains("⚠️") else { continue }
+  
+              // Extract rule ID from [rule_id]
+              guard let ruleIDRange = line.range(of: #"\[([^\]]+)\]"#, options: .regularExpression) else { continue }
+              let ruleIDMatch = line[ruleIDRange]
+              let ruleID = String(ruleIDMatch.dropFirst().dropLast())
+  
+              // Try to extract line number from "Line X"
+              var lineNumber = 0
+              var message = ""
+  
+              if let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) {
+                  let lineNumberMatch = line[lineNumberRange]
+                  lineNumber = lineNumberMatch.split(separator: " ").last.flatMap { Int($0) } ?? 0
+  
+                  // Extract message (everything after the line number)
+                  if let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound {
+                      message = String(line[messageStart...])
+                  }
+              } else {
+                  // No line number - file-level violation
+                  // Extract message (everything after [rule_id])
+                  if let messageStart = ruleIDRange.upperBound.samePosition(in: line) {
+                      message = String(line[messageStart...]).trimmingCharacters(in: .whitespaces)
+                  }
+              }
+  
+              violations.append(Violation(line: lineNumber, ruleID: ruleID, message: message))
+          }
+  
+          return violations
+      }
+new: |
+      /// Parse violations from rule engine output
+      /// Expects formats:
+      /// - "⚠️  [rule_id] Line X has message"
+      /// - "⚠️  [rule_id] message" (for file-level violations)
+      private static func parseViolations(from output: String) -> [Violation] {
+          output.components(separatedBy: .newlines)
+              .filter { $0.contains("⚠️") }
+              .compactMap { line in
+                  parseViolation(from: line)
+              }
+      }
+  
+      /// Parse a single violation line
+      private static func parseViolation(from line: String) -> Violation? {
+          guard let ruleIDRange = line.range(of: #"\[([^\]]+)\]"#, options: .regularExpression) else {
+              return nil
+          }
+  
+          let ruleID = String(line[ruleIDRange].dropFirst().dropLast())
+  
+          // Try to extract line number and message
+          if let (lineNumber, message) = extractLineAndMessage(from: line) {
+              return Violation(line: lineNumber, ruleID: ruleID, message: message)
+          }
+  
+          // File-level violation (no line number)
+          if let messageStart = ruleIDRange.upperBound.samePosition(in: line) {
+              let message = String(line[messageStart...]).trimmingCharacters(in: .whitespaces)
+              return Violation(line: 0, ruleID: ruleID, message: message)
+          }
+  
+          return nil
+      }
+  
+      /// Extract line number and message from violation text
+      private static func extractLineAndMessage(from line: String) -> (Int, String)? {
+          guard let lineNumberRange = line.range(of: #"Line (\d+)"#, options: .regularExpression) else {
+              return nil
+          }
+  
+          let lineNumberMatch = line[lineNumberRange]
+          guard let lineNumber = lineNumberMatch.split(separator: " ").last.flatMap({ Int($0) }) else {
+              return nil
+          }
+  
+          guard let messageStart = line.range(of: #"Line \d+ "#, options: .regularExpression)?.upperBound else {
+              return nil
+          }
+  
+          let message = String(line[messageStart...])
+          return (lineNumber, message)
+      }
+

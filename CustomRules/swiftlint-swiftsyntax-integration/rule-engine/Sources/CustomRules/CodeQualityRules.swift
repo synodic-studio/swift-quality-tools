@@ -54,7 +54,7 @@ public enum CodeQualityRules {
 /// Tracks both CodeBlockSyntax (functions, if statements) and ClosureExprSyntax (trailing closures)
 private final class NestingDepthVisitor: SyntaxVisitor {
     private var currentDepth = 0
-    private let maxDepth = 2 // Triggers at depth 3 (e.g., ScrollView -> VStack -> if)
+    private let maxDepth = 3 // Triggers at depth 4, matching ~16 spaces physical indentation
     private let converter: SourceLocationConverter
     fileprivate var violations: [String] = []
 
