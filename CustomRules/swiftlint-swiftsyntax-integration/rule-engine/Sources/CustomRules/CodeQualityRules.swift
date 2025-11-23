@@ -51,9 +51,10 @@ public enum CodeQualityRules {
 }
 
 /// Visitor to track nesting depth in code
+/// Tracks both CodeBlockSyntax (functions, if statements) and ClosureExprSyntax (trailing closures)
 private final class NestingDepthVisitor: SyntaxVisitor {
     private var currentDepth = 0
-    private let maxDepth = 3
+    private let maxDepth = 2 // Triggers at depth 3 (e.g., ScrollView -> VStack -> if)
     private let converter: SourceLocationConverter
     fileprivate var violations: [String] = []
 
@@ -75,6 +76,22 @@ private final class NestingDepthVisitor: SyntaxVisitor {
     }
 
     override func visitPost(_: CodeBlockSyntax) {
+        currentDepth -= 1
+    }
+
+    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        currentDepth += 1
+
+        if currentDepth > maxDepth {
+            let location = converter.location(for: node.position)
+            let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+            violations.append(violation)
+        }
+
+        return .visitChildren
+    }
+
+    override func visitPost(_: ClosureExprSyntax) {
         currentDepth -= 1
     }
 }
