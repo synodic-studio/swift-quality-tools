@@ -1,18 +1,18 @@
-# SwiftLint Directive Support
+# SwiftLintCustom Directive Support
 
 ## Overview
 
-The custom SwiftLint rules now support suppression directives similar to standard SwiftLint. This allows you to selectively disable rules for specific lines or scopes where violations are intentional or necessary.
+The custom SwiftLint rules now support suppression directives using the `swiftlintcustom:` prefix. This allows you to selectively disable custom rules for specific lines without interfering with standard SwiftLint directives.
 
 ## Supported Directives
 
 ### ✅ Implemented
 
-#### `swiftlint:disable:next rule_name`
-Disables the specified rule for the **next line** only.
+#### `swiftlintcustom:disable:next rule_name`
+Disables the specified custom rule for the **next line** only.
 
 ```swift
-// swiftlint:disable:next excessive_nesting
+// swiftlintcustom:disable:next excessive_nesting
 var computed: String {
     if true {
         if true {
@@ -29,11 +29,11 @@ var computed: String {
 
 **Note:** The directive applies to the immediately following line. In the example above, the violation occurs on the 4th `if true {` statement, NOT on the `var computed` line. To suppress violations within a function/property body, you may need to use multiple `disable:next` directives or consider restructuring the code.
 
-#### `swiftlint:disable:this rule_name`
-Disables the specified rule for the **current line** (inline directive).
+#### `swiftlintcustom:disable:this rule_name`
+Disables the specified custom rule for the **current line** (inline directive).
 
 ```swift
-func deeplyNested() { // swiftlint:disable:this excessive_nesting
+func deeplyNested() { // swiftlintcustom:disable:this excessive_nesting
     if true {
         if true {
             if true {
@@ -47,10 +47,10 @@ func deeplyNested() { // swiftlint:disable:this excessive_nesting
 ```
 
 #### Multiple Rules
-You can suppress multiple rules in a single directive:
+You can suppress multiple custom rules in a single directive:
 
 ```swift
-// swiftlint:disable:next excessive_nesting skimmable_body
+// swiftlintcustom:disable:next excessive_nesting skimmable_body
 var body: some View {
     // Complex but necessary implementation
 }
@@ -59,11 +59,11 @@ var body: some View {
 ### ❌ Not Yet Implemented
 
 #### File-Level Directives
-File-level `swiftlint:disable` and `swiftlint:enable` directives are not yet supported.
+File-level `swiftlintcustom:disable` and `swiftlintcustom:enable` directives are not yet supported.
 
 ```swift
 // ❌ This doesn't work yet
-// swiftlint:disable excessive_nesting
+// swiftlintcustom:disable excessive_nesting
 
 func deeplyNested1() {
     // ...deep nesting...
@@ -73,7 +73,7 @@ func deeplyNested2() {
     // ...deep nesting...
 }
 
-// swiftlint:enable excessive_nesting
+// swiftlintcustom:enable excessive_nesting
 ```
 
 **Workaround:** Use line-specific directives for each violation, or consider refactoring to comply with the rule.
@@ -101,7 +101,7 @@ All custom rules can be suppressed using their identifier:
 ### Suppress Single Violation
 
 ```swift
-// swiftlint:disable:next skimmable_body
+// swiftlintcustom:disable:next skimmable_body
 var body: some View {
     VStack {
         // More than 15 lines but necessary for this specific view
@@ -115,7 +115,7 @@ var body: some View {
 ### Suppress Multiple Rules
 
 ```swift
-// swiftlint:disable:next excessive_nesting skimmable_body view_structure_order
+// swiftlintcustom:disable:next excessive_nesting skimmable_body view_structure_order
 var complexBody: some View {
     // Complex implementation that intentionally violates multiple rules
 }
@@ -124,7 +124,7 @@ var complexBody: some View {
 ### Inline Suppression
 
 ```swift
-Group { /* content */ } // swiftlint:disable:this no_group_body
+Group { /* content */ } // swiftlintcustom:disable:this no_group_body
 ```
 
 ## Implementation Details
@@ -158,7 +158,7 @@ To test directive support:
 
 ```bash
 # Create a test Swift file with directives
-echo '// swiftlint:disable:next excessive_nesting
+echo '// swiftlintcustom:disable:next excessive_nesting
 func test() {
     if true { if true { if true { if true { print("deep") } } } }
 }' > test.swift
@@ -173,8 +173,8 @@ swiftlintcustom-smart test.swift
 
 ### Planned
 
-1. **File-level directive support** - Implement range tracking for `swiftlint:disable` / `swiftlint:enable`
-2. **Disable all rules** - Support `swiftlint:disable all` syntax
+1. **File-level directive support** - Implement range tracking for `swiftlintcustom:disable` / `swiftlintcustom:enable`
+2. **Disable all rules** - Support `swiftlintcustom:disable all` syntax
 3. **Configuration file integration** - Allow disabling rules globally in config files
 4. **Better error messages** - Warn about unknown rule identifiers in directives
 
@@ -184,13 +184,14 @@ swiftlintcustom-smart test.swift
 2. **Automatic suppression suggestions** - IDE integration to suggest directives for violations
 3. **Directive validation** - Warn about unused or ineffective directives
 
-## Migration from Standard SwiftLint
+## Using with Standard SwiftLint
 
-If you're already using standard SwiftLint directives in your codebase:
+Custom rules use the `swiftlintcustom:` prefix to avoid conflicts with standard SwiftLint:
 
-1. **Line-specific directives will work** - `:next` and `:this` directives are fully compatible
-2. **File-level directives will be ignored** - These won't cause errors, but won't suppress custom rule violations
-3. **Rule names must match** - Use custom rule identifiers (e.g., `excessive_nesting` not `nesting`)
+1. **Use `swiftlint:` for standard rules** - e.g., `// swiftlint:disable:next line_length`
+2. **Use `swiftlintcustom:` for custom rules** - e.g., `// swiftlintcustom:disable:next excessive_nesting`
+3. **No conflicts** - Standard SwiftLint won't complain about custom rule names
+4. **Clean separation** - Makes it clear which linter each directive targets
 
 ## Troubleshooting
 
@@ -205,21 +206,27 @@ If you're already using standard SwiftLint directives in your codebase:
 
 ```swift
 // ❌ Wrong: File-level not supported
-// swiftlint:disable excessive_nesting
+// swiftlintcustom:disable excessive_nesting
 func deep() { ... }
 
 // ✅ Correct: Use line-specific
-// swiftlint:disable:next excessive_nesting
+// swiftlintcustom:disable:next excessive_nesting
 func deep() { ... }
 
+// ❌ Wrong: Using swiftlint prefix for custom rules
+// swiftlint:disable:next excessive_nesting
+
+// ✅ Correct: Use swiftlintcustom prefix
+// swiftlintcustom:disable:next excessive_nesting
+
 // ❌ Wrong: Typo in rule name
-// swiftlint:disable:next excessive-nesting
+// swiftlintcustom:disable:next excessive-nesting
 
 // ✅ Correct: Exact rule identifier
-// swiftlint:disable:next excessive_nesting
+// swiftlintcustom:disable:next excessive_nesting
 
 // ❌ Wrong: disable:next too far from violation
-// swiftlint:disable:next excessive_nesting
+// swiftlintcustom:disable:next excessive_nesting
 func deep() {
     // ... many lines ...
     if true { if true { if true { if true { ... }}}} // Not suppressed!
@@ -228,7 +235,7 @@ func deep() {
 // ✅ Correct: Inline suppression on violating line
 func deep() {
     if true { if true { if true {
-        if true { ... } // swiftlint:disable:this excessive_nesting
+        if true { ... } // swiftlintcustom:disable:this excessive_nesting
     }}}
 }
 ```

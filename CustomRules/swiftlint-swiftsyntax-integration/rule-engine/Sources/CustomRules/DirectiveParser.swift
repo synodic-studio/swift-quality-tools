@@ -1,12 +1,12 @@
 import Foundation
 import SwiftSyntax
 
-/// Handles parsing and tracking of swiftlint directive comments
+/// Handles parsing and tracking of swiftlintcustom directive comments
 /// Supports:
-/// - swiftlint:disable:next rule_name
-/// - swiftlint:disable:this rule_name
-/// - swiftlint:disable rule_name (file-level)
-/// - swiftlint:enable rule_name (file-level)
+/// - swiftlintcustom:disable:next rule_name
+/// - swiftlintcustom:disable:this rule_name
+/// - swiftlintcustom:disable rule_name (file-level - TODO)
+/// - swiftlintcustom:enable rule_name (file-level - TODO)
 public final class DirectiveParser {
     private var disabledRulesForNextLine: [Int: Set<String>] = [:]
     private var disabledRulesForLine: [Int: Set<String>] = [:]
@@ -49,14 +49,14 @@ public final class DirectiveParser {
 
         let comment = trimmed.dropFirst(2).trimmingCharacters(in: .whitespaces)
 
-        // swiftlint:disable:next rule_name
-        if comment.hasPrefix("swiftlint:disable:next") {
-            let rules = extractRules(from: comment, prefix: "swiftlint:disable:next")
+        // swiftlintcustom:disable:next rule_name
+        if comment.hasPrefix("swiftlintcustom:disable:next") {
+            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:next")
             disabledRulesForNextLine[lineNumber] = rules
         }
-        // swiftlint:disable:this rule_name
-        else if comment.hasPrefix("swiftlint:disable:this") {
-            let rules = extractRules(from: comment, prefix: "swiftlint:disable:this")
+        // swiftlintcustom:disable:this rule_name
+        else if comment.hasPrefix("swiftlintcustom:disable:this") {
+            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:this")
             disabledRulesForLine[lineNumber] = rules
         }
         // Note: File-level disable/enable not yet implemented
