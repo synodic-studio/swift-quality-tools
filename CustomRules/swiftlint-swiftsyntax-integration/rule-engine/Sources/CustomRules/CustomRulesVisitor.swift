@@ -20,6 +20,55 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
     private var currentStructDecl: StructDeclSyntax?
     private var isInSwiftUIView = false
+    private let directiveParser = DirectiveParser()
+    private var locationConverter: SourceLocationConverter?
+
+    /// Initialize visitor with source code for directive parsing
+    public func setSourceCode(_ source: String, sourceFile: SourceFileSyntax) {
+        directiveParser.parseDirectives(from: source)
+        locationConverter = SourceLocationConverter(fileName: "", tree: sourceFile)
+    }
+
+    /// Add violation with suppression check
+    /// - Parameters:
+    ///   - ruleID: The rule identifier
+    ///   - node: Syntax node where violation occurred (for line number)
+    ///   - message: Violation message
+    func addViolation(ruleID: String, node: some SyntaxProtocol, message: String) {
+        guard let converter = locationConverter else {
+            // Fallback if converter not set
+            violations.append("⚠️  [\(ruleID)] \(message)")
+            print("⚠️  [\(ruleID)] \(message)")
+            return
+        }
+
+        let location = converter.location(for: node.position)
+        let line = location.line
+
+        // Check if rule is suppressed for this line
+        guard !directiveParser.isSuppressed(rule: ruleID, line: line) else {
+            return
+        }
+
+        let violation = line > 0
+            ? "⚠️  [\(ruleID)] Line \(line): \(message)"
+            : "⚠️  [\(ruleID)] \(message)"
+
+        violations.append(violation)
+        print(violation)
+    }
+
+    /// Add file-level violation (no line number)
+    func addFileViolation(ruleID: String, message: String) {
+        // File-level violations can be suppressed with file-level disable
+        guard !directiveParser.isSuppressed(rule: ruleID, line: 1) else {
+            return
+        }
+
+        let violation = "⚠️  [\(ruleID)] \(message)"
+        violations.append(violation)
+        print(violation)
+    }
 
     override public func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
         // Check if this struct conforms to View protocol
@@ -112,6 +161,32 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     }
 
     public func getViolations() -> [String] {
-        violations
+        // Filter out suppressed violations
+        violations.filter { violation in
+            !isSuppressed(violation)
+        }
+    }
+
+    /// Check if a violation is suppressed by directives
+    private func isSuppressed(_ violation: String) -> Bool {
+        // Parse violation format: "⚠️  [rule_id] Line N: message" or "⚠️  [rule_id] message"
+        guard let ruleIDRange = violation.range(of: #"\[([^\]]+)\]"#, options: .regularExpression) else {
+            return false
+        }
+
+        let ruleID = String(violation[ruleIDRange].dropFirst().dropLast())
+
+        // Try to extract line number
+        if let lineRange = violation.range(of: #"Line (\d+)"#, options: .regularExpression) {
+            let lineText = violation[lineRange]
+            if let lineNumberStr = lineText.split(separator: " ").last,
+               let lineNumber = Int(lineNumberStr)
+            {
+                return directiveParser.isSuppressed(rule: ruleID, line: lineNumber)
+            }
+        }
+
+        // File-level violation (no line number) - check line 1
+        return directiveParser.isSuppressed(rule: ruleID, line: 1)
     }
 }
