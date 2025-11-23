@@ -135,16 +135,27 @@ When you edit Swift files in Claude Code, these tools run automatically.
 
 ### Xcode Build Phases
 
-Add to your Xcode project's Build Phases for in-IDE warnings:
+Add to your Xcode project's Build Phases to show lint warnings in the IDE.
 
-**Build Phase Script:**
+**Note:** SwiftFormat runs on edit via Claude Code hooks, not in build phases. Only linters (SwiftLint + custom rules) should be in build phases.
+
+**Recommended: Single Script Approach**
+
+Add a "Run Script" build phase with:
 ```bash
-if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" ]; then
-    "${HOME}/Developer/swift-quality-tools/.build/release/swiftformat-smart" "${SRCROOT}"
-fi
+"${HOME}/Developer/swift-quality-tools/Scripts/xcode-lint.sh"
+```
 
+This script runs both linters and works around Xcode's subprocess output suppression by parsing and re-echoing warnings.
+
+**Known Limitation:** Xcode's build phase sandbox suppresses subprocess output. The script works around this by running swiftlintcustom-smart in terminal mode, parsing the output, and re-echoing warnings directly.
+
+**Alternative: Direct Tool Invocation**
+
+If you prefer explicit control:
+```bash
 if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" ]; then
-    "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}"
+    "${HOME}/Developer/swift-quality-tools/.build/release/swiftlint-smart" "${SRCROOT}" || true
 fi
 
 if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-smart" ]; then
@@ -152,10 +163,14 @@ if [ -f "${HOME}/Developer/swift-quality-tools/.build/release/swiftlintcustom-sm
 fi
 ```
 
+**Auto-Detection:** `swiftlintcustom-smart` automatically detects when running in Xcode (via `XCODE_VERSION_ACTUAL` environment variable) and formats violations as clickable warnings for the Issue Navigator.
+
 This provides:
-- ✅ In-Xcode error/warning display
+- ✅ Clickable lint warnings in Xcode Issue Navigator
 - ✅ Consistent quality checks across all projects
 - ✅ Automatic config discovery per project
+- ✅ Auto-detection of Xcode environment (no flags needed)
+- ✅ Single script for easy maintenance
 
 ### Manual Command Line
 

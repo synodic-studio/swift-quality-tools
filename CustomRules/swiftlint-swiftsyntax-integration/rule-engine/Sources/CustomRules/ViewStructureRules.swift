@@ -56,33 +56,33 @@ public enum ViewStructureRules {
     private static func categorizeMember(
         _ member: MemberBlockItemSyntax,
         memberDesc: String,
-        categories: inout [(category: MemberCategory, description: String)],
+        categories: inout [(category: MemberCategory, description: String, node: any SyntaxProtocol)],
     ) {
         if let varDecl = member.decl.as(VariableDeclSyntax.self) {
             if isBodyProperty(varDecl) {
-                categories.append((.body, "body property"))
+                categories.append((.body, "body property", member))
                 return
             }
 
             if isComputedProperty(varDecl) {
                 let propName = getPropertyName(varDecl) ?? "computed property"
-                categories.append((.computedOrMethod, propName))
+                categories.append((.computedOrMethod, propName, member))
                 return
             }
 
             let category: MemberCategory = hasEnvironmentAttribute(varDecl) ? .environmentProperty : .otherProperty
             let propName = getPropertyName(varDecl) ?? "property"
-            categories.append((category, propName))
+            categories.append((category, propName, member))
         } else if member.decl.is(InitializerDeclSyntax.self) {
-            categories.append((.initializer, "init"))
+            categories.append((.initializer, "init", member))
         } else if member.decl.is(EnumDeclSyntax.self) || member.decl.is(StructDeclSyntax.self) ||
             member.decl.is(ClassDeclSyntax.self) || member.decl.is(ProtocolDeclSyntax.self) ||
             member.decl.is(ActorDeclSyntax.self)
         {
-            categories.append((.embeddedType, memberDesc.prefix(50).description))
+            categories.append((.embeddedType, memberDesc.prefix(50).description, member))
         } else if let funcDecl = member.decl.as(FunctionDeclSyntax.self) {
             let funcName = funcDecl.name.text
-            categories.append((.computedOrMethod, funcName))
+            categories.append((.computedOrMethod, funcName, member))
         }
     }
 
@@ -95,7 +95,8 @@ public enum ViewStructureRules {
         // 5. body property
         // 6. Computed properties and methods
 
-        var memberCategories: [(category: MemberCategory, description: String)] = []
+        let converter = SourceLocationConverter(fileName: "", tree: structDecl.root)
+        var memberCategories: [(category: MemberCategory, description: String, node: any SyntaxProtocol)] = []
 
         for member in structDecl.memberBlock.members {
             let memberDesc = member.decl.description.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -115,12 +116,13 @@ public enum ViewStructureRules {
             .computedOrMethod,
         ]
 
-        for (category, description) in memberCategories {
+        for (category, description, node) in memberCategories {
             guard let currentIndex = categoryOrder.firstIndex(of: category) else { continue }
 
             if currentIndex < maxCategorySeen {
                 let categoryName = getCategoryName(category)
-                let violation = "⚠️  [view_structure_order] '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
+                let location = converter.location(for: node.position)
+                let violation = "⚠️  [view_structure_order] Line \(location.line): '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
                 violations.append(violation)
                 print(violation)
                 // Don't return - report all violations

@@ -6,6 +6,25 @@ This file provides guidance to Claude Code when working with the swift-quality-t
 
 Swift Quality Tools is a centralized Swift code quality tooling package with smart configuration discovery. It provides unified interfaces for SwiftFormat, SwiftLint, and custom SwiftSyntax-based rules.
 
+## CRITICAL: Release Mode Required
+
+**ALWAYS build in release mode when making changes to swift-quality-tools:**
+
+```bash
+swift build -c release
+cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c release
+```
+
+**Why:** Xcode build phases in other projects (gravity-well, etc.) reference `.build/release/` binaries. Building in debug mode leaves those binaries stale, causing Xcode to show outdated lint results or no warnings at all.
+
+**Workflow:**
+1. Make changes to source code
+2. Build in **release** mode (both main package and rule engine)
+3. Test with `swiftlintcustom-smart` to verify changes work
+4. Commit changes
+
+**Never** return control to the user after modifying swift-quality-tools without building in release mode.
+
 ## Custom SwiftLint Rule Identifiers
 
 **All custom SwiftSyntax rules MUST have unique identifiers** for tracking and future line-level disabling.
@@ -16,7 +35,7 @@ Swift Quality Tools is a centralized Swift code quality tooling package with sma
 - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
 - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
-- `excessive_nesting`: AST-based nesting depth limit (3 levels max - allows modifier chains up to 16 spaces)
+- `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
 - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
