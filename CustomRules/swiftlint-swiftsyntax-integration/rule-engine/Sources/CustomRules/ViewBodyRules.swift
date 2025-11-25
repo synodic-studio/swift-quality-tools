@@ -1,7 +1,7 @@
 import SwiftSyntax
 
 /// Rules related to SwiftUI View body properties
-/// - skimmable_body: Line count limit (15 max)
+/// - skimmable_body: Line count limit (15 max) - applies to View body and ViewModifier body
 /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Exactly one top-level view
 /// - no_if_modifier: Detect custom .if modifier anti-pattern
@@ -24,6 +24,8 @@ public enum ViewBodyRules {
         return -1
     }
 
+    private static let maxBodyLines = 15
+
     public static func checkSkimmableBody(_ node: VariableDeclSyntax, violations: inout [String]) {
         // Count lines in the body
         let bodyText = node.description
@@ -33,8 +35,35 @@ public enum ViewBodyRules {
             return !trimmed.isEmpty && !trimmed.hasPrefix("var body") && trimmed != "}" && trimmed != "{"
         }
 
-        if contentLines.count > 15 {
-            let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
+        if contentLines.count > maxBodyLines {
+            let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+            violations.append(violation)
+        }
+    }
+
+    /// Check line count in ViewModifier body function
+    /// ViewModifiers use `func body(content: Content) -> some View` instead of `var body`
+    public static func checkSkimmableViewModifierBody(_ node: FunctionDeclSyntax, violations: inout [String]) {
+        // Verify this is a body function with content parameter
+        guard node.name.text == "body",
+              let firstParam = node.signature.parameterClause.parameters.first,
+              firstParam.firstName.text == "content"
+        else {
+            return
+        }
+
+        // Count lines in the function body
+        guard let body = node.body else { return }
+
+        let bodyText = body.description
+        let lines = bodyText.split(separator: "\n", omittingEmptySubsequences: false)
+        let contentLines = lines.filter { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return !trimmed.isEmpty && trimmed != "}" && trimmed != "{"
+        }
+
+        if contentLines.count > maxBodyLines {
+            let violation = "⚠️  [skimmable_body] ViewModifier body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
             violations.append(violation)
         }
     }

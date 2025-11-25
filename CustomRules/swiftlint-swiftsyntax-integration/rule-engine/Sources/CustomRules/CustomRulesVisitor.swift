@@ -4,7 +4,7 @@ import SwiftSyntax
 /// Main coordinator for all custom SwiftLint rules
 ///
 /// Rule identifiers (12 total):
-/// - skimmable_body: View body line count limit (max 15 lines)
+/// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
 /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
 /// - no_if_modifier: Detect custom .if modifier anti-pattern
@@ -153,6 +153,13 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
         // OnChangeRules: Check for 2-param onChange with ignored old value
         OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+
+        return .visitChildren
+    }
+
+    override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        // ViewBodyRules: Check ViewModifier body line count
+        ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
 
         return .visitChildren
     }

@@ -91,6 +91,7 @@ func configure(
 #### 4. no_if_modifier
 **Priority**: High
 **Difficulty**: Low
+**Status**: ✅ IMPLEMENTED (2025-11)
 
 **What**: Detect custom `.if` modifier pattern and suggest standard SwiftUI patterns
 
@@ -129,12 +130,13 @@ var text: some View {
 **Source**: B3
 **Type**: Extend existing `skimmable_body` rule
 **Difficulty**: Low
+**Status**: ✅ IMPLEMENTED (2025-11)
 
 **What**: Apply same 15-line limit to `func body(content: Content) -> some View` in ViewModifier
 
 **Why**: Consistency - View body is limited, ViewModifier body should be too
 
-**Implementation**: Modify `skimmable_body` to detect ViewModifier protocol conformance
+**Implementation**: Added `checkSkimmableViewModifierBody` to ViewBodyRules.swift
 
 ---
 
