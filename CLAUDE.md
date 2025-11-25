@@ -35,6 +35,7 @@ cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c r
 - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
 - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
+- `no_if_without_else`: Detect if-without-else in @ViewBuilder (view shouldn't decide its own visibility - hoist to parent)
 - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
