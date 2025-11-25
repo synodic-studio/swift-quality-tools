@@ -124,7 +124,6 @@ public enum ViewStructureRules {
                 let location = converter.location(for: node.position)
                 let violation = "⚠️  [view_structure_order] Line \(location.line): '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
                 violations.append(violation)
-                print(violation)
                 // Don't return - report all violations
             }
 
@@ -138,7 +137,6 @@ public enum ViewStructureRules {
         {
             let violation = "⚠️  [view_structure_order] SwiftUI View init must immediately precede body property"
             violations.append(violation)
-            print(violation)
         }
     }
 
@@ -170,7 +168,6 @@ public enum ViewStructureRules {
             if isSimpleIdentifier {
                 let violation = "⚠️  [no_wrapper_body] SwiftUI View body is a pointless wrapper - just returns '\(line)'. Merge the logic directly into body or use @ViewBuilder if needed."
                 violations.append(violation)
-                print(violation)
             }
         }
     }
@@ -205,7 +202,6 @@ public enum ViewStructureRules {
         // If we get here, it's a violation
         let violation = "⚠️  [stack_minimum_children] \(calledExpr) should have at least 2 children (or use ForEach, or have if/else with a branch containing 2+ views)"
         violations.append(violation)
-        print(violation)
     }
 
     private static func isSingleChildAllowed(_ statement: CodeBlockItemSyntax) -> Bool {

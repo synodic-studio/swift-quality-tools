@@ -235,6 +235,26 @@ SwiftSyntax-based rules in `CustomRules/swiftlint-swiftsyntax-integration/`:
    swift build
    ```
 
+### Suppressing Custom Rules
+
+Custom rules support line-specific suppression using the `swiftlintcustom:` prefix:
+
+```swift
+// swiftlintcustom:disable:next excessive_nesting
+var computed: String {
+    // Deep nesting allowed here
+}
+
+// Or inline
+func deep() { // swiftlintcustom:disable:this excessive_nesting
+    // ...
+}
+```
+
+**Note:** Use `swiftlint:` for standard rules and `swiftlintcustom:` for custom rules. This keeps SwiftLint's `superfluous_disable_command` safety check working for standard rules.
+
+See `docs/swiftlint-directive-support.md` for full documentation.
+
 ## Architecture
 
 ```

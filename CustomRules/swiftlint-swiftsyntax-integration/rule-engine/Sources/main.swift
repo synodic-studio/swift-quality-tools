@@ -12,6 +12,7 @@ if CommandLine.arguments.count > 1 {
         let sourceCode = try String(contentsOf: url)
         let tree = Parser.parse(source: sourceCode)
         let visitor = CustomRulesVisitor(viewMode: .sourceAccurate)
+        visitor.setSourceCode(sourceCode, sourceFile: tree)
         visitor.walk(tree)
 
         let violations = visitor.getViolations()
@@ -19,6 +20,9 @@ if CommandLine.arguments.count > 1 {
             print("✅ No violations found")
         } else {
             print("Found \(violations.count) violation(s)")
+            for violation in violations {
+                print(violation)
+            }
         }
     } catch {
         print("Error reading file: \(error)")

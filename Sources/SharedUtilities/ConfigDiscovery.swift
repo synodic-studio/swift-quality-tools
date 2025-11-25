@@ -107,7 +107,7 @@ public enum ConfigDiscovery {
             .appendingPathComponent("swiftlint-swiftsyntax-integration")
             .appendingPathComponent("rule-engine")
             .appendingPathComponent(".build")
-            .appendingPathComponent("debug")
+            .appendingPathComponent("release")
             .appendingPathComponent("test-custom-rule")
     }
 
