@@ -121,7 +121,8 @@ public enum ViewStructureRules {
 
             if currentIndex < maxCategorySeen {
                 let categoryName = getCategoryName(category)
-                let location = converter.location(for: node.position)
+                // Use positionAfterSkippingLeadingTrivia to get actual declaration line, not leading whitespace
+                let location = converter.location(for: node.positionAfterSkippingLeadingTrivia)
                 let violation = "⚠️  [view_structure_order] Line \(location.line): '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
                 violations.append(violation)
                 // Don't return - report all violations
