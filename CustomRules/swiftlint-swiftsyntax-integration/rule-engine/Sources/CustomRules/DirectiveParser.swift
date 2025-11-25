@@ -42,9 +42,22 @@ public final class DirectiveParser {
 
     /// Parse a single line for directives
     private func parseLine(_ line: String, lineNumber: Int) {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        // Check for inline comments (after code on same line)
+        // Example: Task { ... } // swiftlintcustom:disable:this rule_name
+        if let commentStart = line.range(of: "//") {
+            let comment = String(line[commentStart.upperBound...])
+                .trimmingCharacters(in: .whitespaces)
 
-        // Only process comment lines
+            // swiftlintcustom:disable:this for inline comments
+            if comment.hasPrefix("swiftlintcustom:disable:this") {
+                let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:this")
+                disabledRulesForLine[lineNumber] = rules
+                return
+            }
+        }
+
+        // Check for comment-only lines (for :next directives)
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
         guard trimmed.hasPrefix("//") else { return }
 
         let comment = trimmed.dropFirst(2).trimmingCharacters(in: .whitespaces)
@@ -54,7 +67,7 @@ public final class DirectiveParser {
             let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:next")
             disabledRulesForNextLine[lineNumber] = rules
         }
-        // swiftlintcustom:disable:this rule_name
+        // swiftlintcustom:disable:this for comment-only lines
         else if comment.hasPrefix("swiftlintcustom:disable:this") {
             let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:this")
             disabledRulesForLine[lineNumber] = rules

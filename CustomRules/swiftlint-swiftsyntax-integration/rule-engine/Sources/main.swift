@@ -20,6 +20,9 @@ if CommandLine.arguments.count > 1 {
             print("✅ No violations found")
         } else {
             print("Found \(violations.count) violation(s)")
+            for violation in violations {
+                print(violation)
+            }
         }
     } catch {
         print("Error reading file: \(error)")
