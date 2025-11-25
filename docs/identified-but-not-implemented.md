@@ -122,6 +122,33 @@ var text: some View {
 
 ---
 
+#### 5. no_nested_ternary
+**Priority**: High
+**Difficulty**: Medium
+**Status**: TODO (2025-11) - Build integration issues
+
+**What**: Forbid nested ternary operators. The fix is to extract the inner ternary to a named variable with meaningful semantics.
+
+**Why**: Nested ternaries hurt readability and make code harder to understand at a glance.
+
+**Example**:
+```swift
+// Bad - nested ternary
+let color = isError ? .red : isWarning ? .orange : .green
+
+// Good - extract inner ternary to named variable
+let nonErrorColor: Color = isWarning ? .orange : .green
+let color = isError ? .red : nonErrorColor
+```
+
+**Implementation Notes**:
+- Rule logic was implemented using TernaryExprSyntax visitor in CustomRulesVisitor.swift
+- Build system issue: Swift Package Manager incremental build not detecting changes to CustomRulesVisitor.swift
+- The visitor is compiled into the binary (verified via `nm` symbols) but not being invoked at runtime
+- Needs investigation of Package.swift target configuration
+
+---
+
 ## Phase 4 Alpha - High Priority
 
 ### SwiftSyntax Rules
