@@ -3,30 +3,50 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
-// Test the rules
-if CommandLine.arguments.count > 1 {
-    let filePath = CommandLine.arguments[1]
-    let url = URL(fileURLWithPath: filePath)
+// Parse arguments
+// Usage: test-custom-rule <file.swift> [--only-rules rule1,rule2,...]
+var filePath: String?
+var onlyRules: [String]?
 
-    do {
-        let sourceCode = try String(contentsOf: url)
-        let tree = Parser.parse(source: sourceCode)
-        let visitor = CustomRulesVisitor(viewMode: .sourceAccurate)
-        visitor.setSourceCode(sourceCode, sourceFile: tree)
-        visitor.walk(tree)
-
-        let violations = visitor.getViolations()
-        if violations.isEmpty {
-            print("✅ No violations found")
-        } else {
-            print("Found \(violations.count) violation(s)")
-            for violation in violations {
-                print(violation)
-            }
-        }
-    } catch {
-        print("Error reading file: \(error)")
+var args = Array(CommandLine.arguments.dropFirst())
+var i = 0
+while i < args.count {
+    let arg = args[i]
+    if arg == "--only-rules", i + 1 < args.count {
+        onlyRules = args[i + 1].split(separator: ",").map { String($0) }
+        i += 2
+    } else if !arg.hasPrefix("-") {
+        filePath = arg
+        i += 1
+    } else {
+        i += 1
     }
-} else {
-    print("Usage: test-custom-rule <file.swift>")
+}
+
+guard let filePath else {
+    print("Usage: test-custom-rule <file.swift> [--only-rules rule1,rule2,...]")
+    exit(1)
+}
+
+let url = URL(fileURLWithPath: filePath)
+
+do {
+    let sourceCode = try String(contentsOf: url)
+    let tree = Parser.parse(source: sourceCode)
+    let visitor = CustomRulesVisitor(viewMode: .sourceAccurate)
+    visitor.setSourceCode(sourceCode, sourceFile: tree)
+    visitor.setEnabledRules(onlyRules)
+    visitor.walk(tree)
+
+    let violations = visitor.getViolations()
+    if violations.isEmpty {
+        print("✅ No violations found")
+    } else {
+        print("Found \(violations.count) violation(s)")
+        for violation in violations {
+            print(violation)
+        }
+    }
+} catch {
+    print("Error reading file: \(error)")
 }

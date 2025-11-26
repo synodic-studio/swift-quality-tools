@@ -13,6 +13,21 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         • Indentation depth limited to 4 levels maximum for all functions, closures, and initializers
 
         Performance: Files are processed in parallel using all available CPU cores for optimal speed.
+
+        Available rule IDs:
+        • skimmable_body
+        • no_group_body
+        • one_top_level_view
+        • no_if_modifier
+        • no_if_without_else
+        • excessive_nesting
+        • view_structure_order
+        • no_wrapper_body
+        • blank_line_import_separation
+        • preview_required
+        • stack_minimum_children
+        • prefer_zero_param_onchange
+        • single_modifier_per_line
         """,
     )
 
@@ -21,6 +36,9 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
 
     @Flag(name: .long, help: "Disable parallel processing (useful for debugging)")
     var sequential = false
+
+    @Option(name: .long, help: "Only run specified rules (comma-separated list of rule IDs)")
+    var onlyRules: String?
 
     mutating func run() async throws {
         let targetURL = URL(fileURLWithPath: target)
@@ -39,16 +57,31 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
         let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
 
+        // Parse only-rules option
+        let rulesToRun = onlyRules?.split(separator: ",").map { String($0) }
+
+        // Print which rules are being run if filtered
+        if let rules = rulesToRun, !isXcode {
+            Console.info("Running only: \(rules.joined(separator: ", "))")
+        }
+
         // Process files in parallel or sequentially based on flag
         let results: [CheckResult] = if sequential {
             // Sequential processing (for debugging or when order matters)
-            try filesToCheck.map { try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode) }
+            try filesToCheck.map {
+                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode, onlyRules: rulesToRun)
+            }
         } else {
             // Parallel processing using TaskGroup for optimal performance
             try await withThrowingTaskGroup(of: CheckResult.self) { group in
                 for fileURL in filesToCheck {
                     group.addTask {
-                        try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEnginePath, xcodeFormat: isXcode)
+                        try CustomRulesChecker.checkFile(
+                            fileURL,
+                            ruleEngine: ruleEnginePath,
+                            xcodeFormat: isXcode,
+                            onlyRules: rulesToRun,
+                        )
                     }
                 }
 

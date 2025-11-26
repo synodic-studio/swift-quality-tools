@@ -7,11 +7,22 @@ public enum CustomRulesChecker {
     ///   - fileURL: URL of file to check
     ///   - ruleEngine: URL of rule engine executable
     ///   - xcodeFormat: Whether to output in Xcode-compatible format
+    ///   - onlyRules: Optional list of rule IDs to run (nil = all rules)
     /// - Returns: CheckResult with violation status and relative path
-    public static func checkFile(_ fileURL: URL, ruleEngine: URL, xcodeFormat: Bool = false) throws -> CheckResult {
+    public static func checkFile(
+        _ fileURL: URL,
+        ruleEngine: URL,
+        xcodeFormat: Bool = false,
+        onlyRules: [String]? = nil
+    ) throws -> CheckResult {
         let process = Process()
         process.executableURL = ruleEngine
-        process.arguments = [fileURL.path]
+        var arguments = [fileURL.path]
+        if let rules = onlyRules, !rules.isEmpty {
+            arguments.append("--only-rules")
+            arguments.append(rules.joined(separator: ","))
+        }
+        process.arguments = arguments
 
         let pipe = Pipe()
         process.standardOutput = pipe
