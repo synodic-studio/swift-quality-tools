@@ -88,20 +88,29 @@ func configure(
 
 ---
 
-#### 3.5. no_modifiers_after_closing_delimiter
-**Priority**: Low
+#### 3.5. single_modifier_per_line
+**Priority**: Medium
 **Difficulty**: Medium
+**Status**: ✅ IMPLEMENTED (2025-11)
 
-**What**: Disallow chaining methods/modifiers on the same line as a closing `)` or `]` when the delimiter is on its own line
+**What**: Each modifier should be on its own line - no multiple modifiers chained on same line, no modifier on same line as closing delimiter
 
-**Why**: Improves readability - modifiers should start on their own line
+**Why**: Improves readability - modifiers should be visually scannable
 
 **Example**:
 ```swift
-// ❌ Hard to scan
+// ❌ Multiple modifiers on same line
+Text("Hello").padding().background(.red)
+
+// ❌ Modifier on same line as closing delimiter
 SomeView(
     parameter: value
 ).padding()
+
+// ✅ Each modifier on its own line
+Text("Hello")
+    .padding()
+    .background(.red)
 
 // ✅ Clear structure
 SomeView(
@@ -110,7 +119,7 @@ SomeView(
 .padding()
 ```
 
-**Note**: SwiftFormat may handle this with `wrapArguments` rules - verify before implementing
+**Implementation**: Added `ModifierFormattingRules.swift` with line-based pattern detection
 
 ---
 
@@ -172,6 +181,62 @@ let color = isError ? .red : nonErrorColor
 - Build system issue: Swift Package Manager incremental build not detecting changes to CustomRulesVisitor.swift
 - The visitor is compiled into the binary (verified via `nm` symbols) but not being invoked at runtime
 - Needs investigation of Package.swift target configuration
+
+---
+
+#### 6. no_multiline_collapse
+**Priority**: High
+**Difficulty**: Medium
+**Status**: TODO
+
+**What**: Never collapse multi-line code into a single line to meet line limits. The fix is always to extract into a named subview/property.
+
+**Why**: Collapsing multi-line code into a single line destroys readability. Line limits exist to encourage extraction, not compression.
+
+**Example**:
+```swift
+// ORIGINAL - triggered skimmable_body warning
+@ViewBuilder private var presetButtons: some View {
+    if !config.presets.isEmpty {
+        HStack {
+            ForEach(config.presets.indices, id: \.self) { index in
+                presetButton(at: index)
+            }
+        }
+    }
+}
+
+// ❌ BAD "fix" - cramming code to reduce line count
+@ViewBuilder private var presetButtons: some View {
+    if !config.presets.isEmpty {
+        HStack {
+            ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+        }
+    }
+}
+
+// ✅ GOOD fix - extract complexity
+@ViewBuilder private var presetButtons: some View {
+    if !config.presets.isEmpty {
+        presetButtonsRow
+    }
+}
+
+private var presetButtonsRow: some View {
+    HStack {
+        ForEach(config.presets.indices, id: \.self) { index in
+            presetButton(at: index)
+        }
+    }
+}
+```
+
+**Detection Challenge**: Hard to detect programmatically - this is more of a code review principle. Could potentially detect:
+- Lines significantly longer than surrounding code
+- Closures with complex expressions crammed onto one line
+- `{ $0.something }` patterns that could be expanded
+
+**Note**: May be better as skill/guidance than automated rule
 
 ---
 
@@ -409,6 +474,27 @@ let color = isError ? .red : nonErrorColor
 ✅ **View Extraction Decision Matrix** (E2, 2025-11-15)
 ✅ **Extension Usage Guidelines** (E4, 2025-11-15)
 ✅ **Extension File Naming** (E9, 2025-11-15)
+
+---
+
+## Tooling Improvements
+
+### 1. Support --only-rules flag in custom linter
+**Priority**: Medium
+**Difficulty**: Low
+
+**What**: Add `--only-rules rule1,rule2` flag to `swiftlintcustom-smart` matching SwiftLint's interface
+
+**Why**: Enables selective rule execution for targeted linting (e.g., only run `single_modifier_per_line` on recent changes)
+
+**Example**:
+```bash
+# Current SwiftLint behavior
+swiftlint --only-rules trailing_whitespace,colon
+
+# Desired custom linter behavior
+swiftlintcustom-smart --only-rules single_modifier_per_line,no_group_body
+```
 
 ---
 
