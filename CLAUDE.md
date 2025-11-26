@@ -93,8 +93,9 @@ Can I fix it in a way that genuinely improves the code?
 ### Suppression Format
 
 ```swift
-// swiftlintcustom:disable:next rule_id
 // Reason: [explain why this is intentional/correct]
+// swiftlintcustom:disable:next rule_id
+<actual code line here>
 ```
 
 ## Custom SwiftLint Rule Identifiers
