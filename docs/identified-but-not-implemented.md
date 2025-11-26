@@ -477,6 +477,27 @@ private var presetButtonsRow: some View {
 
 ---
 
+## Tooling Improvements
+
+### 1. Support --only-rules flag in custom linter
+**Priority**: Medium
+**Difficulty**: Low
+
+**What**: Add `--only-rules rule1,rule2` flag to `swiftlintcustom-smart` matching SwiftLint's interface
+
+**Why**: Enables selective rule execution for targeted linting (e.g., only run `single_modifier_per_line` on recent changes)
+
+**Example**:
+```bash
+# Current SwiftLint behavior
+swiftlint --only-rules trailing_whitespace,colon
+
+# Desired custom linter behavior
+swiftlintcustom-smart --only-rules single_modifier_per_line,no_group_body
+```
+
+---
+
 ## Implementation Notes
 
 **SwiftSyntax Rules**:
