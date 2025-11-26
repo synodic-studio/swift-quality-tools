@@ -748,6 +748,138 @@ struct CustomRulesTests {
         #expect(!output.contains("[no_if_modifier]"))
     }
 
+    // MARK: - No If Without Else Rule Tests
+
+    @Test("no_if_without_else: Detects if-without-else in View body")
+    func noIfWithoutElseViolation() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let showContent: Bool
+
+            var body: some View {
+                VStack {
+                    if showContent {
+                        Text("Content")
+                    }
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Detects if-without-else in @ViewBuilder property")
+    func noIfWithoutElseInViewBuilder() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let condition: Bool
+
+            var body: some View {
+                contentView
+            }
+
+            @ViewBuilder
+            private var contentView: some View {
+                if condition {
+                    Text("Conditional")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Accepts if-else in View body")
+    func noIfWithoutElseWithElse() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            let showContent: Bool
+
+            var body: some View {
+                if showContent {
+                    Text("Content")
+                } else {
+                    Text("No Content")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Accepts if-without-else outside ViewBuilder")
+    func noIfWithoutElseOutsideViewBuilder() throws {
+        let code = """
+        import Foundation
+
+        struct Calculator {
+            func compute(_ value: Int) -> Int {
+                if value > 0 {
+                    return value * 2
+                }
+                return 0
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Accepts if-else-if chain")
+    func noIfWithoutElseChain() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            enum State { case loading, success, error }
+            let state: State
+
+            var body: some View {
+                if state == .loading {
+                    ProgressView()
+                } else if state == .success {
+                    Text("Done")
+                } else {
+                    Text("Error")
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_without_else]"))
+    }
+
     // MARK: - View Structure Order Rule Tests
 
     @Test("view_structure_order: Detects properties out of order")
