@@ -88,6 +88,32 @@ func configure(
 
 ---
 
+#### 3.5. no_modifiers_after_closing_delimiter
+**Priority**: Low
+**Difficulty**: Medium
+
+**What**: Disallow chaining methods/modifiers on the same line as a closing `)` or `]` when the delimiter is on its own line
+
+**Why**: Improves readability - modifiers should start on their own line
+
+**Example**:
+```swift
+// ❌ Hard to scan
+SomeView(
+    parameter: value
+).padding()
+
+// ✅ Clear structure
+SomeView(
+    parameter: value
+)
+.padding()
+```
+
+**Note**: SwiftFormat may handle this with `wrapArguments` rules - verify before implementing
+
+---
+
 #### 4. no_if_modifier
 **Priority**: High
 **Difficulty**: Low
