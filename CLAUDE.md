@@ -98,7 +98,15 @@ Can I fix it in a way that genuinely improves the code?
 <actual code line here>
 ```
 
-**Note on consecutive directives**: If another `disable:next` directive exists immediately before or after yours, they will interfere with each other (each only applies to the very next line). In such cases, consider using:
+**Note on consecutive directives**: If a `swiftlint:` or `swiftformat:` directive exists immediately before or after yours, they will interfere (each `:next` only applies to the very next line). Example conflict:
+
+```swift
+// swiftlint:disable:next identifier_name
+// swiftlintcustom:disable:next skimmable_body  // ← This becomes the "next" line!
+var body: some View { ... }
+```
+
+In such cases, use `:this` or `:previous` instead:
 - `// swiftlintcustom:disable:this rule_id` - suppresses on the same line
 - `// swiftlintcustom:disable:previous rule_id` - suppresses the line above
 
