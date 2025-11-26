@@ -5,6 +5,7 @@ import SwiftSyntax
 /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Exactly one top-level view
 /// - no_if_modifier: Detect custom .if modifier anti-pattern
+/// - no_if_without_else: Detect if-without-else in @ViewBuilder (visibility logic should be hoisted to parent)
 public enum ViewBodyRules {
     private static func isRelevantBodyLine(_ trimmed: String) -> Bool {
         !trimmed.isEmpty && !trimmed.contains("get") && !trimmed.contains("var body") && trimmed != "{" && trimmed != "}"
@@ -252,5 +253,69 @@ public enum ViewBodyRules {
            • Rationale: .if bypasses SwiftUI's view identity system
         """
         violations.append(violation)
+    }
+
+    /// Detect if-without-else in @ViewBuilder contexts
+    /// A view should not decide its own visibility - hoist the condition to the parent
+    public static func checkNoIfWithoutElse(_ node: IfExprSyntax, violations: inout [String]) {
+        // Only flag if there's no else branch
+        guard node.elseBody == nil else { return }
+
+        // Check if we're in a @ViewBuilder context by walking up the tree
+        guard isInViewBuilderContext(node) else { return }
+
+        let violation = """
+        ⚠️  [no_if_without_else] Avoid if-without-else in @ViewBuilder - hoist visibility logic to parent
+           • A view should not decide whether it appears or not
+           • Move the condition to where this view is used
+           • If switching content, add an else branch
+        """
+        violations.append(violation)
+    }
+
+    /// Check if a node is inside a @ViewBuilder context
+    private static func isInViewBuilderContext(_ node: some SyntaxProtocol) -> Bool {
+        var current: Syntax? = Syntax(node)
+
+        while let parent = current?.parent {
+            // Check for @ViewBuilder on a computed property
+            if let varDecl = parent.as(VariableDeclSyntax.self) {
+                if hasViewBuilderAttribute(varDecl.attributes) {
+                    return true
+                }
+                // Also check if it returns `some View` (implicit @ViewBuilder in body)
+                if let binding = varDecl.bindings.first,
+                   let typeAnnotation = binding.typeAnnotation,
+                   typeAnnotation.description.contains("some View")
+                {
+                    return true
+                }
+            }
+
+            // Check for @ViewBuilder on a function
+            if let funcDecl = parent.as(FunctionDeclSyntax.self) {
+                if hasViewBuilderAttribute(funcDecl.attributes) {
+                    return true
+                }
+                // Check return type
+                if let returnClause = funcDecl.signature.returnClause,
+                   returnClause.description.contains("some View")
+                {
+                    return true
+                }
+            }
+
+            current = parent
+        }
+
+        return false
+    }
+
+    /// Check if attributes contain @ViewBuilder
+    private static func hasViewBuilderAttribute(_ attributes: AttributeListSyntax) -> Bool {
+        attributes.contains { attr in
+            guard let attrSyntax = attr.as(AttributeSyntax.self) else { return false }
+            return attrSyntax.attributeName.trimmedDescription == "ViewBuilder"
+        }
     }
 }

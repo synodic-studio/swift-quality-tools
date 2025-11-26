@@ -3143,3 +3143,1288 @@ new: |
           violations.append(violation)
       }
 
+---
+# Edit 2025-11-24T17:46:49.652640
+time: 2025-11-24T17:46:49.652653
+file: /Users/bryancostanza/Developer/swift-quality-tools/docs/identified-but-not-implemented.md
+change_type: docs
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+  #### 4. no_if_modifier
+  **Priority**: High
+  **Difficulty**: Low
+  
+  **What**: Detect custom `.if` modifier pattern and suggest standard SwiftUI patterns
+  
+  **Why**: Custom `.if` modifier is an anti-pattern - SwiftUI has better native approaches
+  
+  **Example**:
+  ```swift
+  // ❌ Custom .if modifier (anti-pattern)
+  Text("Hello")
+      .if(isRed) { $0.foregroundColor(.red) }
+  
+  // ✅ Use standard SwiftUI conditional modifiers
+  Text("Hello")
+      .foregroundColor(isRed ? .red : .primary)
+  
+  // ✅ Or use @ViewBuilder for complex cases
+  @ViewBuilder
+  var text: some View {
+      if isRed {
+          Text("Hello").foregroundColor(.red)
+      } else {
+          Text("Hello")
+      }
+  }
+  ```
+  
+  **Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+  
+  ---
+new: |
+  #### 4. no_if_modifier
+  **Priority**: High
+  **Difficulty**: Low
+  **Status**: ✅ IMPLEMENTED (2025-11)
+  
+  **What**: Detect custom `.if` modifier pattern and suggest standard SwiftUI patterns
+  
+  **Why**: Custom `.if` modifier is an anti-pattern - SwiftUI has better native approaches
+  
+  **Example**:
+  ```swift
+  // ❌ Custom .if modifier (anti-pattern)
+  Text("Hello")
+      .if(isRed) { $0.foregroundColor(.red) }
+  
+  // ✅ Use standard SwiftUI conditional modifiers
+  Text("Hello")
+      .foregroundColor(isRed ? .red : .primary)
+  
+  // ✅ Or use @ViewBuilder for complex cases
+  @ViewBuilder
+  var text: some View {
+      if isRed {
+          Text("Hello").foregroundColor(.red)
+      } else {
+          Text("Hello")
+      }
+  }
+  ```
+  
+  **Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+  
+  ---
+
+---
+# Edit 2025-11-24T17:47:15.103968
+time: 2025-11-24T17:47:15.103979
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max)
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  public enum ViewBodyRules {
+new: |
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max) - applies to View body and ViewModifier body
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  public enum ViewBodyRules {
+      private static let maxBodyLines = 15
+
+---
+# Edit 2025-11-24T17:47:36.173952
+time: 2025-11-24T17:47:36.173966
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+      public static func checkSkimmableBody(_ node: VariableDeclSyntax, violations: inout [String]) {
+          // Count lines in the body
+          let bodyText = node.description
+          let lines = bodyText.split(separator: "\n", omittingEmptySubsequences: false)
+          let contentLines = lines.filter { line in
+              let trimmed = line.trimmingCharacters(in: .whitespaces)
+              return !trimmed.isEmpty && !trimmed.hasPrefix("var body") && trimmed != "}" && trimmed != "{"
+          }
+  
+          if contentLines.count > 15 {
+              let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: 15)"
+              violations.append(violation)
+          }
+      }
+new: |
+      private static let maxBodyLines = 15
+  
+      public static func checkSkimmableBody(_ node: VariableDeclSyntax, violations: inout [String]) {
+          // Count lines in the body
+          let bodyText = node.description
+          let lines = bodyText.split(separator: "\n", omittingEmptySubsequences: false)
+          let contentLines = lines.filter { line in
+              let trimmed = line.trimmingCharacters(in: .whitespaces)
+              return !trimmed.isEmpty && !trimmed.hasPrefix("var body") && trimmed != "}" && trimmed != "{"
+          }
+  
+          if contentLines.count > maxBodyLines {
+              let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+              violations.append(violation)
+          }
+      }
+  
+      /// Check line count in ViewModifier body function
+      /// ViewModifiers use `func body(content: Content) -> some View` instead of `var body`
+      public static func checkSkimmableViewModifierBody(_ node: FunctionDeclSyntax, violations: inout [String]) {
+          // Verify this is a body function with content parameter
+          guard node.name.text == "body",
+                let firstParam = node.signature.parameterClause.parameters.first,
+                firstParam.firstName.text == "content"
+          else {
+              return
+          }
+  
+          // Count lines in the function body
+          guard let body = node.body else { return }
+  
+          let bodyText = body.description
+          let lines = bodyText.split(separator: "\n", omittingEmptySubsequences: false)
+          let contentLines = lines.filter { line in
+              let trimmed = line.trimmingCharacters(in: .whitespaces)
+              return !trimmed.isEmpty && trimmed != "}" && trimmed != "{"
+          }
+  
+          if contentLines.count > maxBodyLines {
+              let violation = "⚠️  [skimmable_body] ViewModifier body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+              violations.append(violation)
+          }
+      }
+
+---
+# Edit 2025-11-24T17:47:48.982816
+time: 2025-11-24T17:47:48.982827
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: style
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check for Group without modifiers
+          ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+  
+          // ViewBodyRules: Check for .if modifier anti-pattern
+          ViewBodyRules.checkNoIfModifier(node, violations: &violations)
+  
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+  
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+  
+          return .visitChildren
+      }
+new: |
+      override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check for Group without modifiers
+          ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+  
+          // ViewBodyRules: Check for .if modifier anti-pattern
+          ViewBodyRules.checkNoIfModifier(node, violations: &violations)
+  
+          // ViewStructureRules: Check stack minimum children
+          ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+  
+          // OnChangeRules: Check for 2-param onChange with ignored old value
+          OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check ViewModifier body line count
+          ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+  
+          return .visitChildren
+      }
+
+---
+# Edit 2025-11-24T17:47:57.433926
+time: 2025-11-24T17:47:57.433937
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: style
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (12 total):
+  /// - skimmable_body: View body line count limit (max 15 lines)
+new: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (12 total):
+  /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
+
+---
+# Edit 2025-11-24T17:48:09.302234
+time: 2025-11-24T17:48:09.302245
+file: /Users/bryancostanza/Developer/swift-quality-tools/docs/identified-but-not-implemented.md
+change_type: docs
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+  #### 1. ViewModifier Body Line Limit
+  **Source**: B3
+  **Type**: Extend existing `skimmable_body` rule
+  **Difficulty**: Low
+  
+  **What**: Apply same 15-line limit to `func body(content: Content) -> some View` in ViewModifier
+  
+  **Why**: Consistency - View body is limited, ViewModifier body should be too
+  
+  **Implementation**: Modify `skimmable_body` to detect ViewModifier protocol conformance
+new: |
+  #### 1. ViewModifier Body Line Limit
+  **Source**: B3
+  **Type**: Extend existing `skimmable_body` rule
+  **Difficulty**: Low
+  **Status**: ✅ IMPLEMENTED (2025-11)
+  
+  **What**: Apply same 15-line limit to `func body(content: Content) -> some View` in ViewModifier
+  
+  **Why**: Consistency - View body is limited, ViewModifier body should be too
+  
+  **Implementation**: Added `checkSkimmableViewModifierBody` to ViewBodyRules.swift
+
+---
+# Edit 2025-11-24T17:48:21.439729
+time: 2025-11-24T17:48:21.439742
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:proceed but don't rebuild the binary yet because I have another CC session going that is solving lint problems as we speak
+old: |
+  - `skimmable_body`: SwiftUI View body line count limit (15 lines max)
+new: |
+  - `skimmable_body`: SwiftUI View/ViewModifier body line count limit (15 lines max)
+
+---
+# Edit 2025-11-24T20:01:54.128197
+time: 2025-11-24T20:01:54.128207
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewStructureRules.swift
+change_type: bugfix
+user_prompt: |
+  looks like an off-by-1 issue with the view strcture[Image #1]
+old: |
+              if currentIndex < maxCategorySeen {
+                  let categoryName = getCategoryName(category)
+                  let location = converter.location(for: node.position)
+                  let violation = "⚠️  [view_structure_order] Line \(location.line): '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
+new: |
+              if currentIndex < maxCategorySeen {
+                  let categoryName = getCategoryName(category)
+                  // Use positionAfterSkippingLeadingTrivia to get actual declaration line, not leading whitespace
+                  let location = converter.location(for: node.positionAfterSkippingLeadingTrivia)
+                  let violation = "⚠️  [view_structure_order] Line \(location.line): '\(description)' (\(categoryName)) is out of order (expected: embedded types → env props → other props → init → body → computed/methods)"
+
+---
+# Edit 2025-11-24T20:28:27.244630
+time: 2025-11-24T20:28:27.244640
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: bugfix
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max) - applies to View body and ViewModifier body
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  public enum ViewBodyRules {
+new: |
+  /// Rules related to SwiftUI View body properties
+  /// - skimmable_body: Line count limit (15 max) - applies to View body and ViewModifier body
+  /// - no_group_body: No Group usage without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Exactly one top-level view
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  /// - no_if_without_else: Detect if-without-else in @ViewBuilder (visibility logic should be hoisted to parent)
+  public enum ViewBodyRules {
+
+---
+# Edit 2025-11-24T20:28:57.067775
+time: 2025-11-24T20:28:57.067794
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: bugfix
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+      /// Detect custom .if modifier anti-pattern
+      /// Suggests using standard SwiftUI patterns instead (ternary, @ViewBuilder, etc.)
+      public static func checkNoIfModifier(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+          // Check if this is a call to .if(
+          guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
+                memberAccess.declName.baseName.text == "if"
+          else {
+              return
+          }
+  
+          let violation = """
+          ⚠️  [no_if_modifier] Avoid custom .if modifier - use standard SwiftUI patterns instead
+             • For simple conditionals: .foregroundColor(condition ? .red : .blue)
+             • For complex cases: Use @ViewBuilder with if/else
+             • Rationale: .if bypasses SwiftUI's view identity system
+          """
+          violations.append(violation)
+      }
+  }
+new: |
+      /// Detect custom .if modifier anti-pattern
+      /// Suggests using standard SwiftUI patterns instead (ternary, @ViewBuilder, etc.)
+      public static func checkNoIfModifier(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+          // Check if this is a call to .if(
+          guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
+                memberAccess.declName.baseName.text == "if"
+          else {
+              return
+          }
+  
+          let violation = """
+          ⚠️  [no_if_modifier] Avoid custom .if modifier - use standard SwiftUI patterns instead
+             • For simple conditionals: .foregroundColor(condition ? .red : .blue)
+             • For complex cases: Use @ViewBuilder with if/else
+             • Rationale: .if bypasses SwiftUI's view identity system
+          """
+          violations.append(violation)
+      }
+  
+      /// Detect if-without-else in @ViewBuilder contexts
+      /// A view should not decide its own visibility - hoist the condition to the parent
+      public static func checkNoIfWithoutElse(_ node: IfExprSyntax, violations: inout [String]) {
+          // Only flag if there's no else branch
+          guard node.elseBody == nil else { return }
+  
+          // Check if we're in a @ViewBuilder context by walking up the tree
+          guard isInViewBuilderContext(node) else { return }
+  
+          let violation = """
+          ⚠️  [no_if_without_else] Avoid if-without-else in @ViewBuilder - hoist visibility logic to parent
+             • A view should not decide whether it appears or not
+             • Move the condition to where this view is used
+             • If switching content, add an else branch
+          """
+          violations.append(violation)
+      }
+  
+      /// Check if a node is inside a @ViewBuilder context
+      private static func isInViewBuilderContext(_ node: some SyntaxProtocol) -> Bool {
+          var current: Syntax? = Syntax(node)
+  
+          while let parent = current?.parent {
+              // Check for @ViewBuilder on a computed property
+              if let varDecl = parent.as(VariableDeclSyntax.self) {
+                  if hasViewBuilderAttribute(varDecl.attributes) {
+                      return true
+                  }
+                  // Also check if it returns `some View` (implicit @ViewBuilder in body)
+                  if let binding = varDecl.bindings.first,
+                     let typeAnnotation = binding.typeAnnotation,
+                     typeAnnotation.description.contains("some View")
+                  {
+                      return true
+                  }
+              }
+  
+              // Check for @ViewBuilder on a function
+              if let funcDecl = parent.as(FunctionDeclSyntax.self) {
+                  if hasViewBuilderAttribute(funcDecl.attributes) {
+                      return true
+                  }
+                  // Check return type
+                  if let returnClause = funcDecl.signature.returnClause,
+                     returnClause.description.contains("some View")
+                  {
+                      return true
+                  }
+              }
+  
+              current = parent
+          }
+  
+          return false
+      }
+  
+      /// Check if attributes contain @ViewBuilder
+      private static func hasViewBuilderAttribute(_ attributes: AttributeListSyntax) -> Bool {
+          attributes.contains { attr in
+              guard let attrSyntax = attr.as(AttributeSyntax.self) else { return false }
+              return attrSyntax.attributeName.trimmedDescription == "ViewBuilder"
+          }
+      }
+  }
+
+---
+# Edit 2025-11-24T20:29:21.505102
+time: 2025-11-24T20:29:21.505115
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (12 total):
+  /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - view_structure_order: Enforce View property ordering
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+  /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
+  /// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
+new: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (13 total):
+  /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
+  /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
+  /// - one_top_level_view: Enforce single top-level view in View bodies
+  /// - no_if_modifier: Detect custom .if modifier anti-pattern
+  /// - no_if_without_else: Detect if-without-else in @ViewBuilder (hoist visibility to parent)
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - view_structure_order: Enforce View property ordering
+  /// - no_wrapper_body: Detect pointless wrapper body properties
+  /// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
+  /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
+  /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+  /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
+  /// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
+
+---
+# Edit 2025-11-24T20:29:39.334287
+time: 2025-11-24T20:29:39.334297
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check ViewModifier body line count
+          ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      public func getViolations() -> [String] {
+new: |
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check ViewModifier body line count
+          ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check for if-without-else in @ViewBuilder
+          ViewBodyRules.checkNoIfWithoutElse(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      public func getViolations() -> [String] {
+
+---
+# Edit 2025-11-24T20:29:59.507086
+time: 2025-11-24T20:29:59.507098
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+  - `skimmable_body`: SwiftUI View/ViewModifier body line count limit (15 lines max)
+  - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+  - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
+  - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
+new: |
+  - `skimmable_body`: SwiftUI View/ViewModifier body line count limit (15 lines max)
+  - `no_group_body`: Prohibit Group without modifiers anywhere in SwiftUI code (use @ViewBuilder instead)
+  - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
+  - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
+  - `no_if_without_else`: Detect if-without-else in @ViewBuilder (view shouldn't decide its own visibility - hoist to parent)
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+  - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
+  - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
+
+---
+# Edit 2025-11-24T20:32:53.571515
+time: 2025-11-24T20:32:53.571529
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  /sy:merged-work PR 23. Make a new PR for the rule you proposed for the if without else. Make sure the hint says that the logic should be hoisted (you pick the best language)
+  
+  ---
+  
+  I ran into this edit you made in another sessions and it boggles the mind. On the one hand We have numerous notes for you to take the warnings very very seriously but we also have a reminder to not make the code worse. By way of getting rid of those warnings, I wish there were a way to get you to consider whether the change is improving things or making them worse because I think that's an evaluation that you can make. The thing that I absolutely do not ever want you to do is to just go "oh these warnings are from before" so I'm not going to deal with them or "oh the warnings aren't important" so we're just going to commit and be done. I absolutely don't ever want that to be done. We either need to fix or exempt every single warning. I think we do have that language already but maybe I said something in there that helps clarify it and maybe you can get in there and set things straight. What do you think? 
+  
+      @ViewBuilder private var presetButtons: some View {
+          if !config.presets.isEmpty {
+              HStack {
+                  ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+          }
+      }
+  
+      private func presetButton(at index: Int) -> some View {
+          PresetButton(label: presetButtonLabel(at: index), action: { setPresetValue(at: index) })
+              .monospacedDigit()
+      }
+  
+  
+  ___
+  
+  Can we make a rule that forbids nested ternary statements? 
+  
+  ---
+  
+  probably each of these ^ should be their own PR. You have permission to do them all.
+old: |
+  **Never** return control to the user after modifying swift-quality-tools without building in release mode.
+  
+  ## Custom SwiftLint Rule Identifiers
+new: |
+  **Never** return control to the user after modifying swift-quality-tools without building in release mode.
+  
+  ## CRITICAL: Warning Handling Philosophy
+  
+  **Every warning MUST be addressed - either fixed properly OR exempted with a suppression directive.**
+  
+  ### What "Addressed" Means
+  
+  1. **Fix it properly** - Make a change that genuinely improves the code
+  2. **Exempt it explicitly** - Add a `// swiftlintcustom:disable:next rule_id` directive with clear justification
+  
+  ### What Is NOT Acceptable
+  
+  - **Ignoring warnings** - "These warnings were there before" is NOT an excuse
+  - **Dismissing warnings** - "The warnings aren't important" is NOT acceptable
+  - **Committing with warnings** - Every commit should have zero unaddressed warnings
+  - **Making code worse to silence warnings** - A "fix" that degrades code quality is not a fix
+  
+  ### The Quality Judgment
+  
+  Before "fixing" a warning, evaluate: **Does this change improve the code or make it worse?**
+  
+  **Example of a BAD "fix"** (making code worse to silence a warning):
+  ```swift
+  // Original - clean, readable
+  @ViewBuilder private var presetButtons: some View {
+      if !config.presets.isEmpty {
+          HStack {
+              ForEach(config.presets.indices, id: \.self) { index in
+                  presetButton(at: index)
+              }
+          }
+      }
+  }
+  
+  // BAD "fix" - cramming code to reduce line count
+  @ViewBuilder private var presetButtons: some View {
+      if !config.presets.isEmpty {
+          HStack {
+              ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+      }
+  }
+  ```
+  
+  The "fix" removed readability for no real benefit. This is worse than the original.
+  
+  **Correct approach**: Either:
+  1. Refactor genuinely (extract subviews, simplify logic)
+  2. Add suppression directive if the code is correct as-is
+  
+  ### Decision Framework
+  
+  ```
+  Warning appears
+      │
+      ▼
+  Can I fix it in a way that genuinely improves the code?
+      │
+      ├── YES → Make the improvement
+      │
+      └── NO → Is the current code correct/intentional?
+                  │
+                  ├── YES → Add suppression directive with justification
+                  │
+                  └── NO → The code has a real problem - fix it properly
+  ```
+  
+  ### Suppression Format
+  
+  ```swift
+  // swiftlintcustom:disable:next rule_id
+  // Reason: [explain why this is intentional/correct]
+  ```
+  
+  ## Custom SwiftLint Rule Identifiers
+
+---
+# Edit 2025-11-24T20:36:24.860852
+time: 2025-11-24T20:36:24.860869
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+  public enum CodeQualityRules {
+new: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+  /// - no_nested_ternary: Prohibit nested ternary operators (extract to named variable instead)
+  public enum CodeQualityRules {
+
+---
+# Edit 2025-11-24T20:38:29.528942
+time: 2025-11-24T20:38:29.528957
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+          let visitor = NestingDepthVisitor(converter: converter)
+          visitor.walk(sourceFile)
+  
+          for violation in visitor.violations {
+              violations.append(violation)
+          }
+      }
+  }
+new: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+          let visitor = NestingDepthVisitor(converter: converter)
+          visitor.walk(sourceFile)
+  
+          for violation in visitor.violations {
+              violations.append(violation)
+          }
+      }
+  
+      /// Check for nested ternary operators
+      /// Nested ternaries hurt readability - extract inner ternary to a named variable instead
+      public static func checkNoNestedTernary(_ node: TernaryExprSyntax, violations: inout [String]) {
+          // Check if either branch contains another ternary expression
+          let hasTernaryInThen = containsTernary(node.thenExpression)
+          let hasTernaryInElse = containsTernary(node.elseExpression)
+  
+          if hasTernaryInThen || hasTernaryInElse {
+              let violation = """
+              ⚠️  [no_nested_ternary] Avoid nested ternary operators - extract inner ternary to a named variable
+                 • Bad:  condition1 ? value1 : condition2 ? value2 : value3
+                 • Good: let innerResult = condition2 ? value2 : value3
+                         condition1 ? value1 : innerResult
+              """
+              violations.append(violation)
+          }
+      }
+  
+      /// Recursively check if an expression contains a ternary operator
+      private static func containsTernary(_ expr: ExprSyntax) -> Bool {
+          // Direct ternary check
+          if expr.as(TernaryExprSyntax.self) != nil {
+              return true
+          }
+  
+          // Check through parentheses
+          if let parenExpr = expr.as(TupleExprSyntax.self),
+             parenExpr.elements.count == 1,
+             let innerExpr = parenExpr.elements.first?.expression
+          {
+              return containsTernary(innerExpr)
+          }
+  
+          return false
+      }
+  }
+
+---
+# Edit 2025-11-24T20:38:42.636540
+time: 2025-11-24T20:38:42.636556
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (12 total):
+new: |
+  /// Main coordinator for all custom SwiftLint rules
+  ///
+  /// Rule identifiers (14 total):
+
+---
+# Edit 2025-11-24T20:38:56.046245
+time: 2025-11-24T20:38:56.046258
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - view_structure_order: Enforce View property ordering
+new: |
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - no_nested_ternary: Prohibit nested ternary operators (extract to named variable)
+  /// - view_structure_order: Enforce View property ordering
+
+---
+# Edit 2025-11-24T20:39:41.475808
+time: 2025-11-24T20:39:41.475823
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check ViewModifier body line count
+          ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+  
+          return .visitChildren
+      }
+new: |
+      override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+          // ViewBodyRules: Check ViewModifier body line count
+          ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+
+---
+# Edit 2025-11-24T20:40:04.202327
+time: 2025-11-24T20:40:04.202343
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+new: |
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `no_nested_ternary`: Prohibit nested ternary operators (extract inner ternary to a named variable instead)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+
+---
+# Edit 2025-11-24T20:43:14.895332
+time: 2025-11-24T20:43:14.895344
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      /// Check for nested ternary operators
+      /// Nested ternaries hurt readability - extract inner ternary to a named variable instead
+      public static func checkNoNestedTernary(_ node: TernaryExprSyntax, violations: inout [String]) {
+          // Check if either branch contains another ternary expression
+          let hasTernaryInThen = containsTernary(node.thenExpression)
+          let hasTernaryInElse = containsTernary(node.elseExpression)
+  
+          if hasTernaryInThen || hasTernaryInElse {
+              let violation = """
+              ⚠️  [no_nested_ternary] Avoid nested ternary operators - extract inner ternary to a named variable
+                 • Bad:  condition1 ? value1 : condition2 ? value2 : value3
+                 • Good: let innerResult = condition2 ? value2 : value3
+                         condition1 ? value1 : innerResult
+              """
+              violations.append(violation)
+          }
+      }
+new: |
+      /// Check for nested ternary operators
+      /// Nested ternaries hurt readability - extract inner ternary to a named variable instead
+      public static func checkNoNestedTernary(_ node: TernaryExprSyntax, violations: inout [String]) {
+          // Check if either branch contains another ternary expression
+          let hasTernaryInThen = containsTernary(node.thenExpression)
+          let hasTernaryInElse = containsTernary(node.elseExpression)
+  
+          // Debug output
+          print("DEBUG: Checking ternary, then=\(type(of: node.thenExpression)), else=\(type(of: node.elseExpression))")
+          print("DEBUG: hasTernaryInThen=\(hasTernaryInThen), hasTernaryInElse=\(hasTernaryInElse)")
+  
+          if hasTernaryInThen || hasTernaryInElse {
+              let violation = """
+              ⚠️  [no_nested_ternary] Avoid nested ternary operators - extract inner ternary to a named variable
+                 • Bad:  condition1 ? value1 : condition2 ? value2 : value3
+                 • Good: let innerResult = condition2 ? value2 : value3
+                         condition1 ? value1 : innerResult
+              """
+              violations.append(violation)
+          }
+      }
+
+---
+# Edit 2025-11-24T20:52:48.581136
+time: 2025-11-24T20:52:48.581151
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+new: |
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG VISITOR: Found TernaryExprSyntax")
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+
+---
+# Edit 2025-11-24T21:00:10.551338
+time: 2025-11-24T21:00:10.551352
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG VISITOR: Found TernaryExprSyntax")
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+new: |
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG VISITOR: Found TernaryExprSyntax")
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: InfixOperatorExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG: Found InfixOperatorExprSyntax: \(node.operator)")
+          return .visitChildren
+      }
+
+---
+# Edit 2025-11-24T21:06:17.277308
+time: 2025-11-24T21:06:17.277322
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      override public func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG VISITOR: Found TernaryExprSyntax")
+          // CodeQualityRules: Check for nested ternary operators
+          CodeQualityRules.checkNoNestedTernary(node, violations: &violations)
+  
+          return .visitChildren
+      }
+  
+      override public func visit(_ node: InfixOperatorExprSyntax) -> SyntaxVisitorContinueKind {
+          print("DEBUG: Found InfixOperatorExprSyntax: \(node.operator)")
+          return .visitChildren
+      }
+  
+      public func getViolations()
+new: |
+      public func getViolations()
+
+---
+# Edit 2025-11-24T21:06:37.803702
+time: 2025-11-24T21:06:37.803717
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// Rule identifiers (14 total):
+new: |
+  /// Rule identifiers (13 total):
+
+---
+# Edit 2025-11-24T21:07:02.574918
+time: 2025-11-24T21:07:02.574935
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - no_nested_ternary: Prohibit nested ternary operators (extract to named variable)
+  /// - view_structure_order: Enforce View property ordering
+new: |
+  /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+  /// - view_structure_order: Enforce View property ordering
+
+---
+# Edit 2025-11-24T21:07:41.426602
+time: 2025-11-24T21:07:41.426618
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+  /// - no_nested_ternary: Prohibit nested ternary operators (extract to named variable instead)
+new: |
+  /// Rules related to general code quality
+  /// - constants_enum_usage: No magic numbers (DISABLED)
+  /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+
+---
+# Edit 2025-11-24T21:09:11.306146
+time: 2025-11-24T21:09:11.306168
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CodeQualityRules.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+          let visitor = NestingDepthVisitor(converter: converter)
+          visitor.walk(sourceFile)
+  
+          for violation in visitor.violations {
+              violations.append(violation)
+          }
+      }
+  
+      /// Check for nested ternary operators
+      /// Nested ternaries hurt readability - extract inner ternary to a named variable instead
+      public static func checkNoNestedTernary(_ node: TernaryExprSyntax, violations: inout [String]) {
+          // Check if either branch contains another ternary expression
+          let hasTernaryInThen = containsTernary(node.thenExpression)
+          let hasTernaryInElse = containsTernary(node.elseExpression)
+  
+          // Debug output
+          print("DEBUG: Checking ternary, then=\(type(of: node.thenExpression)), else=\(type(of: node.elseExpression))")
+          print("DEBUG: hasTernaryInThen=\(hasTernaryInThen), hasTernaryInElse=\(hasTernaryInElse)")
+  
+          if hasTernaryInThen || hasTernaryInElse {
+              let violation = """
+              ⚠️  [no_nested_ternary] Avoid nested ternary operators - extract inner ternary to a named variable
+                 • Bad:  condition1 ? value1 : condition2 ? value2 : value3
+                 • Good: let innerResult = condition2 ? value2 : value3
+                         condition1 ? value1 : innerResult
+              """
+              violations.append(violation)
+          }
+      }
+  
+      /// Recursively check if an expression contains a ternary operator
+      private static func containsTernary(_ expr: ExprSyntax) -> Bool {
+          // Direct ternary check
+          if expr.as(TernaryExprSyntax.self) != nil {
+              return true
+          }
+  
+          // Check through parentheses
+          if let parenExpr = expr.as(TupleExprSyntax.self),
+             parenExpr.elements.count == 1,
+             let innerExpr = parenExpr.elements.first?.expression
+          {
+              return containsTernary(innerExpr)
+          }
+  
+          return false
+      }
+  }
+new: |
+      public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
+          let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+          let visitor = NestingDepthVisitor(converter: converter)
+          visitor.walk(sourceFile)
+  
+          for violation in visitor.violations {
+              violations.append(violation)
+          }
+      }
+  }
+
+---
+# Edit 2025-11-24T21:09:53.260095
+time: 2025-11-24T21:09:53.260119
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `no_nested_ternary`: Prohibit nested ternary operators (extract inner ternary to a named variable instead)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+new: |
+  - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+  - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
+
+---
+# Edit 2025-11-24T21:11:23.691001
+time: 2025-11-24T21:11:23.691044
+file: /Users/bryancostanza/Developer/swift-quality-tools/CLAUDE.md
+change_type: docs
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  ## Architecture
+  
+  - **Main tools**: `swiftformat-smart`, `swiftlint-smart`, `swiftlintcustom-smart`
+  - **Config discovery**: Automatic discovery with fallback to shared configs
+  - **Custom rules**: SwiftSyntax-based, separate rule engine in CustomRules/
+  - **Shared configs**: Configs/ directory contains shared SwiftFormat and SwiftLint configurations
+new: |
+  ## Architecture
+  
+  - **Main tools**: `swiftformat-smart`, `swiftlint-smart`, `swiftlintcustom-smart`
+  - **Config discovery**: Automatic discovery with fallback to shared configs
+  - **Custom rules**: SwiftSyntax-based, separate rule engine in CustomRules/
+  - **Shared configs**: Configs/ directory contains shared SwiftFormat and SwiftLint configurations
+  
+  ## Build Troubleshooting
+  
+  ### Rule Engine Incremental Build Issues
+  
+  The rule engine uses Swift Package Manager which sometimes has incremental build issues:
+  
+  **Symptoms:**
+  - Changes to source files don't take effect after rebuild
+  - Build output shows fewer files compiled than expected
+  - `warning: found N file(s) which are unhandled` appears (this is normal but might indicate issues)
+  
+  **Solutions:**
+  1. **Force rebuild**: `swift package clean && swift build -c release`
+  2. **Full clean**: `rm -rf .build .swiftpm && swift build -c release`
+  3. **Touch files**: `touch Sources/CustomRules/*.swift && swift build -c release`
+  
+  **Important:** Always verify changes take effect by testing with a sample file that should trigger the rule.
+  
+  ### Known Build Quirks
+  
+  - The "unhandled files" warning for Sources/CustomRules/*.swift files is expected - these are treated as resources but compile correctly
+  - First clean build after removing .build takes ~5 minutes due to SwiftSyntax compilation
+  - Incremental builds are fast (~5-10 seconds) when working correctly
+
+---
+# Edit 2025-11-24T21:12:42.990700
+time: 2025-11-24T21:12:42.990722
+file: /Users/bryancostanza/Developer/swift-quality-tools/docs/identified-but-not-implemented.md
+change_type: docs
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  **Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+  
+  ---
+  
+  ## Phase 4 Alpha - High Priority
+new: |
+  **Rationale**: The `.if` modifier pattern bypasses SwiftUI's view identity system and causes unnecessary re-renders.
+  
+  ---
+  
+  #### 5. no_nested_ternary
+  **Priority**: High
+  **Difficulty**: Medium
+  **Status**: TODO (2025-11) - Build integration issues
+  
+  **What**: Forbid nested ternary operators. The fix is to extract the inner ternary to a named variable with meaningful semantics.
+  
+  **Why**: Nested ternaries hurt readability and make code harder to understand at a glance.
+  
+  **Example**:
+  ```swift
+  // Bad - nested ternary
+  let color = isError ? .red : isWarning ? .orange : .green
+  
+  // Good - extract inner ternary to named variable
+  let nonErrorColor: Color = isWarning ? .orange : .green
+  let color = isError ? .red : nonErrorColor
+  ```
+  
+  **Implementation Notes**:
+  - Rule logic was implemented using TernaryExprSyntax visitor in CustomRulesVisitor.swift
+  - Build system issue: Swift Package Manager incremental build not detecting changes to CustomRulesVisitor.swift
+  - The visitor is compiled into the binary (verified via `nm` symbols) but not being invoked at runtime
+  - Needs investigation of Package.swift target configuration
+  
+  ---
+  
+  ## Phase 4 Alpha - High Priority
+
+---
+# Edit 2025-11-24T21:26:34.884106
+time: 2025-11-24T21:26:34.884121
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/CustomRulesVisitor.swift
+change_type: bugfix
+user_prompt: |
+  For those preferences none of those are allowed. What I was thinking was what a good fix would look like and to give you a preview my thinking has always been that whatever was being handled by that internal ternary, that should be saved to a variable with a meaningful name and then where the existing ternary is, the variable we just saved gets put in place of the nested ternary 
+old: |
+  /// Rule identifiers (13 total):
+new: |
+  /// Rule identifiers (12 total):
+

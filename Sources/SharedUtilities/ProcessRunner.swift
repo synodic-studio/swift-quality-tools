@@ -57,6 +57,9 @@ public enum ProcessRunner {
             // Command in PATH
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = [executable] + arguments
+            if let workingDir = workingDirectory {
+                process.currentDirectoryURL = workingDir
+            }
             return try executeProcess(process)
         }
 
