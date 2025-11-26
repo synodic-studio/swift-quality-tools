@@ -1,110 +1,166 @@
 import SwiftSyntax
 
 /// Rules related to modifier formatting and line structure
-/// - single_modifier_per_line: Each modifier should be on its own line for readability
+/// - single_modifier_per_line: Each SwiftUI modifier should be on its own line for readability
 public enum ModifierFormattingRules {
-    /// Check for multiple modifiers on the same line or modifiers on the same line as closing delimiter
-    /// Examples of violations:
-    /// - `.padding().background(.red)` - multiple modifiers on same line
-    /// - `).padding()` - modifier on same line as multiline expression's closing paren
+    /// Check for multiple SwiftUI modifiers on the same line
+    /// Only flags within View/ViewModifier body contexts
     public static func checkSingleModifierPerLine(
         _ sourceFile: SourceFileSyntax,
         violations: inout [String],
     ) {
-        let sourceText = sourceFile.description
-        let lines = sourceText.split(separator: "\n", omittingEmptySubsequences: false)
+        let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+        let visitor = ModifierLineVisitor(converter: converter)
+        visitor.walk(sourceFile)
 
-        for (index, line) in lines.enumerated() {
-            let lineNumber = index + 1
-            let lineStr = String(line)
-            let trimmed = lineStr.trimmingCharacters(in: .whitespaces)
-
-            // Skip empty lines and comments
-            if trimmed.isEmpty || trimmed.hasPrefix("//") {
-                continue
-            }
-
-            // Check 1: Multiple modifiers on the same line
-            // Pattern: .something().something() or .something().something
-            if hasMultipleModifiersOnLine(trimmed) {
-                let violation = "⚠️  [single_modifier_per_line] Line \(lineNumber): Multiple modifiers on same line - place each modifier on its own line for readability"
-                violations.append(violation)
-                continue
-            }
-
-            // Check 2: Modifier on same line as closing delimiter from multiline expression
-            // Pattern: ).modifier( or ].modifier(
-            if hasModifierAfterClosingDelimiter(trimmed) {
-                let violation = "⚠️  [single_modifier_per_line] Line \(lineNumber): Modifier chained on same line as closing delimiter - place modifier on its own line"
-                violations.append(violation)
-            }
+        for violation in visitor.violations {
+            violations.append(violation)
         }
     }
+}
 
-    /// Detect multiple modifier calls on the same line
-    /// Returns true if line contains patterns like `.foo().bar()` or `.foo().bar`
-    private static func hasMultipleModifiersOnLine(_ line: String) -> Bool {
-        // Find all occurrences of ").identifier" or ")." patterns
-        // This indicates a method/modifier being chained after a closing paren
+/// Visitor to detect multiple SwiftUI modifiers on the same line
+private final class ModifierLineVisitor: SyntaxVisitor {
+    private let converter: SourceLocationConverter
+    private var isInViewBody = false
+    private var modifierLineNumbers: [Int: Int] = [:] // line -> count of modifier chains on that line
+    private var reportedLines: Set<Int> = []
+    fileprivate var violations: [String] = []
 
-        // Count the number of modifier starts (lines starting with . don't count for this rule)
-        // We're looking for chained modifiers in the middle of a line
-
-        var modifierCount = 0
-        var inString = false
-        var prevChar: Character = " "
-        var i = line.startIndex
-
-        while i < line.endIndex {
-            let char = line[i]
-
-            // Basic string detection (doesn't handle escapes but good enough for this)
-            if char == "\"" {
-                inString.toggle()
-            }
-
-            if !inString {
-                // Pattern: ).something or ].something (chained call after closing delimiter)
-                if prevChar == ")" || prevChar == "]", char == "." {
-                    modifierCount += 1
-                }
-            }
-
-            prevChar = char
-            i = line.index(after: i)
-        }
-
-        // Multiple modifiers = more than one chain point on the line
-        return modifierCount >= 2
+    init(converter: SourceLocationConverter) {
+        self.converter = converter
+        super.init(viewMode: .sourceAccurate)
     }
 
-    /// Detect modifier chained on same line as a closing delimiter
-    /// Returns true if line starts with a closing delimiter followed by a modifier
-    /// Example: `).padding()` when the opening `(` was on a previous line
-    private static func hasModifierAfterClosingDelimiter(_ line: String) -> Bool {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+    /// Track when we enter a View body (var body: some View)
+    override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
+        guard let binding = node.bindings.first,
+              let identifier = binding.pattern.as(IdentifierPatternSyntax.self),
+              identifier.identifier.text == "body",
+              let typeAnnotation = binding.typeAnnotation,
+              typeAnnotation.description.contains("some View")
+        else {
+            return .visitChildren
+        }
 
-        // Pattern: line starts with ) or ] followed by .
-        // This means the closing delimiter and modifier are on the same line
-        guard let firstChar = trimmed.first else { return false }
+        isInViewBody = true
+        return .visitChildren
+    }
 
-        if firstChar == ")" || firstChar == "]" {
-            // Find the position after all closing delimiters
-            var index = trimmed.startIndex
-            while index < trimmed.endIndex {
-                let char = trimmed[index]
-                if char != ")", char != "]" {
-                    break
-                }
-                index = trimmed.index(after: index)
-            }
+    override func visitPost(_ node: VariableDeclSyntax) {
+        guard let binding = node.bindings.first,
+              let identifier = binding.pattern.as(IdentifierPatternSyntax.self),
+              identifier.identifier.text == "body"
+        else {
+            return
+        }
+        isInViewBody = false
+        modifierLineNumbers.removeAll()
+        reportedLines.removeAll()
+    }
 
-            // Check if the next character is a dot (modifier)
-            if index < trimmed.endIndex, trimmed[index] == "." {
-                return true
+    /// Track when we enter a function returning some View (including ViewModifier body)
+    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        // Check if function returns some View
+        guard let returnClause = node.signature.returnClause,
+              returnClause.type.description.contains("some View")
+        else {
+            return .visitChildren
+        }
+
+        isInViewBody = true
+        return .visitChildren
+    }
+
+    override func visitPost(_ node: FunctionDeclSyntax) {
+        // Reset if we were in a function returning some View
+        guard let returnClause = node.signature.returnClause,
+              returnClause.type.description.contains("some View")
+        else {
+            return
+        }
+        isInViewBody = false
+        modifierLineNumbers.removeAll()
+        reportedLines.removeAll()
+    }
+
+    /// Check for modifier chains (FunctionCallExpr with MemberAccessExpr base)
+    override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        guard isInViewBody else { return .visitChildren }
+
+        // Check if this is a modifier call (called via member access on another expression)
+        guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
+              memberAccess.base != nil
+        else {
+            return .visitChildren
+        }
+
+        // Get the line number of this modifier's period (the . in .modifier())
+        let thisModifierLine = converter.location(for: memberAccess.period.position).line
+
+        // Get the line of this call's closing paren
+        guard let rightParen = node.rightParen else { return .visitChildren }
+        let thisEndLine = converter.location(for: rightParen.position).line
+
+        // If the modifier starts and ends on the same line, count it as a chained modifier on that line
+        // This catches cases like .padding().background() where both are on same line
+        if thisModifierLine == thisEndLine {
+            modifierLineNumbers[thisModifierLine, default: 0] += 1
+
+            // Flag when we see 2+ modifiers on the same line
+            if (modifierLineNumbers[thisModifierLine] ?? 0) >= 2, !reportedLines.contains(thisModifierLine) {
+                reportedLines.insert(thisModifierLine)
+                let violation = "⚠️  [single_modifier_per_line] Line \(thisModifierLine): Multiple modifiers on same line - place each modifier on its own line for readability"
+                violations.append(violation)
             }
         }
 
-        return false
+        return .visitChildren
+    }
+
+    /// Check for modifier after closing delimiter: ).modifier()
+    override func visit(_ node: MemberAccessExprSyntax) -> SyntaxVisitorContinueKind {
+        guard isInViewBody else { return .visitChildren }
+
+        // Check if this member access follows a closing paren on a different line
+        guard let base = node.base else { return .visitChildren }
+
+        // Get positions
+        let dotLocation = converter.location(for: node.period.position)
+        let dotLine = dotLocation.line
+
+        // Check if the base ends on a previous line (multiline expression)
+        let baseEndLocation = converter.location(for: base.endPosition)
+        let baseEndLine = baseEndLocation.line
+
+        // If base ends on same line as dot, check if line starts with closing delimiter
+        if baseEndLine == dotLine {
+            // Get the source text for this line to check if it starts with )
+            let sourceText = node.root.description
+            let lines = sourceText.split(separator: "\n", omittingEmptySubsequences: false)
+
+            if dotLine > 0, dotLine <= lines.count {
+                let lineContent = String(lines[dotLine - 1]).trimmingCharacters(in: .whitespaces)
+
+                // Check if line starts with ) or ] followed by .
+                if let firstChar = lineContent.first,
+                   firstChar == ")" || firstChar == "]",
+                   !reportedLines.contains(dotLine)
+                {
+                    // Verify there's a dot after the closing delimiters
+                    var idx = lineContent.startIndex
+                    while idx < lineContent.endIndex, lineContent[idx] == ")" || lineContent[idx] == "]" {
+                        idx = lineContent.index(after: idx)
+                    }
+                    if idx < lineContent.endIndex, lineContent[idx] == "." {
+                        reportedLines.insert(dotLine)
+                        let violation = "⚠️  [single_modifier_per_line] Line \(dotLine): Modifier chained on same line as closing delimiter - place modifier on its own line"
+                        violations.append(violation)
+                    }
+                }
+            }
+        }
+
+        return .visitChildren
     }
 }

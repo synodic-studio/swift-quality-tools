@@ -1023,6 +1023,136 @@ struct CustomRulesTests {
         #expect(!output.contains("[excessive_nesting]"))
     }
 
+    // MARK: - Single Modifier Per Line Rule Tests
+
+    @Test("single_modifier_per_line: Detects multiple modifiers on same line")
+    func singleModifierPerLineMultipleModifiers() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Hello").padding().background(.red)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Accepts modifiers on separate lines")
+    func singleModifierPerLineSeparateLines() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Hello")
+                    .padding()
+                    .background(.red)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Detects modifier after closing delimiter")
+    func singleModifierPerLineClosingDelimiter() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                VStack(
+                    alignment: .leading
+                ).padding()
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Accepts non-View context")
+    func singleModifierPerLineNonViewContext() throws {
+        let code = """
+        import Foundation
+
+        class Calculator {
+            func calculate() {
+                let range1 = (0.0...1.0).contains(0.5)
+                let range2 = (1.0...2.0).contains(1.5)
+                print(range1 || range2)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Detects in ViewModifier body")
+    func singleModifierPerLineViewModifier() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestModifier: ViewModifier {
+            func body(content: Content) -> some View {
+                content.padding().background(.red)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Detects in function returning some View")
+    func singleModifierPerLineFunctionReturningView() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                makeContent()
+            }
+
+            func makeContent() -> some View {
+                Text("Hello").padding().background(.red)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[single_modifier_per_line]"))
+    }
+
     @Test("Multiple rules: File with multiple different violations")
     func multipleRuleViolations() throws {
         let code = """
