@@ -3,7 +3,7 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (13 total):
+/// Rule identifiers (14 total):
 /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
 /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
@@ -17,6 +17,7 @@ import SwiftSyntax
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
 /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
 /// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
+/// - single_modifier_per_line: Each modifier on its own line for readability
 public final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
     private var currentStructDecl: StructDeclSyntax?
@@ -125,6 +126,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
         // CodeQualityRules: Excessive nesting (AST-based depth check)
         CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+
+        // ModifierFormattingRules: Single modifier per line
+        ModifierFormattingRules.checkSingleModifierPerLine(node, violations: &violations)
 
         return .visitChildren
     }
