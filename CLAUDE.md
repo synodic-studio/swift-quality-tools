@@ -25,6 +25,91 @@ cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c r
 
 **Never** return control to the user after modifying swift-quality-tools without building in release mode.
 
+## CRITICAL: Warning Handling Philosophy
+
+**Every warning MUST be addressed - either fixed properly OR exempted with a suppression directive.**
+
+### What "Addressed" Means
+
+1. **Fix it properly** - Make a change that genuinely improves the code
+2. **Exempt it explicitly** - Add a `// swiftlintcustom:disable:next rule_id` directive with clear justification
+
+### What Is NOT Acceptable
+
+- **Ignoring warnings** - "These warnings were there before" is NOT an excuse
+- **Dismissing warnings** - "The warnings aren't important" is NOT acceptable
+- **Committing with warnings** - Every commit should have zero unaddressed warnings
+- **Making code worse to silence warnings** - A "fix" that degrades code quality is not a fix
+
+### The Quality Judgment
+
+Before "fixing" a warning, evaluate: **Does this change improve the code or make it worse?**
+
+**Example of a BAD "fix"** (making code worse to silence a warning):
+```swift
+// Original - clean, readable
+@ViewBuilder private var presetButtons: some View {
+    if !config.presets.isEmpty {
+        HStack {
+            ForEach(config.presets.indices, id: \.self) { index in
+                presetButton(at: index)
+            }
+        }
+    }
+}
+
+// BAD "fix" - cramming code to reduce line count
+@ViewBuilder private var presetButtons: some View {
+    if !config.presets.isEmpty {
+        HStack {
+            ForEach(config.presets.indices, id: \.self) { presetButton(at: $0) }
+    }
+}
+```
+
+The "fix" removed readability for no real benefit. This is worse than the original.
+
+**Correct approach**: Either:
+1. Refactor genuinely (extract subviews, simplify logic)
+2. Add suppression directive if the code is correct as-is
+
+### Decision Framework
+
+```
+Warning appears
+    │
+    ▼
+Can I fix it in a way that genuinely improves the code?
+    │
+    ├── YES → Make the improvement
+    │
+    └── NO → Is the current code correct/intentional?
+                │
+                ├── YES → Add suppression directive with justification
+                │
+                └── NO → The code has a real problem - fix it properly
+```
+
+### Suppression Format
+
+```swift
+// Reason: [explain why this is intentional/correct]
+// swiftlintcustom:disable:next rule_id
+<actual code line here>
+```
+
+**Note on consecutive directives**: If a `swiftlint:` or `swiftformat:` directive exists immediately before or after yours, they will interfere (each `:next` only applies to the very next line). Example conflict:
+
+```swift
+// swiftlint:disable:next identifier_name
+// swiftlintcustom:disable:next skimmable_body  // ← This becomes the "next" line!
+var body: some View { ... }
+```
+
+In such cases, use `:this` or `:previous` instead:
+- `// swiftlintcustom:disable:this rule_id` - suppresses on the same line
+- `// swiftlintcustom:disable:previous rule_id` - suppresses the line above
+
 ## Custom SwiftLint Rule Identifiers
 
 **All custom SwiftSyntax rules MUST have unique identifiers** for tracking and future line-level disabling.
@@ -118,3 +203,27 @@ After modifying:
 - **Config discovery**: Automatic discovery with fallback to shared configs
 - **Custom rules**: SwiftSyntax-based, separate rule engine in CustomRules/
 - **Shared configs**: Configs/ directory contains shared SwiftFormat and SwiftLint configurations
+
+## Build Troubleshooting
+
+### Rule Engine Incremental Build Issues
+
+The rule engine uses Swift Package Manager which sometimes has incremental build issues:
+
+**Symptoms:**
+- Changes to source files don't take effect after rebuild
+- Build output shows fewer files compiled than expected
+- `warning: found N file(s) which are unhandled` appears (this is normal but might indicate issues)
+
+**Solutions:**
+1. **Force rebuild**: `swift package clean && swift build -c release`
+2. **Full clean**: `rm -rf .build .swiftpm && swift build -c release`
+3. **Touch files**: `touch Sources/CustomRules/*.swift && swift build -c release`
+
+**Important:** Always verify changes take effect by testing with a sample file that should trigger the rule.
+
+### Known Build Quirks
+
+- The "unhandled files" warning for Sources/CustomRules/*.swift files is expected - these are treated as resources but compile correctly
+- First clean build after removing .build takes ~5 minutes due to SwiftSyntax compilation
+- Incremental builds are fast (~5-10 seconds) when working correctly
