@@ -98,6 +98,10 @@ Can I fix it in a way that genuinely improves the code?
 <actual code line here>
 ```
 
+**Note on consecutive directives**: If another `disable:next` directive exists immediately before or after yours, they will interfere with each other (each only applies to the very next line). In such cases, consider using:
+- `// swiftlintcustom:disable:this rule_id` - suppresses on the same line
+- `// swiftlintcustom:disable:previous rule_id` - suppresses the line above
+
 ## Custom SwiftLint Rule Identifiers
 
 **All custom SwiftSyntax rules MUST have unique identifiers** for tracking and future line-level disabling.
