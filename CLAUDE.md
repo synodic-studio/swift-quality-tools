@@ -117,3 +117,27 @@ After modifying:
 - **Config discovery**: Automatic discovery with fallback to shared configs
 - **Custom rules**: SwiftSyntax-based, separate rule engine in CustomRules/
 - **Shared configs**: Configs/ directory contains shared SwiftFormat and SwiftLint configurations
+
+## Build Troubleshooting
+
+### Rule Engine Incremental Build Issues
+
+The rule engine uses Swift Package Manager which sometimes has incremental build issues:
+
+**Symptoms:**
+- Changes to source files don't take effect after rebuild
+- Build output shows fewer files compiled than expected
+- `warning: found N file(s) which are unhandled` appears (this is normal but might indicate issues)
+
+**Solutions:**
+1. **Force rebuild**: `swift package clean && swift build -c release`
+2. **Full clean**: `rm -rf .build .swiftpm && swift build -c release`
+3. **Touch files**: `touch Sources/CustomRules/*.swift && swift build -c release`
+
+**Important:** Always verify changes take effect by testing with a sample file that should trigger the rule.
+
+### Known Build Quirks
+
+- The "unhandled files" warning for Sources/CustomRules/*.swift files is expected - these are treated as resources but compile correctly
+- First clean build after removing .build takes ~5 minutes due to SwiftSyntax compilation
+- Incremental builds are fast (~5-10 seconds) when working correctly
