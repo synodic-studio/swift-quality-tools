@@ -338,6 +338,13 @@ public enum ViewBodyRules {
                     return true
                 }
 
+                // Check if this code block is inside .overlay or .background closure
+                // These modifiers are special: the parent view always exists, so conditional
+                // content inside them is fine - it's just optional layering
+                if isInsideOverlayOrBackground(codeBlockItemList) {
+                    return true
+                }
+
                 // Count siblings - if more than 1 item, we have siblings
                 // Return immediately - only check the first/immediate container
                 return codeBlockItemList.count > 1
@@ -359,6 +366,36 @@ public enum ViewBodyRules {
             current = parent
         }
         return nil
+    }
+
+    /// Check if a code block is inside a closure passed to .overlay or .background
+    /// These modifiers are special: the parent view always exists, so conditional
+    /// content inside them is fine - it's just optional layering, not visibility control
+    private static func isInsideOverlayOrBackground(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+        var current: Syntax? = Syntax(codeBlock)
+
+        while let parent = current?.parent {
+            // Check if this is a function call to .overlay or .background
+            if let funcCall = parent.as(FunctionCallExprSyntax.self),
+               let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self)
+            {
+                let methodName = memberAccess.declName.baseName.text
+                if methodName == "overlay" || methodName == "background" {
+                    return true
+                }
+            }
+            // Stop if we hit a variable declaration (we're in a computed property body)
+            if parent.as(VariableDeclSyntax.self) != nil {
+                return false
+            }
+            // Stop if we hit a function declaration
+            if parent.as(FunctionDeclSyntax.self) != nil {
+                return false
+            }
+            current = parent
+        }
+
+        return false
     }
 
     /// Check if a node is inside a @ViewBuilder context
