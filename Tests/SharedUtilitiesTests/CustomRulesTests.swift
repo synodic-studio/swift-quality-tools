@@ -880,6 +880,85 @@ struct CustomRulesTests {
         #expect(!output.contains("[no_if_without_else]"))
     }
 
+    @Test("no_if_without_else: Accepts if in .overlay closure")
+    func noIfWithoutElseInOverlay() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var showOverlay = true
+
+            var body: some View {
+                Text("Main content")
+                    .overlay {
+                        if showOverlay {
+                            Text("Overlay")
+                        }
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Accepts if in .background closure")
+    func noIfWithoutElseInBackground() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var showBackground = true
+
+            var body: some View {
+                Text("Main content")
+                    .background {
+                        if showBackground {
+                            Color.blue
+                        }
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[no_if_without_else]"))
+    }
+
+    @Test("no_if_without_else: Detects if in .sheet closure")
+    func noIfWithoutElseInSheet() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var showSheet = false
+            @State private var condition = true
+
+            var body: some View {
+                Text("Main")
+                    .sheet(isPresented: $showSheet) {
+                        if condition {
+                            Text("Sheet content")
+                        }
+                    }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("[no_if_without_else]"))
+    }
+
     // MARK: - View Structure Order Rule Tests
 
     @Test("view_structure_order: Detects properties out of order")
