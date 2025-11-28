@@ -141,7 +141,11 @@ public enum ViewStructureRules {
         }
     }
 
-    public static func checkNoWrapperBody(_ node: VariableDeclSyntax, violations: inout [String]) {
+    public static func checkNoWrapperBody(
+        _ node: VariableDeclSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Detect pointless wrapper pattern:
         // var body: some View {
         //     mainContent  // ← Just returns another property
@@ -167,13 +171,18 @@ public enum ViewStructureRules {
                 !line.hasPrefix(".")
 
             if isSimpleIdentifier {
-                let violation = "⚠️  [no_wrapper_body] SwiftUI View body is a pointless wrapper - just returns '\(line)'. Merge the logic directly into body or use @ViewBuilder if needed."
+                let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+                let violation = "⚠️  [no_wrapper_body] \(lineInfo)SwiftUI View body is a pointless wrapper - just returns '\(line)'. Merge the logic directly into body or use @ViewBuilder if needed."
                 violations.append(violation)
             }
         }
     }
 
-    public static func checkStackMinimumChildren(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+    public static func checkStackMinimumChildren(
+        _ node: FunctionCallExprSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Check if this is a VStack, HStack, or ZStack call
         // Note: Using trimmedDescription to avoid whitespace issues
         let calledExpr = node.calledExpression.trimmedDescription
@@ -201,7 +210,8 @@ public enum ViewStructureRules {
         }
 
         // If we get here, it's a violation
-        let violation = "⚠️  [stack_minimum_children] \(calledExpr) should have at least 2 children (or use ForEach, or have if/else with a branch containing 2+ views)"
+        let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+        let violation = "⚠️  [stack_minimum_children] \(lineInfo)\(calledExpr) should have at least 2 children (or use ForEach, or have if/else with a branch containing 2+ views)"
         violations.append(violation)
     }
 

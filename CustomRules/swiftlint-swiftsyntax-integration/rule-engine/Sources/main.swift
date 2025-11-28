@@ -23,6 +23,8 @@ if CommandLine.arguments.count > 1 {
             for violation in violations {
                 print(violation)
             }
+            // Print suppression hint so LLMs know to use swiftlintcustom, not swiftlint
+            print("\n💡 Suppress with: // swiftlintcustom:disable:next <rule_id>")
         }
     } catch {
         print("Error reading file: \(error)")

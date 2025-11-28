@@ -105,12 +105,12 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             let typeText = typeAnnotation.description
             if typeText.contains("some View") {
                 // ViewBodyRules
-                ViewBodyRules.checkSkimmableBody(node, violations: &violations)
-                ViewBodyRules.checkNoGroupBody(node, violations: &violations)
-                ViewBodyRules.checkOneTopLevelView(node, violations: &violations)
+                ViewBodyRules.checkSkimmableBody(node, converter: locationConverter, violations: &violations)
+                ViewBodyRules.checkNoGroupBody(node, converter: locationConverter, violations: &violations)
+                ViewBodyRules.checkOneTopLevelView(node, converter: locationConverter, violations: &violations)
 
                 // ViewStructureRules
-                ViewStructureRules.checkNoWrapperBody(node, violations: &violations)
+                ViewStructureRules.checkNoWrapperBody(node, converter: locationConverter, violations: &violations)
             }
         }
 
@@ -148,30 +148,30 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check for Group without modifiers
-        ViewBodyRules.checkGroupWithoutModifiers(node, violations: &violations)
+        ViewBodyRules.checkGroupWithoutModifiers(node, converter: locationConverter, violations: &violations)
 
         // ViewBodyRules: Check for .if modifier anti-pattern
-        ViewBodyRules.checkNoIfModifier(node, violations: &violations)
+        ViewBodyRules.checkNoIfModifier(node, converter: locationConverter, violations: &violations)
 
         // ViewStructureRules: Check stack minimum children
-        ViewStructureRules.checkStackMinimumChildren(node, violations: &violations)
+        ViewStructureRules.checkStackMinimumChildren(node, converter: locationConverter, violations: &violations)
 
         // OnChangeRules: Check for 2-param onChange with ignored old value
-        OnChangeRules.checkOnChangeIgnoredOldValue(node, violations: &violations)
+        OnChangeRules.checkOnChangeIgnoredOldValue(node, converter: locationConverter, violations: &violations)
 
         return .visitChildren
     }
 
     override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check ViewModifier body line count
-        ViewBodyRules.checkSkimmableViewModifierBody(node, violations: &violations)
+        ViewBodyRules.checkSkimmableViewModifierBody(node, converter: locationConverter, violations: &violations)
 
         return .visitChildren
     }
 
     override public func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check for if-without-else in @ViewBuilder
-        ViewBodyRules.checkNoIfWithoutElse(node, violations: &violations)
+        ViewBodyRules.checkNoIfWithoutElse(node, converter: locationConverter, violations: &violations)
 
         return .visitChildren
     }
