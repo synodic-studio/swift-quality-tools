@@ -92,11 +92,20 @@ Can I fix it in a way that genuinely improves the code?
 
 ### Suppression Format
 
+**Line-specific suppression:**
 ```swift
 // Reason: [explain why this is intentional/correct]
 // swiftlintcustom:disable:next rule_id
 <actual code line here>
 ```
+
+**Block-level suppression:**
+```swift
+// swiftlintcustom:disable rule_id
+// ... code with suppressed violations ...
+// swiftlintcustom:enable rule_id
+```
+If `enable` is never called, the disable extends to end of file.
 
 **Note on consecutive directives**: If a `swiftlint:` or `swiftformat:` directive exists immediately before or after yours, they will interfere (each `:next` only applies to the very next line). Example conflict:
 
@@ -121,7 +130,7 @@ In such cases, use `:this` or `:previous` instead:
 - `one_top_level_view`: Enforce single top-level view in View bodies (if/else counts as one statement)
 - `no_if_modifier`: Detect custom `.if` modifier anti-pattern (use ternary or @ViewBuilder instead)
 - `no_if_without_else`: Detect if-without-else in @ViewBuilder (view shouldn't decide its own visibility - hoist to parent)
-- `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks)
+- `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks). **Automatically relaxed inside #Preview macros.**
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
 - `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
@@ -174,6 +183,23 @@ Currently not implemented, but identifiers are in place for when we add this fea
 swift build -c release
 cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build
 ```
+
+### Running the Test Suite
+
+**IMPORTANT: Always run the full test suite before completing work.**
+
+```bash
+# Run ALL tests (unit + integration)
+./Scripts/run-tests.sh
+
+# Or run just unit tests
+swift test
+```
+
+Test locations:
+- **Unit tests**: `Tests/SharedUtilitiesTests/` (XCTest suite with 86 tests)
+- **Integration tests**: `Scripts/test-tools.sh`
+- **Sample test files**: `Tests/test-*.swift` (for manual validation)
 
 ### Testing Custom Rules
 

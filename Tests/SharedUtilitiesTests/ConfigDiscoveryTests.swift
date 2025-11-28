@@ -13,7 +13,8 @@ struct ConfigDiscoveryTests {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        return tempDir
+        // Resolve symlinks to avoid /var vs /private/var mismatch on macOS
+        return tempDir.resolvingSymlinksInPath()
     }
 
     private func cleanup(_ url: URL) {
@@ -239,8 +240,10 @@ struct ConfigDiscoveryTests {
             sharedConfigName: "shared-swiftformat.yml",
         )
 
-        #expect(result.lastPathComponent == ".swiftformat.yml")
-        #expect(result.path.contains(tempDir.lastPathComponent))
+        // Compare standardized paths to handle symlink differences
+        let expectedPath = configFile.standardizedFileURL.path
+        let actualPath = result.standardizedFileURL.path
+        #expect(actualPath == expectedPath, "Expected config at \(expectedPath) but found \(actualPath)")
     }
 
     @Test("Multiple configs in same directory throws error")
