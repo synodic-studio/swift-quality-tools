@@ -9,7 +9,11 @@ public enum OnChangeRules {
     /// GOOD: .onChange(of: value) { use(value) }
     ///
     /// The 0-parameter version is more readable and semantically clearer
-    public static func checkOnChangeIgnoredOldValue(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+    public static func checkOnChangeIgnoredOldValue(
+        _ node: FunctionCallExprSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Check if this is an onChange call
         guard isOnChangeCall(node) else { return }
 
@@ -32,7 +36,8 @@ public enum OnChangeRules {
             let secondParam = params.last!
             let secondName = secondParam.name.text
 
-            let violation = "⚠️  [onchange_ignored_old_value] Use 0-parameter onChange when old value is ignored - replace '{ \(firstName), \(secondName) in ...' with '{ ... }' and reference the observed value directly"
+            let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+            let violation = "⚠️  [onchange_ignored_old_value] \(lineInfo)Use 0-parameter onChange when old value is ignored - replace '{ \(firstName), \(secondName) in ...' with '{ ... }' and reference the observed value directly"
             violations.append(violation)
 
         case .parameterClause, .none:

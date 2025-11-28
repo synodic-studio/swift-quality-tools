@@ -27,7 +27,11 @@ public enum ViewBodyRules {
 
     private static let maxBodyLines = 15
 
-    public static func checkSkimmableBody(_ node: VariableDeclSyntax, violations: inout [String]) {
+    public static func checkSkimmableBody(
+        _ node: VariableDeclSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Count lines in the body
         let bodyText = node.description
         let lines = bodyText.split(separator: "\n", omittingEmptySubsequences: false)
@@ -37,14 +41,19 @@ public enum ViewBodyRules {
         }
 
         if contentLines.count > maxBodyLines {
-            let violation = "⚠️  [skimmable_body] SwiftUI View body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+            let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+            let violation = "⚠️  [skimmable_body] \(lineInfo)SwiftUI View body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
             violations.append(violation)
         }
     }
 
     /// Check line count in ViewModifier body function
     /// ViewModifiers use `func body(content: Content) -> some View` instead of `var body`
-    public static func checkSkimmableViewModifierBody(_ node: FunctionDeclSyntax, violations: inout [String]) {
+    public static func checkSkimmableViewModifierBody(
+        _ node: FunctionDeclSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Verify this is a body function with content parameter
         guard node.name.text == "body",
               let firstParam = node.signature.parameterClause.parameters.first,
@@ -64,12 +73,17 @@ public enum ViewBodyRules {
         }
 
         if contentLines.count > maxBodyLines {
-            let violation = "⚠️  [skimmable_body] ViewModifier body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+            let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+            let violation = "⚠️  [skimmable_body] \(lineInfo)ViewModifier body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
             violations.append(violation)
         }
     }
 
-    public static func checkNoGroupBody(_ node: VariableDeclSyntax, violations: inout [String]) {
+    public static func checkNoGroupBody(
+        _ node: VariableDeclSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Look for Group as top-level view
         guard let binding = node.bindings.first,
               let accessor = binding.accessorBlock
@@ -87,7 +101,8 @@ public enum ViewBodyRules {
         if groupLineIndex >= 0 {
             let hasModifiers = checkForViewModifiers(lines: lines, groupLineIndex: groupLineIndex)
             if !hasModifiers {
-                let violation = "⚠️  [no_group_body] SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
+                let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+                let violation = "⚠️  [no_group_body] \(lineInfo)SwiftUI View body should not have Group as the top-level view (unless it has view modifiers)"
                 violations.append(violation)
             }
         }
@@ -176,7 +191,11 @@ public enum ViewBodyRules {
 
     /// Check for Group usage without modifiers anywhere in SwiftUI code
     /// If Group has no modifiers, suggest using @ViewBuilder instead
-    public static func checkGroupWithoutModifiers(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+    public static func checkGroupWithoutModifiers(
+        _ node: FunctionCallExprSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Check if this is a Group initializer
         let calledExpr = node.calledExpression.description.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -186,12 +205,17 @@ public enum ViewBodyRules {
 
         // Check if the Group has modifiers
         if !groupHasModifiers(node) {
-            let violation = "⚠️  [no_group_body] Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
+            let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+            let violation = "⚠️  [no_group_body] \(lineInfo)Avoid Group without modifiers - use @ViewBuilder instead for multiple views"
             violations.append(violation)
         }
     }
 
-    public static func checkOneTopLevelView(_ node: VariableDeclSyntax, violations: inout [String]) {
+    public static func checkOneTopLevelView(
+        _ node: VariableDeclSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Look for multiple top-level statements in the body
         guard let binding = node.bindings.first,
               let accessor = binding.accessorBlock
@@ -231,14 +255,19 @@ public enum ViewBodyRules {
         }
 
         if viewStatements > 1 {
-            let violation = "⚠️  [one_top_level_view] SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
+            let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
+            let violation = "⚠️  [one_top_level_view] \(lineInfo)SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
             violations.append(violation)
         }
     }
 
     /// Detect custom .if modifier anti-pattern
     /// Suggests using standard SwiftUI patterns instead (ternary, @ViewBuilder, etc.)
-    public static func checkNoIfModifier(_ node: FunctionCallExprSyntax, violations: inout [String]) {
+    public static func checkNoIfModifier(
+        _ node: FunctionCallExprSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Check if this is a call to .if(
         guard let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self),
               memberAccess.declName.baseName.text == "if"
@@ -246,8 +275,9 @@ public enum ViewBodyRules {
             return
         }
 
+        let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
         let violation = """
-        ⚠️  [no_if_modifier] Avoid custom .if modifier - use standard SwiftUI patterns instead
+        ⚠️  [no_if_modifier] \(lineInfo)Avoid custom .if modifier - use standard SwiftUI patterns instead
            • For simple conditionals: .foregroundColor(condition ? .red : .blue)
            • For complex cases: Use @ViewBuilder with if/else
            • Rationale: .if bypasses SwiftUI's view identity system
@@ -257,20 +287,115 @@ public enum ViewBodyRules {
 
     /// Detect if-without-else in @ViewBuilder contexts
     /// A view should not decide its own visibility - hoist the condition to the parent
-    public static func checkNoIfWithoutElse(_ node: IfExprSyntax, violations: inout [String]) {
+    ///
+    /// However, if the `if` is one of multiple siblings in a container, it's fine -
+    /// that's just conditionally showing a section, not controlling the view's existence.
+    public static func checkNoIfWithoutElse(
+        _ node: IfExprSyntax,
+        converter: SourceLocationConverter?,
+        violations: inout [String],
+    ) {
         // Only flag if there's no else branch
         guard node.elseBody == nil else { return }
 
         // Check if we're in a @ViewBuilder context by walking up the tree
         guard isInViewBuilderContext(node) else { return }
 
+        // If the `if` has multiple siblings, it's fine - it's just one conditional section among many
+        // Only flag when the `if` is the sole/primary content (controlling the view's existence)
+        guard !hasMultipleSiblings(node) else { return }
+
+        let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
         let violation = """
-        ⚠️  [no_if_without_else] Avoid if-without-else in @ViewBuilder - hoist visibility logic to parent
-           • A view should not decide whether it appears or not
-           • Move the condition to where this view is used
-           • If switching content, add an else branch
+        ⚠️  [no_if_without_else] \(lineInfo)Avoid if-without-else in @ViewBuilder - hoist visibility to the CALLER
+           • WRONG: `else { EmptyView() }` - same identity problem, just hidden
+           • WRONG: `.opacity(condition ? 1 : 0)` - view still in hierarchy, wastes resources
+           • WRONG: extracting to computed property - moves problem, doesn't fix it
+           • RIGHT: remove the condition entirely; let the parent/caller decide whether to show this view
+           • This may require changes in another file where this view is instantiated
         """
         violations.append(violation)
+    }
+
+    /// Check if the node has multiple siblings in its parent code block
+    /// If true, the `if` is just one of several items (fine)
+    /// If false, the `if` is the sole/primary content (problematic)
+    private static func hasMultipleSiblings(_ node: IfExprSyntax) -> Bool {
+        // Walk up to find the FIRST containing CodeBlockItemListSyntax
+        // Only check that immediate container - don't walk up to file level
+        var current: Syntax? = Syntax(node)
+
+        while let parent = current?.parent {
+            // Found the code block item list (e.g., inside a closure or function body)
+            if let codeBlockItemList = parent.as(CodeBlockItemListSyntax.self) {
+                // Before returning, check if this code block is inside a switch case
+                // If so, treat multiple switch cases as "siblings"
+                if let grandparent = codeBlockItemList.parent,
+                   let switchCase = grandparent.as(SwitchCaseSyntax.self),
+                   let switchExpr = findParentSwitch(switchCase),
+                   switchExpr.cases.count > 1
+                {
+                    return true
+                }
+
+                // Check if this code block is inside .overlay or .background closure
+                // These modifiers are special: the parent view always exists, so conditional
+                // content inside them is fine - it's just optional layering
+                if isInsideOverlayOrBackground(codeBlockItemList) {
+                    return true
+                }
+
+                // Count siblings - if more than 1 item, we have siblings
+                // Return immediately - only check the first/immediate container
+                return codeBlockItemList.count > 1
+            }
+
+            current = parent
+        }
+
+        return false
+    }
+
+    /// Find the parent SwitchExprSyntax for a switch case
+    private static func findParentSwitch(_ switchCase: SwitchCaseSyntax) -> SwitchExprSyntax? {
+        var current: Syntax? = Syntax(switchCase)
+        while let parent = current?.parent {
+            if let switchExpr = parent.as(SwitchExprSyntax.self) {
+                return switchExpr
+            }
+            current = parent
+        }
+        return nil
+    }
+
+    /// Check if a code block is inside a closure passed to .overlay or .background
+    /// These modifiers are special: the parent view always exists, so conditional
+    /// content inside them is fine - it's just optional layering, not visibility control
+    private static func isInsideOverlayOrBackground(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+        var current: Syntax? = Syntax(codeBlock)
+
+        while let parent = current?.parent {
+            // Check if this is a function call to .overlay or .background
+            if let funcCall = parent.as(FunctionCallExprSyntax.self),
+               let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self)
+            {
+                let methodName = memberAccess.declName.baseName.text
+                if methodName == "overlay" || methodName == "background" {
+                    return true
+                }
+            }
+            // Stop if we hit a variable declaration (we're in a computed property body)
+            if parent.as(VariableDeclSyntax.self) != nil {
+                return false
+            }
+            // Stop if we hit a function declaration
+            if parent.as(FunctionDeclSyntax.self) != nil {
+                return false
+            }
+            current = parent
+        }
+
+        return false
     }
 
     /// Check if a node is inside a @ViewBuilder context

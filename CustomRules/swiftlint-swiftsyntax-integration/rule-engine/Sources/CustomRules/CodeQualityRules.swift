@@ -49,21 +49,54 @@ public enum CodeQualityRules {
 
 /// Visitor to track nesting depth in code
 /// Tracks both CodeBlockSyntax (functions, if statements) and ClosureExprSyntax (trailing closures)
+/// Relaxes checking inside #Preview macros where setup code naturally nests deeper
 private final class NestingDepthVisitor: SyntaxVisitor {
     private var currentDepth = 0
     private let maxDepth = 3 // Triggers at depth 4, matching ~16 spaces physical indentation
     private let converter: SourceLocationConverter
     fileprivate var violations: [String] = []
+    private var isInPreviewMacro = false
 
     init(converter: SourceLocationConverter) {
         self.converter = converter
         super.init(viewMode: .sourceAccurate)
     }
 
+    // MARK: - Preview macro tracking
+
+    override func visit(_ node: MacroExpansionDeclSyntax) -> SyntaxVisitorContinueKind {
+        if node.macroName.text == "Preview" {
+            isInPreviewMacro = true
+        }
+        return .visitChildren
+    }
+
+    override func visitPost(_ node: MacroExpansionDeclSyntax) {
+        if node.macroName.text == "Preview" {
+            isInPreviewMacro = false
+        }
+    }
+
+    override func visit(_ node: MacroExpansionExprSyntax) -> SyntaxVisitorContinueKind {
+        if node.macroName.text == "Preview" {
+            isInPreviewMacro = true
+        }
+        return .visitChildren
+    }
+
+    override func visitPost(_ node: MacroExpansionExprSyntax) {
+        if node.macroName.text == "Preview" {
+            isInPreviewMacro = false
+        }
+    }
+
+    // MARK: - Nesting depth tracking
+
     override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
         currentDepth += 1
 
-        if currentDepth > maxDepth {
+        // Skip violations inside #Preview macros - preview setup code naturally nests deeper
+        if currentDepth > maxDepth, !isInPreviewMacro {
             let location = converter.location(for: node.position)
             let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
             violations.append(violation)
@@ -79,7 +112,8 @@ private final class NestingDepthVisitor: SyntaxVisitor {
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
         currentDepth += 1
 
-        if currentDepth > maxDepth {
+        // Skip violations inside #Preview macros - preview setup code naturally nests deeper
+        if currentDepth > maxDepth, !isInPreviewMacro {
             let location = converter.location(for: node.position)
             let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
             violations.append(violation)
