@@ -482,6 +482,7 @@ private var presetButtonsRow: some View {
 ### 1. Support --only-rules flag in custom linter
 **Priority**: Medium
 **Difficulty**: Low
+**Status**: ✅ IMPLEMENTED (2025-11)
 
 **What**: Add `--only-rules rule1,rule2` flag to `swiftlintcustom-smart` matching SwiftLint's interface
 
@@ -489,12 +490,14 @@ private var presetButtonsRow: some View {
 
 **Example**:
 ```bash
-# Current SwiftLint behavior
-swiftlint --only-rules trailing_whitespace,colon
-
-# Desired custom linter behavior
+# Run only specific rules
 swiftlintcustom-smart --only-rules single_modifier_per_line,no_group_body
+
+# Run single rule
+swiftlintcustom-smart path/to/file.swift --only-rules skimmable_body
 ```
+
+**Implementation**: Added `--only-rules` option to CLI that passes comma-separated rule IDs to the rule engine
 
 ---
 

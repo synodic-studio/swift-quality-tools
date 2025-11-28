@@ -566,3 +566,652 @@ new: |
               process.currentDirectoryURL = workingDir
           }
 
+---
+# Edit 2025-11-28T11:19:06.210427
+time: 2025-11-28T11:19:06.210440
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+      /// Check if the node has multiple siblings in its parent code block
+      /// If true, the `if` is just one of several items (fine)
+      /// If false, the `if` is the sole/primary content (problematic)
+      private static func hasMultipleSiblings(_ node: IfExprSyntax) -> Bool {
+          // Walk up to find the FIRST containing CodeBlockItemListSyntax
+          // Only check that immediate container - don't walk up to file level
+          var current: Syntax? = Syntax(node)
+  
+          while let parent = current?.parent {
+              // Found the code block item list (e.g., inside a closure or function body)
+              if let codeBlockItemList = parent.as(CodeBlockItemListSyntax.self) {
+                  // Before returning, check if this code block is inside a switch case
+                  // If so, treat multiple switch cases as "siblings"
+                  if let grandparent = codeBlockItemList.parent,
+                     let switchCase = grandparent.as(SwitchCaseSyntax.self),
+                     let switchExpr = findParentSwitch(switchCase),
+                     switchExpr.cases.count > 1
+                  {
+                      return true
+                  }
+  
+                  // Count siblings - if more than 1 item, we have siblings
+                  // Return immediately - only check the first/immediate container
+                  return codeBlockItemList.count > 1
+              }
+  
+              current = parent
+          }
+  
+          return false
+      }
+new: |
+      /// Check if the node has multiple siblings in its parent code block
+      /// If true, the `if` is just one of several items (fine)
+      /// If false, the `if` is the sole/primary content (problematic)
+      private static func hasMultipleSiblings(_ node: IfExprSyntax) -> Bool {
+          // Walk up to find the FIRST containing CodeBlockItemListSyntax
+          // Only check that immediate container - don't walk up to file level
+          var current: Syntax? = Syntax(node)
+  
+          while let parent = current?.parent {
+              // Found the code block item list (e.g., inside a closure or function body)
+              if let codeBlockItemList = parent.as(CodeBlockItemListSyntax.self) {
+                  // Before returning, check if this code block is inside a switch case
+                  // If so, treat multiple switch cases as "siblings"
+                  if let grandparent = codeBlockItemList.parent,
+                     let switchCase = grandparent.as(SwitchCaseSyntax.self),
+                     let switchExpr = findParentSwitch(switchCase),
+                     switchExpr.cases.count > 1
+                  {
+                      return true
+                  }
+  
+                  // Check if this code block is inside a closure passed to a modifier
+                  // (e.g., .overlay { }, .sheet { }, .background { })
+                  // Conditional content inside modifiers is fine - it's not deciding
+                  // the view's existence, just providing optional modifier content
+                  if isInsideModifierClosure(codeBlockItemList) {
+                      return true
+                  }
+  
+                  // Count siblings - if more than 1 item, we have siblings
+                  // Return immediately - only check the first/immediate container
+                  return codeBlockItemList.count > 1
+              }
+  
+              current = parent
+          }
+  
+          return false
+      }
+  
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          // Walk up: CodeBlockItemList -> CodeBlock -> Closure -> (args) -> FunctionCall
+          guard let codeBlockSyntax = codeBlock.parent?.as(CodeBlockSyntax.self),
+                let closureExpr = codeBlockSyntax.parent?.as(ClosureExprSyntax.self)
+          else {
+              return false
+          }
+  
+          // Check if this closure is being passed as an argument to a function call
+          var current: Syntax? = Syntax(closureExpr)
+          while let parent = current?.parent {
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+
+---
+# Edit 2025-11-28T11:19:39.858648
+time: 2025-11-28T11:19:39.858663
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          // Walk up: CodeBlockItemList -> CodeBlock -> Closure -> (args) -> FunctionCall
+          guard let codeBlockSyntax = codeBlock.parent?.as(CodeBlockSyntax.self),
+                let closureExpr = codeBlockSyntax.parent?.as(ClosureExprSyntax.self)
+          else {
+              return false
+          }
+  
+          // Check if this closure is being passed as an argument to a function call
+          var current: Syntax? = Syntax(closureExpr)
+          while let parent = current?.parent {
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+new: |
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          // Walk up: CodeBlockItemList -> CodeBlock -> Closure -> (args) -> FunctionCall
+          // But the structure might be different - let's trace it
+          var current: Syntax? = Syntax(codeBlock)
+          print("DEBUG isInsideModifierClosure: starting from CodeBlockItemListSyntax")
+  
+          while let parent = current?.parent {
+              print("DEBUG: parent type = \(type(of: parent))")
+  
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  print("DEBUG: Found FunctionCallExprSyntax - returning true")
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  print("DEBUG: Hit VariableDeclSyntax - returning false")
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  print("DEBUG: Hit FunctionDeclSyntax - returning false")
+                  return false
+              }
+              current = parent
+          }
+  
+          print("DEBUG: Reached root - returning false")
+          return false
+      }
+
+---
+# Edit 2025-11-28T11:20:07.379302
+time: 2025-11-28T11:20:07.379312
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          // Walk up: CodeBlockItemList -> CodeBlock -> Closure -> (args) -> FunctionCall
+          // But the structure might be different - let's trace it
+          var current: Syntax? = Syntax(codeBlock)
+          print("DEBUG isInsideModifierClosure: starting from CodeBlockItemListSyntax")
+  
+          while let parent = current?.parent {
+              print("DEBUG: parent type = \(type(of: parent))")
+  
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  print("DEBUG: Found FunctionCallExprSyntax - returning true")
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  print("DEBUG: Hit VariableDeclSyntax - returning false")
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  print("DEBUG: Hit FunctionDeclSyntax - returning false")
+                  return false
+              }
+              current = parent
+          }
+  
+          print("DEBUG: Reached root - returning false")
+          return false
+      }
+new: |
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          var current: Syntax? = Syntax(codeBlock)
+  
+          while let parent = current?.parent {
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+
+---
+# Edit 2025-11-28T11:20:26.321455
+time: 2025-11-28T11:20:26.321466
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+      /// Check if a code block is inside a closure that's passed to a modifier/function
+      /// e.g., .overlay { if condition { ... } }
+      private static func isInsideModifierClosure(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          var current: Syntax? = Syntax(codeBlock)
+  
+          while let parent = current?.parent {
+              // If we hit a FunctionCallExprSyntax, we're inside a modifier closure
+              if parent.as(FunctionCallExprSyntax.self) != nil {
+                  return true
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+new: |
+      /// Check if a code block is inside a closure passed to .overlay or .background
+      /// These modifiers are special: the parent view always exists, so conditional
+      /// content inside them is fine - it's just optional layering, not visibility control
+      private static func isInsideOverlayOrBackground(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          var current: Syntax? = Syntax(codeBlock)
+  
+          while let parent = current?.parent {
+              // Check if this is a function call to .overlay or .background
+              if let funcCall = parent.as(FunctionCallExprSyntax.self),
+                 let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self)
+              {
+                  let methodName = memberAccess.declName.baseName.text
+                  if methodName == "overlay" || methodName == "background" {
+                      return true
+                  }
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+
+---
+# Edit 2025-11-28T11:20:48.425548
+time: 2025-11-28T11:20:48.425561
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+                  // Check if this code block is inside a closure passed to a modifier
+                  // (e.g., .overlay { }, .sheet { }, .background { })
+                  // Conditional content inside modifiers is fine - it's not deciding
+                  // the view's existence, just providing optional modifier content
+                  if isInsideModifierClosure(codeBlockItemList) {
+                      return true
+                  }
+new: |
+                  // Check if this code block is inside .overlay or .background closure
+                  // These modifiers are special: the parent view always exists, so conditional
+                  // content inside them is fine - it's just optional layering
+                  if isInsideOverlayOrBackground(codeBlockItemList) {
+                      return true
+                  }
+
+---
+# Edit 2025-11-28T11:20:59.724500
+time: 2025-11-28T11:20:59.724510
+file: /Users/bryancostanza/Developer/swift-quality-tools/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/ViewBodyRules.swift
+change_type: style
+user_prompt: |
+  This is a false postive for or if-without-else rule
+  
+          imageView
+              .overlay {
+                  // swiftlintcustom:disable:next no_if_without_else
+                  if !cameraManager.isConnected {
+                      disconnectedOverlayContent
+                  }
+              }
+old: |
+      /// Find the parent SwitchExprSyntax for a switch case
+      private static func findParentSwitch(_ switchCase: SwitchCaseSyntax) -> SwitchExprSyntax? {
+          var current: Syntax? = Syntax(switchCase)
+          while let parent = current?.parent {
+              if let switchExpr = parent.as(SwitchExprSyntax.self) {
+                  return switchExpr
+              }
+              current = parent
+          }
+          return nil
+      }
+  
+      /// Check if a node is inside a @ViewBuilder context
+new: |
+      /// Find the parent SwitchExprSyntax for a switch case
+      private static func findParentSwitch(_ switchCase: SwitchCaseSyntax) -> SwitchExprSyntax? {
+          var current: Syntax? = Syntax(switchCase)
+          while let parent = current?.parent {
+              if let switchExpr = parent.as(SwitchExprSyntax.self) {
+                  return switchExpr
+              }
+              current = parent
+          }
+          return nil
+      }
+  
+      /// Check if a code block is inside a closure passed to .overlay or .background
+      /// These modifiers are special: the parent view always exists, so conditional
+      /// content inside them is fine - it's just optional layering, not visibility control
+      private static func isInsideOverlayOrBackground(_ codeBlock: CodeBlockItemListSyntax) -> Bool {
+          var current: Syntax? = Syntax(codeBlock)
+  
+          while let parent = current?.parent {
+              // Check if this is a function call to .overlay or .background
+              if let funcCall = parent.as(FunctionCallExprSyntax.self),
+                 let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self)
+              {
+                  let methodName = memberAccess.declName.baseName.text
+                  if methodName == "overlay" || methodName == "background" {
+                      return true
+                  }
+              }
+              // Stop if we hit a variable declaration (we're in a computed property body)
+              if parent.as(VariableDeclSyntax.self) != nil {
+                  return false
+              }
+              // Stop if we hit a function declaration
+              if parent.as(FunctionDeclSyntax.self) != nil {
+                  return false
+              }
+              current = parent
+          }
+  
+          return false
+      }
+  
+      /// Check if a node is inside a @ViewBuilder context
+
+---
+# Edit 2025-11-28T11:29:06.353250
+time: 2025-11-28T11:29:06.353266
+file: /Users/bryancostanza/Developer/swift-quality-tools/Tests/SharedUtilitiesTests/CustomRulesTests.swift
+change_type: test
+user_prompt: |
+  in pull 37 you wrote that it passed manual testing. Did you update the auto testing?
+old: |
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      // MARK: - View Structure Order Rule Tests
+new: |
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Accepts if in .overlay closure")
+      func noIfWithoutElseInOverlay() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showOverlay = true
+  
+              var body: some View {
+                  Text("Main content")
+                      .overlay {
+                          if showOverlay {
+                              Text("Overlay")
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Accepts if in .background closure")
+      func noIfWithoutElseInBackground() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showBackground = true
+  
+              var body: some View {
+                  Text("Main content")
+                      .background {
+                          if showBackground {
+                              Color.blue
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Detects if in .sheet closure")
+      func noIfWithoutElseInSheet() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showSheet = false
+              @State private var condition = true
+  
+              var body: some View {
+                  Text("Main")
+                      .sheet(isPresented: $showSheet) {
+                          if condition {
+                              Text("Sheet content")
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(output.contains("[no_if_without_else]"))
+      }
+  
+      // MARK: - View Structure Order Rule Tests
+
+---
+# Edit 2025-11-28T11:34:54.705423
+time: 2025-11-28T11:34:54.705437
+file: /Users/bryancostanza/Developer/swift-quality-tools/Tests/SharedUtilitiesTests/CustomRulesTests.swift
+change_type: test
+user_prompt: |
+  i already merged 37 so new PR please
+old: |
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      // MARK: - View Structure Order Rule Tests
+  
+      @Test("view_structure_order: Detects properties out of order")
+new: |
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Accepts if in .overlay closure")
+      func noIfWithoutElseInOverlay() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showOverlay = true
+  
+              var body: some View {
+                  Text("Main content")
+                      .overlay {
+                          if showOverlay {
+                              Text("Overlay")
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Accepts if in .background closure")
+      func noIfWithoutElseInBackground() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showBackground = true
+  
+              var body: some View {
+                  Text("Main content")
+                      .background {
+                          if showBackground {
+                              Color.blue
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(!output.contains("[no_if_without_else]"))
+      }
+  
+      @Test("no_if_without_else: Detects if in .sheet closure")
+      func noIfWithoutElseInSheet() throws {
+          let code = """
+          import SwiftUI
+  
+          struct TestView: View {
+              @State private var showSheet = false
+              @State private var condition = true
+  
+              var body: some View {
+                  Text("Main")
+                      .sheet(isPresented: $showSheet) {
+                          if condition {
+                              Text("Sheet content")
+                          }
+                      }
+              }
+          }
+          """
+  
+          let file = try createTempSwiftFile(content: code)
+          defer { cleanup(file) }
+  
+          let output = try runRuleEngine(on: file)
+          #expect(output.contains("[no_if_without_else]"))
+      }
+  
+      // MARK: - View Structure Order Rule Tests
+  
+      @Test("view_structure_order: Detects properties out of order")
+

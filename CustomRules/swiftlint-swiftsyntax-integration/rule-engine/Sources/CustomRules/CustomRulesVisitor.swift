@@ -25,10 +25,28 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     private let directiveParser = DirectiveParser()
     private var locationConverter: SourceLocationConverter?
 
+    /// Set of enabled rule IDs. If nil, all rules are enabled.
+    private var enabledRules: Set<String>?
+
     /// Initialize visitor with source code for directive parsing
     public func setSourceCode(_ source: String, sourceFile: SourceFileSyntax) {
         directiveParser.parseDirectives(from: source)
         locationConverter = SourceLocationConverter(fileName: "", tree: sourceFile)
+    }
+
+    /// Set which rules should run. If nil or empty, all rules run.
+    public func setEnabledRules(_ rules: [String]?) {
+        if let rules, !rules.isEmpty {
+            enabledRules = Set(rules)
+        } else {
+            enabledRules = nil
+        }
+    }
+
+    /// Check if a rule should run based on enabledRules filter
+    private func shouldRun(_ ruleID: String) -> Bool {
+        guard let enabled = enabledRules else { return true }
+        return enabled.contains(ruleID)
     }
 
     /// Add violation with suppression check
@@ -80,7 +98,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             isInSwiftUIView = true
 
             // Rule: view_structure_order
-            ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+            if shouldRun("view_structure_order") {
+                ViewStructureRules.checkViewStructureOrder(node, violations: &violations)
+            }
         }
 
         return .visitChildren
@@ -105,12 +125,20 @@ public final class CustomRulesVisitor: SyntaxVisitor {
             let typeText = typeAnnotation.description
             if typeText.contains("some View") {
                 // ViewBodyRules
-                ViewBodyRules.checkSkimmableBody(node, converter: locationConverter, violations: &violations)
-                ViewBodyRules.checkNoGroupBody(node, converter: locationConverter, violations: &violations)
-                ViewBodyRules.checkOneTopLevelView(node, converter: locationConverter, violations: &violations)
+                if shouldRun("skimmable_body") {
+                    ViewBodyRules.checkSkimmableBody(node, converter: locationConverter, violations: &violations)
+                }
+                if shouldRun("no_group_body") {
+                    ViewBodyRules.checkNoGroupBody(node, converter: locationConverter, violations: &violations)
+                }
+                if shouldRun("one_top_level_view") {
+                    ViewBodyRules.checkOneTopLevelView(node, converter: locationConverter, violations: &violations)
+                }
 
                 // ViewStructureRules
-                ViewStructureRules.checkNoWrapperBody(node, converter: locationConverter, violations: &violations)
+                if shouldRun("no_wrapper_body") {
+                    ViewStructureRules.checkNoWrapperBody(node, converter: locationConverter, violations: &violations)
+                }
             }
         }
 
@@ -119,16 +147,24 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
     override public func visit(_ node: SourceFileSyntax) -> SyntaxVisitorContinueKind {
         // ImportRules
-        ImportRules.checkBlankLineImportSeparation(node, violations: &violations)
+        if shouldRun("blank_line_import_separation") {
+            ImportRules.checkBlankLineImportSeparation(node, violations: &violations)
+        }
 
         // PreviewRules
-        PreviewRules.checkPreviewRequired(node, violations: &violations)
+        if shouldRun("preview_required") {
+            PreviewRules.checkPreviewRequired(node, violations: &violations)
+        }
 
         // CodeQualityRules: Excessive nesting (AST-based depth check)
-        CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+        if shouldRun("excessive_nesting") {
+            CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+        }
 
         // ModifierFormattingRules: Single modifier per line
-        ModifierFormattingRules.checkSingleModifierPerLine(node, violations: &violations)
+        if shouldRun("single_modifier_per_line") {
+            ModifierFormattingRules.checkSingleModifierPerLine(node, violations: &violations)
+        }
 
         return .visitChildren
     }
@@ -148,30 +184,42 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check for Group without modifiers
-        ViewBodyRules.checkGroupWithoutModifiers(node, converter: locationConverter, violations: &violations)
+        if shouldRun("no_group_body") {
+            ViewBodyRules.checkGroupWithoutModifiers(node, converter: locationConverter, violations: &violations)
+        }
 
         // ViewBodyRules: Check for .if modifier anti-pattern
-        ViewBodyRules.checkNoIfModifier(node, converter: locationConverter, violations: &violations)
+        if shouldRun("no_if_modifier") {
+            ViewBodyRules.checkNoIfModifier(node, converter: locationConverter, violations: &violations)
+        }
 
         // ViewStructureRules: Check stack minimum children
-        ViewStructureRules.checkStackMinimumChildren(node, converter: locationConverter, violations: &violations)
+        if shouldRun("stack_minimum_children") {
+            ViewStructureRules.checkStackMinimumChildren(node, converter: locationConverter, violations: &violations)
+        }
 
         // OnChangeRules: Check for 2-param onChange with ignored old value
-        OnChangeRules.checkOnChangeIgnoredOldValue(node, converter: locationConverter, violations: &violations)
+        if shouldRun("prefer_zero_param_onchange") {
+            OnChangeRules.checkOnChangeIgnoredOldValue(node, converter: locationConverter, violations: &violations)
+        }
 
         return .visitChildren
     }
 
     override public func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check ViewModifier body line count
-        ViewBodyRules.checkSkimmableViewModifierBody(node, converter: locationConverter, violations: &violations)
+        if shouldRun("skimmable_body") {
+            ViewBodyRules.checkSkimmableViewModifierBody(node, converter: locationConverter, violations: &violations)
+        }
 
         return .visitChildren
     }
 
     override public func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check for if-without-else in @ViewBuilder
-        ViewBodyRules.checkNoIfWithoutElse(node, converter: locationConverter, violations: &violations)
+        if shouldRun("no_if_without_else") {
+            ViewBodyRules.checkNoIfWithoutElse(node, converter: locationConverter, violations: &violations)
+        }
 
         return .visitChildren
     }
