@@ -2,10 +2,26 @@ import SwiftSyntax
 
 /// Rules related to general code quality
 /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
+/// - prefer_shorthand_optional_binding: Use shorthand with original name (if let bar, not if let foo = bar)
 public enum CodeQualityRules {
     public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
         let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
         let visitor = NestingDepthVisitor(converter: converter)
+        visitor.walk(sourceFile)
+
+        for violation in visitor.violations {
+            violations.append(violation)
+        }
+    }
+
+    /// Check for optional binding renames like `if let foo = bar`
+    /// These should use the original name with shorthand: `if let bar`
+    public static func checkPreferShorthandOptionalBinding(
+        _ sourceFile: SourceFileSyntax,
+        violations: inout [String],
+    ) {
+        let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
+        let visitor = ShorthandOptionalBindingVisitor(converter: converter)
         visitor.walk(sourceFile)
 
         for violation in visitor.violations {
@@ -91,5 +107,47 @@ private final class NestingDepthVisitor: SyntaxVisitor {
 
     override func visitPost(_: ClosureExprSyntax) {
         currentDepth -= 1
+    }
+}
+
+// MARK: - Shorthand Optional Binding Visitor
+
+/// Visitor to detect optional binding renames like `if let foo = bar`
+/// When binding name differs from source, suggests using original name with shorthand
+private final class ShorthandOptionalBindingVisitor: SyntaxVisitor {
+    private let converter: SourceLocationConverter
+    fileprivate var violations: [String] = []
+
+    init(converter: SourceLocationConverter) {
+        self.converter = converter
+        super.init(viewMode: .sourceAccurate)
+    }
+
+    override func visit(_ node: OptionalBindingConditionSyntax) -> SyntaxVisitorContinueKind {
+        // Get the binding pattern name
+        guard let pattern = node.pattern.as(IdentifierPatternSyntax.self) else {
+            return .visitChildren
+        }
+        let bindingName = pattern.identifier.text
+
+        // Get the initializer expression - must be a simple identifier
+        guard let initializer = node.initializer,
+              let sourceExpr = initializer.value.as(DeclReferenceExprSyntax.self)
+        else {
+            return .visitChildren
+        }
+        let sourceName = sourceExpr.baseName.text
+
+        // If names differ, it's a rename - flag it
+        // Note: if names are the same (foo = foo), SwiftLint's shorthand_optional_binding handles it
+        if bindingName != sourceName {
+            let location = converter.location(for: node.position)
+            let bindingKeyword = node.bindingSpecifier.text // "let" or "var"
+            let violation = "⚠️  [prefer_shorthand_optional_binding] Line \(location.line): " +
+                "Use shorthand '\(bindingKeyword) \(sourceName)' instead of renaming '\(bindingKeyword) \(bindingName) = \(sourceName)'"
+            violations.append(violation)
+        }
+
+        return .visitChildren
     }
 }

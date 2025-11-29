@@ -3,13 +3,14 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (15 total):
+/// Rule identifiers (16 total):
 /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
 /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
 /// - no_if_modifier: Detect custom .if modifier anti-pattern
 /// - no_if_without_else: Detect if-without-else in @ViewBuilder (hoist visibility to parent)
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
+/// - prefer_shorthand_optional_binding: Use shorthand with original name (if let bar, not if let foo = bar)
 /// - view_structure_order: Enforce View property ordering
 /// - no_wrapper_body: Detect pointless wrapper body properties
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
@@ -46,8 +47,8 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
     /// Check if a rule should run based on enabledRules filter
     private func shouldRun(_ ruleID: String) -> Bool {
-        guard let enabled = enabledRules else { return true }
-        return enabled.contains(ruleID)
+        guard let enabledRules else { return true }
+        return enabledRules.contains(ruleID)
     }
 
     /// Add violation with suppression check
@@ -56,13 +57,13 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     ///   - node: Syntax node where violation occurred (for line number)
     ///   - message: Violation message
     func addViolation(ruleID: String, node: some SyntaxProtocol, message: String) {
-        guard let converter = locationConverter else {
+        guard let locationConverter else {
             // Fallback if converter not set
             violations.append("⚠️  [\(ruleID)] \(message)")
             return
         }
 
-        let location = converter.location(for: node.position)
+        let location = locationConverter.location(for: node.position)
         let line = location.line
 
         // Check if rule is suppressed for this line
@@ -166,6 +167,11 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         // CodeQualityRules: Excessive nesting (AST-based depth check)
         if shouldRun("excessive_nesting") {
             CodeQualityRules.checkExcessiveNesting(node, violations: &violations)
+        }
+
+        // CodeQualityRules: Prefer shorthand optional binding
+        if shouldRun("prefer_shorthand_optional_binding") {
+            CodeQualityRules.checkPreferShorthandOptionalBinding(node, violations: &violations)
         }
 
         // ModifierFormattingRules: Single modifier per line
