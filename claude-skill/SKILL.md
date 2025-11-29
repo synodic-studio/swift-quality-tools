@@ -417,6 +417,11 @@ SwiftSyntax custom rules enforce architecture and code quality patterns. When th
    - **`single_modifier_per_line`** - Multiple modifiers on one line
      - Split each modifier to its own line
 
+   - **`prefer_swift_testing`** - XCTest usage detected
+     - Replace `import XCTest` with `import Testing`
+     - Migrate XCTAssert* calls to Swift Testing equivalents
+     - See `references/testing.md` for migration patterns
+
 3. **Verify the fix** by checking hook output after next edit
 
 ## File Organization & Extension Patterns
@@ -540,5 +545,6 @@ Activate this skill when:
 
 - **`quality-philosophy.md`** - Why metrics matter, when to apply formatting, naming and commenting guidelines
 - **`swiftui-patterns.md`** - Comprehensive SwiftUI patterns with examples (onChange, view structure enforcement, modifier usage)
+- **`testing.md`** - Swift Testing standards, best practices, migration from XCTest, and known issues
 
 Load these references when detailed information is needed.

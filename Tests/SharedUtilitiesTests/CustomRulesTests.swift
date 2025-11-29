@@ -1274,4 +1274,113 @@ struct CustomRulesTests {
         #expect(output.contains("[skimmable_body]"))
         #expect(output.contains("[no_group_body]"))
     }
+
+    // MARK: - Prefer Swift Testing Rule Tests
+
+    @Test("prefer_swift_testing: Detects import XCTest")
+    func preferSwiftTestingImportViolation() throws {
+        let code = """
+        import XCTest
+
+        class MyTests: XCTestCase {
+            func testSomething() {
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_swift_testing]"))
+        #expect(output.contains("import Testing"))
+    }
+
+    @Test("prefer_swift_testing: Detects XCTAssertEqual")
+    func preferSwiftTestingAssertEqualViolation() throws {
+        let code = """
+        XCTAssertEqual(1, 1)
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_swift_testing]"))
+        #expect(output.contains("#expect(a == b)"))
+    }
+
+    @Test("prefer_swift_testing: Detects XCTAssertTrue")
+    func preferSwiftTestingAssertTrueViolation() throws {
+        let code = """
+        XCTAssertTrue(result)
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_swift_testing]"))
+        #expect(output.contains("#expect(value)"))
+    }
+
+    @Test("prefer_swift_testing: Detects XCTFail")
+    func preferSwiftTestingFailViolation() throws {
+        let code = """
+        XCTFail("message")
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_swift_testing]"))
+        #expect(output.contains("Issue.record"))
+    }
+
+    @Test("prefer_swift_testing: Accepts Swift Testing imports")
+    func preferSwiftTestingNoViolation() throws {
+        let code = """
+        import Testing
+
+        @Test
+        func testSomething() {
+            #expect(true)
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[prefer_swift_testing]"))
+    }
+
+    @Test("prefer_swift_testing: Detects multiple XCT assertions")
+    func preferSwiftTestingMultipleAssertions() throws {
+        let code = """
+        import XCTest
+
+        class MyTests: XCTestCase {
+            func testSomething() {
+                XCTAssertEqual(1, 1)
+                XCTAssertTrue(true)
+                XCTAssertNil(nil as String?)
+                XCTFail("fail")
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        // Should have 5 violations: 1 import + 4 assertions
+        let violationCount = output.components(separatedBy: "[prefer_swift_testing]").count - 1
+        #expect(violationCount == 5)
+    }
 }
