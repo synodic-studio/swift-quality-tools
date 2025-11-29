@@ -134,6 +134,7 @@ In such cases, use `:this` or `:previous` instead:
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
 - `single_modifier_per_line`: Each modifier should be on its own line (no `.padding().background()` or `).padding()`)
+- `no_exported_import`: Prohibit `@_exported import` (underscore prefix = internal Swift API, not guaranteed stable across versions)
 
 ### Violation Format
 

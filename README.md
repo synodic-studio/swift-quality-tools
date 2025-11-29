@@ -225,6 +225,7 @@ SwiftSyntax-based rules in `CustomRules/swiftlint-swiftsyntax-integration/`:
 7. **`no_wrapper_body`** - Detect pointless wrapper body properties
 8. **`blank_line_import_separation`** - Enforce blank line between regular and @testable imports
 9. **`preview_required`** - Every file with View/ViewModifier must have at least one #Preview
+10. **`no_exported_import`** - Prohibit `@_exported import` (underscore prefix = internal Swift API, not stable)
 
 **To add new rules:**
 1. Edit `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/test-custom-rule.swift`

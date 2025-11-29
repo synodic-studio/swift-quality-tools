@@ -2,7 +2,34 @@ import SwiftSyntax
 
 /// Rules related to import organization
 /// - blank_line_import_separation: Blank line between regular and @testable imports
+/// - no_exported_import: Prohibit @_exported import (internal Swift API, not stable)
 public enum ImportRules {
+    /// Check for @_exported import usage
+    /// This is an internal Swift API (underscore prefix) that is not guaranteed stable
+    /// across Swift versions. Use explicit public API surface instead.
+    public static func checkNoExportedImport(
+        _ sourceFile: SourceFileSyntax,
+        violations: inout [String],
+    ) {
+        for statement in sourceFile.statements {
+            guard let importDecl = statement.item.as(ImportDeclSyntax.self) else {
+                continue
+            }
+
+            let hasExported = importDecl.attributes.contains { attr in
+                attr.as(AttributeSyntax.self)?.attributeName.description.contains("_exported") ?? false
+            }
+
+            if hasExported {
+                let location = importDecl.startLocation(converter: SourceLocationConverter(fileName: "", tree: sourceFile))
+                let line = location.line
+                let moduleName = importDecl.path.description.trimmingCharacters(in: .whitespaces)
+                let violation = "⚠️  [no_exported_import] Line \(line): @_exported import is an internal Swift API - use explicit public API surface instead of re-exporting '\(moduleName)'"
+                violations.append(violation)
+            }
+        }
+    }
+
     private static func classifyImport(
         _ importDecl: ImportDeclSyntax,
         regularImports: inout [ImportDeclSyntax],
