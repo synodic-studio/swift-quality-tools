@@ -98,7 +98,11 @@ private final class NestingDepthVisitor: SyntaxVisitor {
         // Skip violations inside #Preview macros - preview setup code naturally nests deeper
         if currentDepth > maxDepth, !isInPreviewMacro {
             let location = converter.location(for: node.position)
-            let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+            let violation = """
+            ⚠️  [excessive_nesting] Line \(location.line): nesting level \(currentDepth) (max \(maxDepth))
+               Extract nested logic to a separate method or computed property.
+               Do not flatten by combining conditions or removing structure.
+            """
             violations.append(violation)
         }
 
@@ -115,7 +119,11 @@ private final class NestingDepthVisitor: SyntaxVisitor {
         // Skip violations inside #Preview macros - preview setup code naturally nests deeper
         if currentDepth > maxDepth, !isInPreviewMacro {
             let location = converter.location(for: node.position)
-            let violation = "⚠️  [excessive_nesting] Line \(location.line) has excessive nesting (level \(currentDepth), maximum: \(maxDepth)) - refactor code to reduce nesting depth"
+            let violation = """
+            ⚠️  [excessive_nesting] Line \(location.line): nesting level \(currentDepth) (max \(maxDepth))
+               Extract nested logic to a separate method or computed property.
+               Do not flatten by combining conditions or removing structure.
+            """
             violations.append(violation)
         }
 

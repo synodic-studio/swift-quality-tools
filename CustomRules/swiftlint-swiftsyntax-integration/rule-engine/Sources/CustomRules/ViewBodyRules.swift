@@ -42,7 +42,11 @@ public enum ViewBodyRules {
 
         if contentLines.count > maxBodyLines {
             let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
-            let violation = "⚠️  [skimmable_body] \(lineInfo)SwiftUI View body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+            let violation = """
+            ⚠️  [skimmable_body] \(lineInfo)View body has \(contentLines.count) lines (max \(maxBodyLines))
+               Fix by extracting subviews to private computed properties.
+               Do not collapse code, remove blank lines, or inline helpers.
+            """
             violations.append(violation)
         }
     }
@@ -74,7 +78,11 @@ public enum ViewBodyRules {
 
         if contentLines.count > maxBodyLines {
             let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
-            let violation = "⚠️  [skimmable_body] \(lineInfo)ViewModifier body has \(contentLines.count) lines (maximum: \(maxBodyLines))"
+            let violation = """
+            ⚠️  [skimmable_body] \(lineInfo)ViewModifier body has \(contentLines.count) lines (max \(maxBodyLines))
+               Fix by extracting logic to private helper methods.
+               Do not collapse code, remove blank lines, or inline helpers.
+            """
             violations.append(violation)
         }
     }
@@ -256,7 +264,10 @@ public enum ViewBodyRules {
 
         if viewStatements > 1 {
             let lineInfo = converter.map { "Line \($0.location(for: node.positionAfterSkippingLeadingTrivia).line): " } ?? ""
-            let violation = "⚠️  [one_top_level_view] \(lineInfo)SwiftUI View body has \(viewStatements) top-level views (should be exactly 1)"
+            let violation = """
+            ⚠️  [one_top_level_view] \(lineInfo)View body has \(viewStatements) top-level views (should be 1)
+               Wrap in a container (VStack, ZStack, etc.) or extract to subviews.
+            """
             violations.append(violation)
         }
     }
