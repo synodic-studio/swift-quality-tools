@@ -95,6 +95,12 @@ private final class ModifierLineVisitor: SyntaxVisitor {
             return .visitChildren
         }
 
+        // Skip method calls that are nested inside another call's argument list
+        // This filters out cases like `geometry.frame(in: .local)` inside `.position(...)`
+        if isInsideArgumentList(node) {
+            return .visitChildren
+        }
+
         // Get the line number of this modifier's period (the . in .modifier())
         let thisModifierLine = converter.location(for: memberAccess.period.position).line
 
@@ -116,6 +122,40 @@ private final class ModifierLineVisitor: SyntaxVisitor {
         }
 
         return .visitChildren
+    }
+
+    /// Check if this node is inside another function call's argument list
+    private func isInsideArgumentList(_ node: FunctionCallExprSyntax) -> Bool {
+        var current: Syntax? = node._syntaxNode.parent
+        while let parent = current {
+            // If we hit a LabeledExprSyntax, we're inside an argument
+            if parent.is(LabeledExprSyntax.self) {
+                return true
+            }
+            // If we hit another FunctionCallExpr before a modifier chain, check if we're in its arguments
+            if let funcCall = parent.as(FunctionCallExprSyntax.self) {
+                // Check if node is in funcCall's argument list (not its calledExpression)
+                if funcCall.arguments.contains(where: { arg in
+                    arg.expression.id == node.id || isDescendant(node, of: arg.expression)
+                }) {
+                    return true
+                }
+            }
+            current = parent.parent
+        }
+        return false
+    }
+
+    /// Check if child is a descendant of parent
+    private func isDescendant(_ child: FunctionCallExprSyntax, of parent: ExprSyntax) -> Bool {
+        var current: Syntax? = child._syntaxNode
+        while let node = current {
+            if node.id == parent.id {
+                return true
+            }
+            current = node.parent
+        }
+        return false
     }
 
     /// Check for modifier after closing delimiter: ).modifier()
