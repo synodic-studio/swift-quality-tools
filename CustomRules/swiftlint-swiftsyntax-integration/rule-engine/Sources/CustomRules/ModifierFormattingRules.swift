@@ -127,6 +127,8 @@ private final class ModifierLineVisitor: SyntaxVisitor {
     /// Check if this node is inside another function call's argument list
     private func isInsideArgumentList(_ node: FunctionCallExprSyntax) -> Bool {
         var current: Syntax? = node._syntaxNode.parent
+        // Reason: Tree-walking pattern requires mutable outer var + immutable inner binding
+        // swiftlintcustom:disable:next prefer_shorthand_optional_binding
         while let parent = current {
             // If we hit a LabeledExprSyntax, we're inside an argument
             if parent.is(LabeledExprSyntax.self) {
@@ -149,6 +151,8 @@ private final class ModifierLineVisitor: SyntaxVisitor {
     /// Check if child is a descendant of parent
     private func isDescendant(_ child: FunctionCallExprSyntax, of parent: ExprSyntax) -> Bool {
         var current: Syntax? = child._syntaxNode
+        // Reason: Tree-walking pattern requires mutable outer var + immutable inner binding
+        // swiftlintcustom:disable:next prefer_shorthand_optional_binding
         while let node = current {
             if node.id == parent.id {
                 return true

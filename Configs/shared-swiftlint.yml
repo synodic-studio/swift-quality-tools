@@ -113,6 +113,7 @@ opt_in_rules:
   - redundant_type_annotation         # Remove redundant type annotations
   - toggle_bool                       # Use toggle() instead of = !
   - shorthand_operator               # Use shorthand operators (+=, -=, etc.)
+  - shorthand_optional_binding        # Use if let foo instead of if let foo = foo
   - implicit_return
 
   # === BASIC SAFETY ===

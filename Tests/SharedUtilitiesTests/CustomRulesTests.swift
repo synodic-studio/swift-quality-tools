@@ -1383,4 +1383,117 @@ struct CustomRulesTests {
         let violationCount = output.components(separatedBy: "[prefer_swift_testing]").count - 1
         #expect(violationCount == 5)
     }
+
+    // MARK: - Prefer Shorthand Optional Binding Rule Tests
+
+    @Test("prefer_shorthand_optional_binding: Detects if let rename")
+    func preferShorthandOptionalBindingIfLetRename() throws {
+        let code = """
+        func test(value: String?) {
+            if let foo = value {
+                print(foo)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_shorthand_optional_binding]"))
+        #expect(output.contains("let value"))
+    }
+
+    @Test("prefer_shorthand_optional_binding: Detects guard let rename")
+    func preferShorthandOptionalBindingGuardLetRename() throws {
+        let code = """
+        func test(input: Int?) {
+            guard let number = input else { return }
+            print(number)
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_shorthand_optional_binding]"))
+        #expect(output.contains("let input"))
+    }
+
+    @Test("prefer_shorthand_optional_binding: Detects if var rename")
+    func preferShorthandOptionalBindingIfVarRename() throws {
+        let code = """
+        func test(data: [Int]?) {
+            if var items = data {
+                items.append(1)
+                print(items)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("⚠️"))
+        #expect(output.contains("[prefer_shorthand_optional_binding]"))
+        #expect(output.contains("var data"))
+    }
+
+    @Test("prefer_shorthand_optional_binding: Accepts shorthand syntax")
+    func preferShorthandOptionalBindingShorthand() throws {
+        let code = """
+        func test(value: String?) {
+            if let value {
+                print(value)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[prefer_shorthand_optional_binding]"))
+    }
+
+    @Test("prefer_shorthand_optional_binding: Ignores same-name binding (SwiftLint handles)")
+    func preferShorthandOptionalBindingSameName() throws {
+        // Note: SwiftLint's shorthand_optional_binding rule handles this case
+        let code = """
+        func test(value: String?) {
+            if let value = value {
+                print(value)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        // Our custom rule should NOT flag same-name bindings
+        #expect(!output.contains("[prefer_shorthand_optional_binding]"))
+    }
+
+    @Test("prefer_shorthand_optional_binding: Ignores complex expressions")
+    func preferShorthandOptionalBindingComplexExpression() throws {
+        // Only simple identifier references should be flagged
+        let code = """
+        func test(dict: [String: String]) {
+            if let value = dict["key"] {
+                print(value)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[prefer_shorthand_optional_binding]"))
+    }
 }
