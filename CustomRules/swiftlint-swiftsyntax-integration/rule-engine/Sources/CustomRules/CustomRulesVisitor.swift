@@ -3,7 +3,7 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (14 total):
+/// Rule identifiers (15 total):
 /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
 /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
@@ -14,6 +14,7 @@ import SwiftSyntax
 /// - no_wrapper_body: Detect pointless wrapper body properties
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
 /// - no_exported_import: Prohibit @_exported import (internal Swift API, not stable)
+/// - prefer_swift_testing: Prefer Swift Testing framework over XCTest
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
 /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
 /// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
@@ -152,6 +153,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         }
         if shouldRun("no_exported_import") {
             ImportRules.checkNoExportedImport(node, violations: &violations)
+        }
+        if shouldRun("prefer_swift_testing") {
+            ImportRules.checkPreferSwiftTesting(node, violations: &violations)
         }
 
         // PreviewRules

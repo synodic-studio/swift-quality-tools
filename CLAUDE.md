@@ -135,6 +135,7 @@ In such cases, use `:this` or `:previous` instead:
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
 - `single_modifier_per_line`: Each modifier should be on its own line (no `.padding().background()` or `).padding()`)
 - `no_exported_import`: Prohibit `@_exported import` (underscore prefix = internal Swift API, not guaranteed stable across versions)
+- `prefer_swift_testing`: Prefer Swift Testing framework over XCTest (detects `import XCTest` and XCTAssert* calls)
 
 ### Violation Format
 
