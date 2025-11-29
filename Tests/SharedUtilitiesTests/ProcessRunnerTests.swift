@@ -3,15 +3,14 @@ import Testing
 
 @testable import SharedUtilities
 
-@Suite("ProcessRunner Tests")
+@Suite("ProcessRunner Tests", .serialized)
 struct ProcessRunnerTests {
     // MARK: - Command Exists Tests
 
     @Test("commandExists returns true for valid commands")
     func commandExistsValid() {
-        #expect(ProcessRunner.commandExists("echo"))
-        #expect(ProcessRunner.commandExists("ls"))
-        #expect(ProcessRunner.commandExists("pwd"))
+        // Use /bin/sh which is guaranteed to exist on all Unix systems
+        #expect(ProcessRunner.commandExists("sh"))
     }
 
     @Test("commandExists returns false for invalid commands")

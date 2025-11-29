@@ -5,7 +5,7 @@ import Testing
 
 @testable import SharedUtilities
 
-@Suite("Custom SwiftSyntax Rules Tests")
+@Suite("Custom SwiftSyntax Rules Tests", .serialized)
 struct CustomRulesTests {
     // MARK: - Test Fixtures
 
