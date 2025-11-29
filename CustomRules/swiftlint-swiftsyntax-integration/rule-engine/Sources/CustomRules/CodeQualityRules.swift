@@ -62,6 +62,16 @@ private final class NestingDepthVisitor: SyntaxVisitor {
         super.init(viewMode: .sourceAccurate)
     }
 
+    private func addNestingViolation(at position: AbsolutePosition) {
+        let location = converter.location(for: position)
+        let violation = """
+        ⚠️  [excessive_nesting] Line \(location.line): nesting level \(currentDepth) (max \(maxDepth))
+           Extract nested logic to a separate method or computed property.
+           Do not flatten by combining conditions or removing structure.
+        """
+        violations.append(violation)
+    }
+
     // MARK: - Preview macro tracking
 
     override func visit(_ node: MacroExpansionDeclSyntax) -> SyntaxVisitorContinueKind {
@@ -94,18 +104,9 @@ private final class NestingDepthVisitor: SyntaxVisitor {
 
     override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
         currentDepth += 1
-
-        // Skip violations inside #Preview macros - preview setup code naturally nests deeper
         if currentDepth > maxDepth, !isInPreviewMacro {
-            let location = converter.location(for: node.position)
-            let violation = """
-            ⚠️  [excessive_nesting] Line \(location.line): nesting level \(currentDepth) (max \(maxDepth))
-               Extract nested logic to a separate method or computed property.
-               Do not flatten by combining conditions or removing structure.
-            """
-            violations.append(violation)
+            addNestingViolation(at: node.position)
         }
-
         return .visitChildren
     }
 
@@ -115,18 +116,9 @@ private final class NestingDepthVisitor: SyntaxVisitor {
 
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
         currentDepth += 1
-
-        // Skip violations inside #Preview macros - preview setup code naturally nests deeper
         if currentDepth > maxDepth, !isInPreviewMacro {
-            let location = converter.location(for: node.position)
-            let violation = """
-            ⚠️  [excessive_nesting] Line \(location.line): nesting level \(currentDepth) (max \(maxDepth))
-               Extract nested logic to a separate method or computed property.
-               Do not flatten by combining conditions or removing structure.
-            """
-            violations.append(violation)
+            addNestingViolation(at: node.position)
         }
-
         return .visitChildren
     }
 
