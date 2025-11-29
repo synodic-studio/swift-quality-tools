@@ -396,10 +396,6 @@ SwiftSyntax custom rules enforce architecture and code quality patterns. When th
      - Merge wrapper logic directly into `body`
      - Or extract meaningful sections that `body` composes
 
-   - **`constants_enum_usage`** - Magic numbers detected
-     - Add `enum Constants` at top of type
-     - Define constants with meaningful names
-
    - **`blank_line_import_separation`** - Missing blank line
      - Add blank line between regular imports and `@testable` imports
 
@@ -515,7 +511,6 @@ extension UserProfile: Codable {
 ### Layout Modifiers
 - **Overlay/Background**: Use `.overlay()` and `.background()` modifiers, not `ZStack`
 - **Frame Alignment**: Prefer `.frame(maxWidth: .infinity, alignment: .leading)` over `HStack + Spacer`
-- **No Magic Numbers**: Always use meaningful constants
 - **Never `.if` Modifier**: Use standard Swift control flow instead
 
 ### Optional Handling

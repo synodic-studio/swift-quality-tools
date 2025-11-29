@@ -3,7 +3,7 @@ import SwiftSyntax
 
 /// Main coordinator for all custom SwiftLint rules
 ///
-/// Rule identifiers (14 total):
+/// Rule identifiers (13 total):
 /// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
 /// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
 /// - one_top_level_view: Enforce single top-level view in View bodies
@@ -12,7 +12,6 @@ import SwiftSyntax
 /// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
 /// - view_structure_order: Enforce View property ordering
 /// - no_wrapper_body: Detect pointless wrapper body properties
-/// - constants_enum_usage: Detect magic numbers, suggest Constants enum (DISABLED)
 /// - blank_line_import_separation: Enforce blank line between regular and @testable imports
 /// - preview_required: Every file with View/ViewModifier must have at least one #Preview
 /// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
@@ -168,19 +167,6 @@ public final class CustomRulesVisitor: SyntaxVisitor {
 
         return .visitChildren
     }
-
-    // DISABLED: Magic number rules are too noisy for practical use
-    // override public func visit(_ node: IntegerLiteralExprSyntax) -> SyntaxVisitorContinueKind {
-    //     // CodeQualityRules: Magic numbers
-    //     CodeQualityRules.checkMagicNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
-    //     return .visitChildren
-    // }
-
-    // override public func visit(_ node: FloatLiteralExprSyntax) -> SyntaxVisitorContinueKind {
-    //     // CodeQualityRules: Magic float numbers
-    //     CodeQualityRules.checkMagicFloatNumber(node, isInSwiftUIView: isInSwiftUIView, violations: &violations)
-    //     return .visitChildren
-    // }
 
     override public func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // ViewBodyRules: Check for Group without modifiers
