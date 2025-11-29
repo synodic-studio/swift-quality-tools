@@ -223,9 +223,8 @@ SwiftSyntax-based rules in `CustomRules/swiftlint-swiftsyntax-integration/`:
 5. **`stack_minimum_children`** - VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 6. **`view_structure_order`** - Enforce View property ordering (DISABLED - has bugs)
 7. **`no_wrapper_body`** - Detect pointless wrapper body properties
-8. **`constants_enum_usage`** - Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
-9. **`blank_line_import_separation`** - Enforce blank line between regular and @testable imports
-10. **`preview_required`** - Every file with View/ViewModifier must have at least one #Preview
+8. **`blank_line_import_separation`** - Enforce blank line between regular and @testable imports
+9. **`preview_required`** - Every file with View/ViewModifier must have at least one #Preview
 
 **To add new rules:**
 1. Edit `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/test-custom-rule.swift`

@@ -7,7 +7,7 @@ This document describes the SwiftSyntax-based custom rules that provide precise 
 **Module Organization**: Rules are organized into logical modules for maintainability:
 - **ViewBodyRules**: Body-specific patterns (skimmable_body, no_group_body, one_top_level_view)
 - **ViewStructureRules**: View organization (view_structure_order, no_wrapper_body)
-- **CodeQualityRules**: General code quality (constants_enum_usage, excessive_nesting)
+- **CodeQualityRules**: General code quality (excessive_nesting)
 - **ImportRules**: Import organization (blank_line_import_separation)
 - **PreviewRules**: Preview requirements (preview_required)
 
@@ -160,37 +160,6 @@ var body: some View {
 
 ---
 
-### `constants_enum_usage`
-**Description**: Detect magic numbers and suggest using an `enum Constants` pattern.
-
-**Severity**: Warning
-
-**What it checks**: Numeric literals (except 0, 1, 2, 0.0, 1.0, 0.5) in SwiftUI Views
-
-**Example Violation**:
-```swift
-.padding(16)  // ❌ Magic number
-.cornerRadius(12.0)  // ❌ Magic number
-```
-
-**How to fix**: Use `enum Constants` pattern:
-```swift
-struct MyView: View {
-    enum Constants {
-        static let padding: CGFloat = 16
-        static let cornerRadius: CGFloat = 12.0
-    }
-
-    var body: some View {
-        content
-            .padding(Constants.padding)
-            .cornerRadius(Constants.cornerRadius)
-    }
-}
-```
-
----
-
 ### `blank_line_import_separation`
 **Description**: Enforce blank line between regular imports and @testable imports.
 
@@ -296,7 +265,6 @@ For use in documentation, skill files, and error messages:
 - `excessive_nesting` - Max 4 indentation levels
 - `view_structure_order` - Member ordering
 - `no_wrapper_body` - No pointless wrappers
-- `constants_enum_usage` - No magic numbers
 - `blank_line_import_separation` - Import group spacing
 - `preview_required` - Every View/ViewModifier must have #Preview
 

@@ -1,41 +1,8 @@
 import SwiftSyntax
 
 /// Rules related to general code quality
-/// - constants_enum_usage: No magic numbers (DISABLED)
 /// - excessive_nesting: Max 3 nesting levels (prevents deep nesting, allows modifier chains)
 public enum CodeQualityRules {
-    public static func checkMagicNumber(_ node: IntegerLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
-        let value = node.literal.text
-
-        // Ignore common safe values (0, 1, 2) and array indices
-        let safeValues = ["0", "1", "2"]
-        if safeValues.contains(value) {
-            return
-        }
-
-        // Only flag if we're in a SwiftUI View context
-        guard isInSwiftUIView else { return }
-
-        let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
-        violations.append(violation)
-    }
-
-    public static func checkMagicFloatNumber(_ node: FloatLiteralExprSyntax, isInSwiftUIView: Bool, violations: inout [String]) {
-        let value = node.literal.text
-
-        // Ignore common safe values (0.0, 1.0, 0.5)
-        let safeValues = ["0.0", "1.0", "0.5", "0", "1"]
-        if safeValues.contains(value) {
-            return
-        }
-
-        // Only flag if we're in a SwiftUI View context
-        guard isInSwiftUIView else { return }
-
-        let violation = "⚠️  [constants_enum_usage] Magic number '\(value)' detected - consider using an enum Constants pattern at the top of the type"
-        violations.append(violation)
-    }
-
     public static func checkExcessiveNesting(_ sourceFile: SourceFileSyntax, violations: inout [String]) {
         let converter = SourceLocationConverter(fileName: "", tree: sourceFile)
         let visitor = NestingDepthVisitor(converter: converter)

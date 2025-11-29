@@ -133,7 +133,6 @@ In such cases, use `:this` or `:previous` instead:
 - `excessive_nesting`: AST-based nesting depth limit (max depth 3, triggers at depth 4+, tracks both closures and code blocks). **Automatically relaxed inside #Preview macros.**
 - `stack_minimum_children`: VStack/HStack/ZStack must have at least 2 children (ForEach allowed; if/else allowed if any branch has 2+ views)
 - `onchange_ignored_old_value`: Use 0-parameter onChange when old value is ignored (cleaner than 2-param with `_`)
-- `constants_enum_usage`: Detect magic numbers, suggest Constants enum (DISABLED - too noisy)
 - `single_modifier_per_line`: Each modifier should be on its own line (no `.padding().background()` or `).padding()`)
 
 ### Violation Format
