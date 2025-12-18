@@ -17,6 +17,70 @@ When writing Swift and SwiftUI code, prioritize:
 - **Code Clarity Over Cleverness** - Readable code beats clever code
 - **YAGNI Enforcement** - Only implement what's explicitly requested
 
+## Compiler Warnings - CRITICAL
+
+**ALL compiler warnings must be taken seriously and fixed immediately.**
+
+- Compiler warnings are NOT optional suggestions
+- Warnings indicate real problems that will become errors in future Swift versions
+- NEVER ignore warnings in build output
+- ALWAYS fix warnings before considering a task complete
+- Concurrency warnings especially critical - they indicate potential race conditions and crashes
+
+**When running xcodebuild:**
+1. Always check for warnings in the output
+2. Fix all warnings before marking work complete
+3. Pay special attention to:
+   - Concurrency/actor isolation warnings
+   - Sendable conformance warnings
+   - MainActor isolation warnings
+   - Deprecation warnings
+
+## Swift Quality Tools - CRITICAL
+
+**ALWAYS use the -smart versions of Swift quality tools:**
+- ✅ `swiftformat-smart` - Auto-discovers project config
+- ✅ `swiftlint-smart` - Auto-discovers project config
+- ✅ `swiftlintcustom-smart` - Runs custom SwiftSyntax rules
+
+**NEVER use bare commands:**
+- ❌ `swiftformat` - Uses wrong/default config
+- ❌ `swiftlint` - Uses SwiftLint defaults that conflict with SwiftFormat
+
+**Why this matters:**
+- Bare `swiftlint` uses default rules that **reject trailing commas**
+- `swiftformat` is configured to **add trailing commas**
+- This creates a conflict where tools fight each other
+- The shared config (`shared-swiftlint.yml`) correctly disables `trailing_comma` rule
+- Only `-smart` versions find and use the correct shared config
+
+**The -smart tools automatically:**
+1. Check for `--config` parameter (explicit override)
+2. Look in current directory for config
+3. Walk up directory tree to find config
+4. Fall back to shared config in `~/Developer/swift-quality-tools/Configs/`
+5. Error if no config found (fail fast)
+
+### Batch Editing for Performance
+
+**When fixing many lint violations across multiple files, use batch editing:**
+
+Why batch editing is faster:
+- Quality hooks run after **every** Edit tool use
+- 50 individual edits = 50 hook runs (slow)
+- 1 batch edit with 50 changes = 1 hook run (fast)
+
+**Use batch editing when:**
+- Fixing similar violations across multiple files (trailing whitespace, formatting, etc.)
+- Making systematic changes (renaming, adding imports, removing code)
+- Addressing lint violations from a quality check run
+- Working with 5+ files that need similar changes
+
+**When NOT to batch:**
+- Different types of changes that need individual review
+- Complex refactoring where you want to see intermediate results
+- When edits might fail and you want to isolate issues
+
 ## Primary Workflow: The 15-Line Body Rule
 
 ### The Rule
@@ -530,6 +594,162 @@ if let foo = foo {
     // use foo
 }
 ```
+
+## Swift Code Style Rules
+
+### EmptyView Anti-Pattern - CRITICAL
+
+**NEVER use `EmptyView` as a placeholder or default view.**
+
+This anti-pattern appears when developers use `EmptyView` in switch statements, ternary operators, or conditional returns:
+
+```swift
+// ❌ NEVER DO THIS
+var body: some View {
+    switch viewModel.state {
+    case .loading:
+        ProgressView()
+    case .loaded:
+        ContentView()
+    default:
+        EmptyView()  // WRONG - pointless container
+    }
+}
+```
+
+**Why this is wrong:**
+- SwiftUI views support `if/else` and optional views natively
+- `EmptyView` creates unnecessary view hierarchy
+- Reduces code clarity and intent
+- Usually indicates missing business logic
+
+**Correct alternatives:**
+
+```swift
+// ✅ Use optional view
+var body: some View {
+    if viewModel.hasData {
+        ContentView(data: viewModel.data)
+    }
+}
+
+// ✅ Use if/else for clear alternatives
+var body: some View {
+    if viewModel.isLoading {
+        ProgressView()
+    } else {
+        ContentView()
+    }
+}
+
+// ✅ Handle all meaningful states
+var body: some View {
+    switch viewModel.state {
+    case .loading:
+        ProgressView()
+    case .loaded(let data):
+        ContentView(data: data)
+    case .error(let message):
+        ErrorView(message: message)
+    // No default with EmptyView needed
+    }
+}
+```
+
+**The only valid use of `EmptyView`** is when you need a concrete type that conforms to `View` for generic constraints, which is extremely rare in application code.
+
+### ViewModel Naming Standard
+
+**Always use `viewModel` for view model properties, never `model` or `vm`.**
+
+```swift
+// ✅ Correct
+@StateObject private var viewModel = MyViewModel()
+
+// ❌ Wrong
+@StateObject private var model = MyViewModel()  // Ambiguous
+@StateObject private var vm = MyViewModel()     // Abbreviated
+```
+
+**Rationale:**
+- `model` is ambiguous (data model vs view model?)
+- `vm` is unclear to readers unfamiliar with the abbreviation
+- `viewModel` is explicit, searchable, and conventional
+- Consistency across codebase aids navigation and comprehension
+
+### Constants and Magic Numbers
+
+**Always use `enum Constants` at the top of the type declaration** instead of magic numbers:
+```swift
+struct MyView: View {
+    enum Constants {
+        static let maxRetries = 3
+        static let timeout: TimeInterval = 30.0
+        static let cornerRadius: CGFloat = 12.0
+    }
+
+    var body: some View {
+        // Use Constants.cornerRadius instead of literal 12.0
+    }
+}
+```
+
+This pattern:
+- Eliminates magic numbers (SwiftLint violation)
+- Makes values easy to find and change
+- Self-documents the meaning of each value
+- Groups related constants logically
+
+### Testing Framework
+
+- Always use Swift Testing (`import Testing`)
+- Never use `XCTest`
+- Reference: https://developer.apple.com/documentation/testing/migratingfromxctest
+
+## Development Tools
+
+### Periphery - Unused Code Detection
+
+**Installation**: Download latest version directly from GitHub releases when Homebrew is behind
+```bash
+# Check version
+periphery version
+
+# Manual install latest
+curl -LO https://github.com/peripheryapp/periphery/releases/download/3.2.0/periphery-3.2.0.zip
+unzip periphery-3.2.0.zip
+mv periphery /opt/homebrew/bin/periphery
+```
+
+**Key Discovery**: Periphery 3.2.0+ supports newer Xcode formats (Xcode 26 Beta) that v2.21.2 doesn't
+
+**Usage**: Use `periphery scan` (auto-detection) for better cross-package analysis
+
+**Configuration Template**:
+```yaml
+project: ProjectName.xcodeproj
+schemes:
+  - MainScheme
+retain_public: true
+retain_objc_accessible: true
+retain_assign_only_properties: true
+retain_unused_protocol_func_params: true
+format: xcode
+```
+
+**Best Practices**:
+- Run `periphery scan` first to verify project detection works
+- Fix imports first (safest), then unused code
+- Build frequently during cleanup to catch breaking changes
+- SwiftFormat automatically fixes whitespace issues after deletions
+
+### XcodeGen (Future Consideration)
+
+Consider adopting XcodeGen for managing Xcode project files:
+- Eliminates .xcodeproj merge conflicts
+- Human-readable YAML configuration
+- Easier project restructuring
+- Consistent project generation
 
 ## When to Use This Skill
 
