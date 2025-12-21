@@ -1,14 +1,14 @@
 import SwiftSyntax
 
 /// Rules related to SwiftUI previews
-/// - preview_required: Every file with View/ViewModifier must have at least one #Preview
+/// - preview_required: Every file with View/ViewModifier/Shape must have at least one #Preview
 public enum PreviewRules {
     private static func checkStructForView(_ structDecl: StructDeclSyntax, hasView: inout Bool, viewNames: inout [String]) {
         guard let inheritance = structDecl.inheritanceClause else { return }
 
         for inherited in inheritance.inheritedTypes {
             let typeName = inherited.type.description.trimmingCharacters(in: .whitespaces)
-            if typeName.contains("View") || typeName.contains("ViewModifier") {
+            if typeName.contains("View") || typeName.contains("ViewModifier") || typeName == "Shape" {
                 hasView = true
                 viewNames.append(structDecl.name.text)
                 break
@@ -64,7 +64,7 @@ public enum PreviewRules {
         // If file has View/ViewModifier but no Preview, report violation
         if hasViewOrModifier, !hasPreview {
             let viewList = viewNames.joined(separator: ", ")
-            let violation = "⚠️  [preview_required] File declares View/ViewModifier (\(viewList)) but has no #Preview - add at least one preview for development workflow"
+            let violation = "⚠️  [preview_required] File declares View/ViewModifier/Shape (\(viewList)) but has no #Preview - add at least one preview for development workflow"
             violations.append(violation)
         }
     }

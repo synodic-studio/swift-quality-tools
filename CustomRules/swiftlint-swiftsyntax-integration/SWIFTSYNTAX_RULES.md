@@ -266,7 +266,7 @@ For use in documentation, skill files, and error messages:
 - `view_structure_order` - Member ordering
 - `no_wrapper_body` - No pointless wrappers
 - `blank_line_import_separation` - Import group spacing
-- `preview_required` - Every View/ViewModifier must have #Preview
+- `preview_required` - Every View/ViewModifier/Shape must have #Preview
 
 ## Future Enhancements
 
