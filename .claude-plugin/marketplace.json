@@ -1,0 +1,13 @@
+{
+  "name": "swift-quality-tools",
+  "owner": {
+    "name": "Adrien Lipari"
+  },
+  "plugins": [
+    {
+      "name": "swift-quality",
+      "source": "./",
+      "description": "SwiftUI code quality rules and SwiftSyntax-based linting toolchain"
+    }
+  ]
+}

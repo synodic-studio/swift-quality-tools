@@ -1,0 +1,8 @@
+{
+  "name": "swift-quality",
+  "description": "SwiftUI code quality rules: 15-line body rule, view structure order, five refactoring strategies, SwiftSyntax linting guidance",
+  "author": {
+    "name": "Adrien Lipari",
+    "email": "adrien@synodic.co"
+  }
+}
