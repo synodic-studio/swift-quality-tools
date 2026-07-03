@@ -9,5 +9,6 @@
       "source": "./",
       "description": "SwiftUI code quality rules and SwiftSyntax-based linting toolchain"
     }
-  ]
+  ],
+  "description": "SwiftUI code quality skill, co-located with its SwiftSyntax linting rules"
 }
