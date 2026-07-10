@@ -12,7 +12,10 @@ var args = Array(CommandLine.arguments.dropFirst())
 var i = 0
 while i < args.count {
     let arg = args[i]
-    if arg == "--only-rules", i + 1 < args.count {
+    if arg == "--list-rules" {
+        print(RuleRegistry.formattedList())
+        exit(0)
+    } else if arg == "--only-rules", i + 1 < args.count {
         onlyRules = args[i + 1].split(separator: ",").map { String($0) }
         i += 2
     } else if !arg.hasPrefix("-") {
@@ -24,7 +27,7 @@ while i < args.count {
 }
 
 guard let filePath else {
-    print("Usage: test-custom-rule <file.swift> [--only-rules rule1,rule2,...]")
+    print("Usage: swiftquality-rule-engine <file.swift> [--only-rules rule1,rule2,...] [--list-rules]")
     exit(1)
 }
 

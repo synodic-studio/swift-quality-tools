@@ -1,25 +1,11 @@
 import Foundation
 import SwiftSyntax
 
-/// Main coordinator for all custom SwiftLint rules
+/// Main coordinator for all custom SwiftLint rules.
 ///
-/// Rule identifiers (16 total):
-/// - skimmable_body: View/ViewModifier body line count limit (max 15 lines)
-/// - no_group_body: Prohibit Group without modifiers (use @ViewBuilder instead)
-/// - one_top_level_view: Enforce single top-level view in View bodies
-/// - no_if_modifier: Detect custom .if modifier anti-pattern
-/// - no_if_without_else: Detect if-without-else in @ViewBuilder (hoist visibility to parent)
-/// - excessive_nesting: AST-based nesting depth limit (max 3 levels)
-/// - prefer_shorthand_optional_binding: Use shorthand with original name (if let bar, not if let foo = bar)
-/// - view_structure_order: Enforce View property ordering
-/// - no_wrapper_body: Detect pointless wrapper body properties
-/// - blank_line_import_separation: Enforce blank line between regular and @testable imports
-/// - no_exported_import: Prohibit @_exported import (internal Swift API, not stable)
-/// - prefer_swift_testing: Prefer Swift Testing framework over XCTest
-/// - preview_required: Every file with View/ViewModifier must have at least one #Preview
-/// - stack_minimum_children: Stacks must have at least 2 children (or special cases)
-/// - prefer_zero_param_onchange: Use 0-param onChange when old value is ignored
-/// - single_modifier_per_line: Each modifier on its own line for readability
+/// The canonical list of rule identifiers and summaries lives in
+/// `RuleRegistry.all` (the single source of truth). Each `shouldRun("id")`
+/// dispatch site below must use an `id` that exists in that registry.
 public final class CustomRulesVisitor: SyntaxVisitor {
     private var violations: [String] = []
     private var currentStructDecl: StructDeclSyntax?
@@ -199,7 +185,7 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         }
 
         // OnChangeRules: Check for 2-param onChange with ignored old value
-        if shouldRun("prefer_zero_param_onchange") {
+        if shouldRun("onchange_ignored_old_value") {
             OnChangeRules.checkOnChangeIgnoredOldValue(node, converter: locationConverter, violations: &violations)
         }
 
