@@ -23,15 +23,15 @@ public enum ConfigDiscovery {
     public static func findConfig(
         configNames: [String],
         sharedConfigName: String,
-        explicitConfig: URL? = nil
+        explicitConfig: URL? = nil,
     ) throws -> URL {
         // If explicit config provided, validate and return it
-        if let explicit = explicitConfig {
-            guard FileManager.default.fileExists(atPath: explicit.path) else {
+        if let explicitConfig {
+            guard FileManager.default.fileExists(atPath: explicitConfig.path) else {
                 throw ConfigDiscoveryError.noConfigFound
             }
-            Console.info("Using explicit config: \(explicit.path)")
-            return explicit
+            Console.info("Using explicit config: \(explicitConfig.path)")
+            return explicitConfig
         }
 
         // Search for config files in current directory and walk up tree

@@ -39,8 +39,8 @@ public enum SwiftLintConfigParser {
     public static func readExclusions(configPath: URL? = nil) -> [String] {
         // Try to find SwiftLint config
         let config: URL
-        if let explicitConfig = configPath {
-            config = explicitConfig
+        if let configPath {
+            config = configPath
         } else {
             // Try to find SwiftLint config in current directory or parent directories
             if let foundConfig = searchDirectoryTreeForSwiftLintConfig() {
@@ -95,7 +95,7 @@ public enum SwiftLintConfigParser {
     private static func handleExcludedSection(
         line: String,
         trimmed: String,
-        exclusions: inout [String]
+        exclusions: inout [String],
     ) -> Bool {
         // Check if this line starts a new top-level section
         if !line.isEmpty, !line.first!.isWhitespace, trimmed.contains(":") {

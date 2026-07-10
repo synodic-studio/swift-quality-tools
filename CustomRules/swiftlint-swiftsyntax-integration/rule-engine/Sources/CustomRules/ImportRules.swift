@@ -1,5 +1,10 @@
 import SwiftSyntax
 
+// Reason: SwiftSyntax visitors match nested tree shapes (decl → binding → type →
+// call → closure); depth-4 traversal is intrinsic to AST matching. excessive_nesting
+// is a SwiftUI view-code readability heuristic and does not fit traversal internals.
+// swiftlintcustom:disable excessive_nesting
+
 /// Rules related to import organization
 /// - blank_line_import_separation: Blank line between regular and @testable imports
 /// - no_exported_import: Prohibit @_exported import (internal Swift API, not stable)

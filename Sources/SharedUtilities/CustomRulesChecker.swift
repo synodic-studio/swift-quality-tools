@@ -13,14 +13,14 @@ public enum CustomRulesChecker {
         _ fileURL: URL,
         ruleEngine: URL,
         xcodeFormat: Bool = false,
-        onlyRules: [String]? = nil
+        onlyRules: [String]? = nil,
     ) throws -> CheckResult {
         let process = Process()
         process.executableURL = ruleEngine
         var arguments = [fileURL.path]
-        if let rules = onlyRules, !rules.isEmpty {
+        if let onlyRules, !onlyRules.isEmpty {
             arguments.append("--only-rules")
-            arguments.append(rules.joined(separator: ","))
+            arguments.append(onlyRules.joined(separator: ","))
         }
         process.arguments = arguments
 

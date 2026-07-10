@@ -36,7 +36,7 @@ public enum ProcessRunner {
     public static func run(
         _ executable: String,
         arguments: [String] = [],
-        workingDirectory: URL? = nil
+        workingDirectory: URL? = nil,
     ) throws -> Int32 {
         // If executable doesn't contain a path separator, check if it exists in PATH
         if !executable.contains("/") && !commandExists(executable) {
@@ -57,16 +57,16 @@ public enum ProcessRunner {
             // Command in PATH
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = [executable] + arguments
-            if let workingDir = workingDirectory {
-                process.currentDirectoryURL = workingDir
+            if let workingDirectory {
+                process.currentDirectoryURL = workingDirectory
             }
             return try executeProcess(process)
         }
 
         process.arguments = arguments
 
-        if let workingDir = workingDirectory {
-            process.currentDirectoryURL = workingDir
+        if let workingDirectory {
+            process.currentDirectoryURL = workingDirectory
         }
 
         return try executeProcess(process)

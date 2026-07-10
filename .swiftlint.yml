@@ -19,6 +19,8 @@ excluded:
   - "**/*-derived*"
   - CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build
   - CustomRules/swiftlint-swiftsyntax-integration/rule-engine/build
+  - Fixtures  # Deliberately-broken sample inputs; they must trip the rules, not pass them
+  - "**/Fixtures"
 
 # Project-specific rule adjustments
 disabled_rules:

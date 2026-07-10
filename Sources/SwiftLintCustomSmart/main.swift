@@ -61,38 +61,16 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         let rulesToRun = onlyRules?.split(separator: ",").map { String($0) }
 
         // Print which rules are being run if filtered
-        if let rules = rulesToRun, !isXcode {
-            Console.info("Running only: \(rules.joined(separator: ", "))")
+        if let rulesToRun, !isXcode {
+            Console.info("Running only: \(rulesToRun.joined(separator: ", "))")
         }
 
-        // Process files in parallel or sequentially based on flag
-        let results: [CheckResult] = if sequential {
-            // Sequential processing (for debugging or when order matters)
-            try filesToCheck.map {
-                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEnginePath, xcodeFormat: isXcode, onlyRules: rulesToRun)
-            }
-        } else {
-            // Parallel processing using TaskGroup for optimal performance
-            try await withThrowingTaskGroup(of: CheckResult.self) { group in
-                for fileURL in filesToCheck {
-                    group.addTask {
-                        try CustomRulesChecker.checkFile(
-                            fileURL,
-                            ruleEngine: ruleEnginePath,
-                            xcodeFormat: isXcode,
-                            onlyRules: rulesToRun,
-                        )
-                    }
-                }
-
-                // Collect results as tasks complete
-                var collectedResults: [CheckResult] = []
-                for try await result in group {
-                    collectedResults.append(result)
-                }
-                return collectedResults
-            }
-        }
+        let results = try await checkFiles(
+            filesToCheck,
+            ruleEngine: ruleEnginePath,
+            isXcode: isXcode,
+            onlyRules: rulesToRun,
+        )
 
         let violationCount = results.filter(\.hasViolations).count
 
@@ -103,5 +81,36 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         if violationCount > 0 {
             throw ExitCode.failure
         }
+    }
+
+    /// Run the rule engine over `files`, in parallel by default (sequential with `--sequential`).
+    private func checkFiles(
+        _ files: [URL],
+        ruleEngine: URL,
+        isXcode: Bool,
+        onlyRules: [String]?,
+    ) async throws -> [CheckResult] {
+        if sequential {
+            return try files.map {
+                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules)
+            }
+        }
+
+        // Reason: structured-concurrency TaskGroup is irreducibly closure → for →
+        // addTask; the per-file task body cannot be hoisted out of that shape.
+        // swiftlintcustom:disable excessive_nesting
+        return try await withThrowingTaskGroup(of: CheckResult.self) { group in
+            for fileURL in files {
+                group.addTask {
+                    try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules)
+                }
+            }
+            var results: [CheckResult] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return results
+        }
+        // swiftlintcustom:enable excessive_nesting
     }
 }
