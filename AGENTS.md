@@ -76,17 +76,19 @@ If the code has a real problem, fix it properly.
 
 ### Suppression format
 
-Custom rules use the `swiftlintcustom:` prefix — deliberately distinct from SwiftLint's
-`swiftlint:` so SwiftLint's `superfluous_disable_command` check still works.
+Custom rules use the `swiftskim:` prefix — deliberately distinct from SwiftLint's
+`swiftlint:` so SwiftLint's `superfluous_disable_command` check still works. The old
+`swiftlintcustom:` prefix is still accepted as a legacy alias (see `DirectiveParser`),
+so existing directives keep working, but `swiftskim:` is the primary form.
 
 ```swift
 // Reason: <why this is intentional/correct>
-// swiftlintcustom:disable:next <rule_id>
+// swiftskim:disable:next <rule_id>
 <code line>
 
-// swiftlintcustom:disable <rule_id>
+// swiftskim:disable <rule_id>
 // ... block ...
-// swiftlintcustom:enable <rule_id>
+// swiftskim:enable <rule_id>
 ```
 
 `:this` and `:previous` target the current and preceding line. If a `swiftlint:` or
