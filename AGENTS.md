@@ -14,6 +14,11 @@ Delivered as thin, skippable surfaces over one engine: CLI, Xcode build phase, a
 Claude Code / Codex plugin (shared skill + post-edit hook), a Cursor `afterFileEdit`
 hook, a pi extension, and an importable `SwiftSkim` SwiftPM library.
 
+**Why things are the way they are** — the load-bearing decisions and their rationale
+(opinionated-orchestrator identity, Swift 6.1 floor, tagged releases, library-not-plugins
+extensibility, the dedicated `.swiftskim.yml`, etc.) live in [`docs/decisions.md`](docs/decisions.md).
+Read it before questioning a design choice.
+
 **Codex and Cursor support is best-effort.** Both hooks are built to each agent's
 documented payload shape and checked with synthetic events (`verify-agent-hooks.sh`),
 but neither has been fired in a live Codex or Cursor session. `format-swift.py` fails
