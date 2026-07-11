@@ -241,12 +241,15 @@ The tool passes its own rule set on its own source (`swiftskim .` exits clean).
 ### Verifying the delivery surfaces
 
 `Scripts/verify-all.sh` is a release gate that checks every public surface — the CLI,
-the Claude Code plugin hook, the pi extension, the `SwiftSkim` SwiftPM library (via SPM,
-a Linux clean-room container, and a Tuist demo), and the Homebrew install:
+the agent post-edit hooks (Claude Code / Codex / Cursor), the pi extension, the
+`SwiftSkim` SwiftPM library (via SPM, a Linux clean-room container, and a Tuist demo),
+and the Homebrew install. Crucially, the release stage consumes the **shipped tagged
+release** (`from:<tag>` / the stable formula), so it verifies the exact artifact a
+public user installs — not just the current branch:
 
 ```bash
 ./Scripts/verify-all.sh              # local surfaces (no network)
-./Scripts/verify-all.sh --release    # + surfaces that consume the pushed HEAD
+./Scripts/verify-all.sh --release    # + surfaces that consume the tagged release
 ```
 
 Each surface also has its own `Scripts/verify-*.sh` for running one in isolation.

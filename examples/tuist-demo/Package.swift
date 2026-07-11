@@ -8,10 +8,11 @@ import PackageDescription
 #endif
 
 /// Tuist reads this manifest to resolve external SwiftPM dependencies. The demo
-/// depends on the public `SwiftSkim` product from the pushed develop HEAD.
+/// depends on the public `SwiftSkim` product at the shipped tagged release, the way
+/// a real consumer pins it.
 let package = Package(
     name: "TuistDemo",
     dependencies: [
-        .package(url: "https://github.com/synodic-studio/swiftskim.git", branch: "develop"),
+        .package(url: "https://github.com/synodic-studio/swiftskim.git", from: "1.0.0"),
     ],
 )

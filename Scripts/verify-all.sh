@@ -3,10 +3,11 @@
 #
 # Two stages:
 #   local   (default) — no network: build, unit+integration tests, self-lint,
-#                        Claude Code plugin hook, pi extension, SPM consumer (path).
-#   release (--release) — adds the surfaces that consume the PUSHED develop HEAD:
-#                        Homebrew install, SPM consumer (remote), Linux clean-room,
-#                        Tuist demo. Push the release commit before running these.
+#                        agent post-edit hooks, pi extension, SPM consumer (path).
+#   release (--release) — adds the surfaces that consume the SHIPPED TAGGED RELEASE
+#                        (the artifact the public installs): Homebrew install, SPM
+#                        consumer (remote, from:<tag>), Linux clean-room (from:<tag>),
+#                        Tuist demo (from:<tag>). Tag + push the release before running.
 #
 # Usage:
 #   Scripts/verify-all.sh              # local stage only
@@ -52,7 +53,7 @@ run "agent post-edit hooks"     "$SCRIPT_DIR/verify-agent-hooks.sh"
 run "pi extension"              "$SCRIPT_DIR/verify-pi-extension.sh"
 run "SPM consumer (path)"       "$SCRIPT_DIR/verify-consumer-spm.sh"
 
-# ---- release stage (consumes pushed develop HEAD) ----
+# ---- release stage (consumes the shipped tagged release) ----
 if [ "$RELEASE" = "1" ]; then
     run "Homebrew install"        "$SCRIPT_DIR/verify-brew-install.sh"
     run "SPM consumer (remote)"   "$SCRIPT_DIR/verify-consumer-spm.sh" --remote
