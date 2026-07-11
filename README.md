@@ -73,6 +73,19 @@ For all three tools:
 3. Walk up parent directories until a config is found
 4. Fall back to the bundled `Configs/shared-*.yml`
 
+### Configurable thresholds
+
+Two rules take a threshold you can tune per project, in a `swift_skim:` block in
+`.swiftlint.yml` (no forking required):
+
+```yaml
+swift_skim:
+  skimmable_body_max_lines: 20      # default 15
+  excessive_nesting_max_depth: 4    # default 3
+```
+
+Omit the block, or any key, to keep the defaults.
+
 ## Custom rules
 
 The rules live in `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules/`,
