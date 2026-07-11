@@ -145,6 +145,7 @@ struct ConfigDiscoveryTests {
 
     @Test("Custom rule engine path points to correct location")
     func testCustomRuleEnginePath() {
+        TestSupport.ensureSwiftskimHome()
         let path = ConfigDiscovery.customRuleEnginePath
 
         // Collapsed layout: the engine is built by the root package, so its dev
@@ -156,6 +157,7 @@ struct ConfigDiscoveryTests {
 
     @Test("Custom rule engine path is in home directory")
     func customRuleEnginePathInHome() {
+        TestSupport.ensureSwiftskimHome()
         let path = ConfigDiscovery.customRuleEnginePath
         let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
 

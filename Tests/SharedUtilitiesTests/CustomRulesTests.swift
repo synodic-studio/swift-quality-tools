@@ -21,6 +21,7 @@ struct CustomRulesTests {
     }
 
     private func runRuleEngine(on file: URL) throws -> String {
+        TestSupport.ensureSwiftskimHome()
         let ruleEnginePath = ConfigDiscovery.customRuleEnginePath
 
         guard FileManager.default.fileExists(atPath: ruleEnginePath.path) else {

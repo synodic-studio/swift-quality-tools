@@ -19,7 +19,7 @@ public enum ConfigDiscovery {
     /// 2. Walk up from the executable to the nearest ancestor containing
     ///    `Configs/shared-swiftlint.yml` (covers dev `.build/release` and installs
     ///    that place `Configs/` relative to the binary).
-    /// 3. Legacy fallback to the historical dev checkout.
+    /// 3. Fall back to the executable's own directory (honest error if Configs/ absent).
     static var resourcesRoot: URL {
         let fileManager = FileManager.default
 
@@ -38,9 +38,10 @@ public enum ConfigDiscovery {
             directory = parent
         }
 
-        return fileManager.homeDirectoryForCurrentUser
-            .appendingPathComponent("Developer")
-            .appendingPathComponent("swift-quality-tools")
+        // No env override and no bundled Configs/ found by walking up from the binary:
+        // fall back to the executable's own directory so a missing-config error points
+        // at the real install location rather than a hardcoded personal path.
+        return executableDirectory
     }
 
     /// Find config file with smart discovery
@@ -48,11 +49,11 @@ public enum ConfigDiscovery {
     /// Discovery order:
     /// 1. Check current directory for config files (error if multiple found)
     /// 2. Walk up directory tree until config found
-    /// 3. Fall back to shared config in swift-quality-tools
+    /// 3. Fall back to swiftskim's bundled shared config
     ///
     /// - Parameters:
     ///   - configNames: List of config file names to search for (e.g., [".swiftformat.yml", ".swiftformat"])
-    ///   - sharedConfigName: Name of shared config file in swift-quality-tools/Configs/
+    ///   - sharedConfigName: Name of shared config file in swiftskim's bundled Configs/
     ///   - explicitConfig: Explicitly provided config path (overrides discovery)
     /// - Returns: URL of config file to use
     /// - Throws: ConfigDiscoveryError if no valid config found

@@ -8,6 +8,17 @@ cannot express — most of them SwiftUI structure rules, the rest general Swift 
 The name is the thesis: the flagship rule, `skimmable_body`, exists to keep code
 readable at a glance. The whole toolkit optimizes for code you can skim.
 
+### What it is (and isn't)
+
+swiftskim is an **opinionated orchestrator**, not a neutral linter. It drives your
+installed SwiftFormat and SwiftLint (both required — `brew install swiftformat
+swiftlint`) alongside its own SwiftSyntax engine, and it ships an **opinionated
+default config** (`Configs/`) that encodes a specific house style. That's the point,
+not an accident — but it means: bring your own `.swiftformat` / `.swiftlint.yml` (the
+wrappers discover project-local config first) if you don't want the bundled taste. The
+genuinely novel, style-neutral part is the AST engine and its `SwiftSkim` library,
+which you can consume on its own.
+
 ## What's in here
 
 - **`swiftformat-smart`** — SwiftFormat with project-aware config discovery

@@ -15,7 +15,7 @@ See edited_files() for how each shape is recognized.
 Binary resolution order (so it works however the tool was installed):
   1. On PATH (Homebrew install)
   2. <plugin root>/.build/release (source install; CLAUDE_PLUGIN_ROOT or CODEX_PLUGIN_ROOT)
-  3. ~/Developer/swift-quality-tools/.build/release (legacy dev checkout)
+  3. <repo>/.build/release relative to this hook (source checkout, any location)
 """
 from __future__ import annotations
 
@@ -35,7 +35,10 @@ def find_bin(name: str) -> str | None:
     candidates = []
     if root:
         candidates.append(Path(root) / ".build" / "release" / name)
-    candidates.append(Path.home() / "Developer" / "swift-quality-tools" / ".build" / "release" / name)
+    # This hook lives at <repo>/hooks/format-swift.py, so <repo>/.build/release is a
+    # location-independent fallback for a source checkout (no hardcoded path).
+    repo_root = Path(__file__).resolve().parent.parent
+    candidates.append(repo_root / ".build" / "release" / name)
     for candidate in candidates:
         if candidate.is_file():
             return str(candidate)

@@ -11,7 +11,8 @@ struct SwiftFormatSmart: ParsableCommand {
         1. --config parameter if provided
         2. .swiftformat.yml or .swiftformat in current directory (error if both)
         3. Walk up directories until finding config file
-        4. Fallback to shared config in ~/Developer/swift-quality-tools/Configs/
+        4. Fallback to swiftskim's bundled Configs/ (resolved relative to the
+           binary, or via the SWIFTSKIM_HOME environment variable)
         5. Error if no config found
         """,
     )
