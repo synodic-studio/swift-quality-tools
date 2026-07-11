@@ -151,7 +151,7 @@ struct ConfigDiscoveryTests {
         #expect(path.path.contains("CustomRules"))
         #expect(path.path.contains("swiftlint-swiftsyntax-integration"))
         #expect(path.path.contains("rule-engine"))
-        #expect(path.path.contains(".build/release/test-custom-rule"))
+        #expect(path.path.contains("swift-skim-engine"))
     }
 
     @Test("Custom rule engine path is in home directory")

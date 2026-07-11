@@ -4,7 +4,7 @@ import SwiftParser
 import SwiftSyntax
 
 // Parse arguments
-// Usage: test-custom-rule <file.swift> [--only-rules rule1,rule2,...]
+// Usage: swift-skim-engine <file.swift> [--only-rules rule1,rule2,...] [--list-rules]
 var filePath: String?
 var onlyRules: [String]?
 
@@ -33,7 +33,7 @@ while i < args.count {
 }
 
 guard let filePath else {
-    print("Usage: swiftquality-rule-engine <file.swift> [--only-rules rule1,rule2,...] [--list-rules]")
+    print("Usage: swift-skim-engine <file.swift> [--only-rules rule1,rule2,...] [--list-rules]")
     exit(1)
 }
 

@@ -3,7 +3,7 @@ import Foundation
 /// Configuration discovery for Swift quality tools
 public enum ConfigDiscovery {
     /// Filename of the rule-engine executable.
-    static let engineBinaryName = "test-custom-rule"
+    static let engineBinaryName = "swift-skim-engine"
 
     /// Directory containing the currently running executable (symlinks resolved).
     private static var executableDirectory: URL {

@@ -117,7 +117,7 @@ echo ""
 
 # Check custom rule engine
 echo "🔍 Checking custom rule engine..."
-RULE_ENGINE="$PROJECT_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build/debug/test-custom-rule"
+RULE_ENGINE="$PROJECT_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build/release/swift-skim-engine"
 
 if [ -f "$RULE_ENGINE" ]; then
     echo "  ✅ Custom rule engine built"
