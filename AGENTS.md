@@ -53,15 +53,28 @@ documented lists match the registry, so an id can never silently diverge from wh
 engine emits, filters, and suppresses. (This closed a real bug where the onChange rule
 dispatched under `prefer_zero_param_onchange` but emitted `onchange_ignored_old_value`.)
 
-## Configurable thresholds
+## Configuration (`.swiftskim.yml`)
 
-Two rules take a per-project threshold via a `swiftskim:` block in `.swiftlint.yml`:
+swiftskim owns its own config file, discovered by walking up from the working directory
+— its rules roll up separately from SwiftLint/SwiftFormat. It governs rule selection and
+the two thresholds; it does not configure file selection (exclusions stay shared from
+`.swiftlint.yml`'s `excluded:`).
 
 ```yaml
-swiftskim:
-  skimmable_body_max_lines: 20      # default 15
-  excessive_nesting_max_depth: 4    # default 3
+# .swiftskim.yml
+disabled_rules:                     # never run these (unknown ids → hard error, exit 2)
+  - preview_required
+# only_rules:                       # if set, ONLY these run (wins over disabled_rules)
+#   - skimmable_body
+skimmable_body_max_lines: 20        # default 15
+excessive_nesting_max_depth: 4      # default 3
 ```
+
+Precedence: CLI `--only-rules` fully overrides config selection; in-config `only_rules`
+beats `disabled_rules`. Parsing/discovery lives in `SwiftSkimConfig.swift`; the engine
+validates every id against `RuleRegistry` (`--disable-rules`/`--only-rules`). Legacy
+fallback: a `swiftskim:` block in `.swiftlint.yml` still supplies thresholds when no
+`.swiftskim.yml` exists. Template: `Configs/example-swiftskim.yml`.
 
 ## Warning-handling philosophy
 

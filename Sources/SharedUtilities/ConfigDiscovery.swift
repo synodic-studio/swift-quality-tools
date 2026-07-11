@@ -169,4 +169,11 @@ public enum ConfigDiscovery {
     public static func readRuleThresholds(configPath: URL? = nil) -> RuleThresholds {
         SwiftLintConfigParser.readThresholds(configPath: configPath)
     }
+
+    /// Load swiftskim's own config: a discovered `.swiftskim.yml` (rule selection +
+    /// thresholds), falling back to the legacy `.swiftlint.yml` `swiftskim:` block for
+    /// thresholds. Rule selection has no legacy equivalent.
+    public static func readSwiftSkimConfig() -> SwiftSkimConfig {
+        SwiftSkimConfigParser.load()
+    }
 }

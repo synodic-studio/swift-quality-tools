@@ -8,6 +8,7 @@ public enum CustomRulesChecker {
     ///   - ruleEngine: URL of rule engine executable
     ///   - xcodeFormat: Whether to output in Xcode-compatible format
     ///   - onlyRules: Optional list of rule IDs to run (nil = all rules)
+    ///   - disabledRules: Optional list of rule IDs to skip (a denylist)
     ///   - thresholds: Configurable rule thresholds (empty = engine defaults)
     /// - Returns: CheckResult with violation status and relative path
     public static func checkFile(
@@ -15,6 +16,7 @@ public enum CustomRulesChecker {
         ruleEngine: URL,
         xcodeFormat: Bool = false,
         onlyRules: [String]? = nil,
+        disabledRules: [String]? = nil,
         thresholds: RuleThresholds = RuleThresholds(),
     ) throws -> CheckResult {
         let process = Process()
@@ -23,6 +25,10 @@ public enum CustomRulesChecker {
         if let onlyRules, !onlyRules.isEmpty {
             arguments.append("--only-rules")
             arguments.append(onlyRules.joined(separator: ","))
+        }
+        if let disabledRules, !disabledRules.isEmpty {
+            arguments.append("--disable-rules")
+            arguments.append(disabledRules.joined(separator: ","))
         }
         arguments.append(contentsOf: thresholds.engineArguments)
         process.arguments = arguments

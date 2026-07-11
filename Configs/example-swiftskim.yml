@@ -1,0 +1,28 @@
+# .swiftskim.yml — example configuration
+#
+# Copy this to your project root as `.swiftskim.yml` and edit. swiftskim discovers it
+# by walking up from the working directory (like .swiftlint.yml / .swiftformat).
+#
+# swiftskim's rules roll up SEPARATELY from SwiftLint and SwiftFormat. Those two each
+# own their own file and their own concerns (text-pattern lint rules; formatting). This
+# file owns only swiftskim's custom SwiftUI/Swift AST rules: which of them run, and the
+# two numeric thresholds. It does NOT configure file selection — swiftskim layers its
+# rules on top of the file set you already lint, so exclusions stay shared from your
+# .swiftlint.yml `excluded:`. One ruleset, configured on its own terms.
+#
+# Run `swiftskim --list-rules` for the authoritative list of rule ids.
+
+# disabled_rules: rules that never run. Unknown ids are a hard error (no silent typos).
+disabled_rules:
+  - preview_required
+  - prefer_swift_testing
+
+# only_rules: if set, ONLY these run. Takes precedence over disabled_rules, and is
+# itself fully overridden by --only-rules on the command line.
+# only_rules:
+#   - skimmable_body
+#   - one_top_level_view
+
+# Thresholds (omit a key to keep the engine default).
+skimmable_body_max_lines: 15        # default 15 — cap on a SwiftUI body's line count
+excessive_nesting_max_depth: 3      # default 3  — max AST nesting depth

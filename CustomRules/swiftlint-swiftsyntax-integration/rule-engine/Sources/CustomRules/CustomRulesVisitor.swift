@@ -21,6 +21,9 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     /// Set of enabled rule IDs. If nil, all rules are enabled.
     private var enabledRules: Set<String>?
 
+    /// Set of disabled rule IDs (a denylist subtracted after the enabled filter).
+    private var disabledRules: Set<String> = []
+
     /// Initialize visitor with source code for directive parsing
     public func setSourceCode(_ source: String, sourceFile: SourceFileSyntax) {
         directiveParser.parseDirectives(from: source)
@@ -36,8 +39,14 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         }
     }
 
-    /// Check if a rule should run based on enabledRules filter
+    /// Set which rules must not run (a denylist). Empty or nil clears it.
+    public func setDisabledRules(_ rules: [String]?) {
+        disabledRules = Set(rules ?? [])
+    }
+
+    /// Check if a rule should run: the denylist wins, then the enabled filter.
     private func shouldRun(_ ruleID: String) -> Bool {
+        if disabledRules.contains(ruleID) { return false }
         guard let enabledRules else { return true }
         return enabledRules.contains(ruleID)
     }

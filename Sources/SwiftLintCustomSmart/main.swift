@@ -11,10 +11,13 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         Runs custom SwiftSyntax-based rules that enforce SwiftUI structure and general
         Swift hygiene text-pattern linters cannot express. Files are processed in parallel.
 
-        For the authoritative list of rule IDs and summaries, run the rule engine's
-        --list-rules (the single source of truth is its RuleRegistry). Thresholds for
-        skimmable_body and excessive_nesting are configurable via a swiftskim: block
-        in .swiftlint.yml.
+        For the authoritative list of rule IDs and summaries, run --list-rules (the
+        single source of truth is the engine's RuleRegistry). Project configuration
+        lives in a dedicated .swiftskim.yml — disabled_rules / only_rules to choose which
+        rules run, plus skimmable_body_max_lines and excessive_nesting_max_depth
+        thresholds. (A legacy swiftskim: block in .swiftlint.yml still supplies
+        thresholds when no .swiftskim.yml is present.) --only-rules on the command line
+        overrides the config's rule selection.
         """,
     )
 
@@ -52,22 +55,35 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
         let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
 
-        // Parse only-rules option
-        let rulesToRun = onlyRules?.split(separator: ",").map { String($0) }
-
-        // Print which rules are being run if filtered
-        if let rulesToRun, !isXcode {
-            Console.info("Running only: \(rulesToRun.joined(separator: ", "))")
+        // Rule selection. A CLI --only-rules is a *full* override of config selection;
+        // otherwise use .swiftskim.yml's only_rules / disabled_rules.
+        let config = ConfigDiscovery.readSwiftSkimConfig()
+        let cliOnly = onlyRules?.split(separator: ",").map { String($0) }
+        let effectiveOnly: [String]?
+        let effectiveDisabled: [String]?
+        if let cliOnly, !cliOnly.isEmpty {
+            effectiveOnly = cliOnly
+            effectiveDisabled = nil
+        } else {
+            effectiveOnly = config.onlyRules
+            effectiveDisabled = config.disabledRules
         }
 
-        let thresholds = ConfigDiscovery.readRuleThresholds()
+        if !isXcode {
+            if let effectiveOnly {
+                Console.info("Running only: \(effectiveOnly.joined(separator: ", "))")
+            } else if let effectiveDisabled {
+                Console.info("Disabled: \(effectiveDisabled.joined(separator: ", "))")
+            }
+        }
 
         let results = try await checkFiles(
             filesToCheck,
             ruleEngine: ruleEnginePath,
             isXcode: isXcode,
-            onlyRules: rulesToRun,
-            thresholds: thresholds,
+            onlyRules: effectiveOnly,
+            disabledRules: effectiveDisabled,
+            thresholds: config.thresholds,
         )
 
         let violationCount = results.filter(\.hasViolations).count
@@ -98,11 +114,12 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         ruleEngine: URL,
         isXcode: Bool,
         onlyRules: [String]?,
+        disabledRules: [String]?,
         thresholds: RuleThresholds,
     ) async throws -> [CheckResult] {
         if sequential {
             return try files.map {
-                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, thresholds: thresholds)
+                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, disabledRules: disabledRules, thresholds: thresholds)
             }
         }
 
@@ -112,7 +129,7 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         return try await withThrowingTaskGroup(of: CheckResult.self) { group in
             for fileURL in files {
                 group.addTask {
-                    try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, thresholds: thresholds)
+                    try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, disabledRules: disabledRules, thresholds: thresholds)
                 }
             }
             var results: [CheckResult] = []

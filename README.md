@@ -99,18 +99,33 @@ For all three tools:
 3. Walk up parent directories until a config is found
 4. Fall back to the bundled `Configs/shared-*.yml`
 
-### Configurable thresholds
+### Configuration (`.swiftskim.yml`)
 
-Two rules take a threshold you can tune per project, in a `swiftskim:` block in
-`.swiftlint.yml` (no forking required):
+swiftskim's rules roll up **separately** from SwiftLint and SwiftFormat — each of those
+owns its own file and concerns. swiftskim's project config lives in its own
+`.swiftskim.yml` (discovered by walking up from the working directory), governing which
+custom rules run and their two thresholds:
 
 ```yaml
-swiftskim:
-  skimmable_body_max_lines: 20      # default 15
-  excessive_nesting_max_depth: 4    # default 3
+# .swiftskim.yml
+disabled_rules:                     # rules that never run (unknown ids are an error)
+  - preview_required
+  - prefer_swift_testing
+
+# only_rules:                       # if set, ONLY these run (wins over disabled_rules)
+#   - skimmable_body
+
+skimmable_body_max_lines: 20        # default 15
+excessive_nesting_max_depth: 4      # default 3
 ```
 
-Omit the block, or any key, to keep the defaults.
+It does **not** configure file selection: swiftskim layers its rules on top of the file
+set you already lint, so exclusions stay shared from your `.swiftlint.yml` `excluded:`.
+
+Precedence: `--only-rules` on the command line fully overrides the config's rule
+selection; within the config, `only_rules` wins over `disabled_rules`. A copyable
+template lives at `Configs/example-swiftskim.yml`. For back-compat, a legacy `swiftskim:`
+block in `.swiftlint.yml` still supplies thresholds when no `.swiftskim.yml` is present.
 
 ## Custom rules
 
