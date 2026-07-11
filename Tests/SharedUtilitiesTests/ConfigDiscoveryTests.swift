@@ -147,10 +147,10 @@ struct ConfigDiscoveryTests {
     func testCustomRuleEnginePath() {
         let path = ConfigDiscovery.customRuleEnginePath
 
+        // Collapsed layout: the engine is built by the root package, so its dev
+        // fallback path lives in the root `.build/release/`, not a nested package.
         #expect(path.path.contains("swift-quality-tools"))
-        #expect(path.path.contains("CustomRules"))
-        #expect(path.path.contains("swiftlint-swiftsyntax-integration"))
-        #expect(path.path.contains("rule-engine"))
+        #expect(path.path.contains(".build/release"))
         #expect(path.path.contains("swiftskim-engine"))
     }
 

@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-quality-tools",
+    name: "swiftskim",
     platforms: [
         .macOS(.v12),
     ],
@@ -10,6 +10,10 @@ let package = Package(
         .executable(name: "swiftformat-smart", targets: ["SwiftFormatSmart"]),
         .executable(name: "swiftlint-smart", targets: ["SwiftLintSmart"]),
         .executable(name: "swiftskim", targets: ["SwiftLintCustomSmart"]),
+        // The rule engine's own CLI binary, which the `swiftskim` wrapper shells out
+        // to. Built here in the root package (the engine was formerly its own nested
+        // SwiftPM package; collapsing it in means SwiftSyntax compiles once).
+        .executable(name: "swiftskim-engine", targets: ["swiftskim-engine"]),
         // The rule engine as an importable library: conform to `Rule` in your own
         // package and run it via `SwiftSkim.lint(externalRules:)`.
         .library(name: "SwiftSkim", targets: ["CustomRules"]),
@@ -66,10 +70,30 @@ let package = Package(
             path: "CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules",
         ),
 
+        // The rule engine's CLI entrypoint (`main.swift`), sharing the CustomRules
+        // target above. Path/sources mirror the former nested package's layout.
+        .executableTarget(
+            name: "swiftskim-engine",
+            dependencies: [
+                "CustomRules",
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+            ],
+            path: "CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources",
+            sources: ["main.swift"],
+        ),
+
         // Tests
         .testTarget(
             name: "SharedUtilitiesTests",
             dependencies: ["SharedUtilities"],
+        ),
+        // The rule engine's public `Rule` extensibility API tests, hoisted from the
+        // former nested package so `swift test` at the root covers them too.
+        .testTarget(
+            name: "CustomRulesTests",
+            dependencies: ["CustomRules"],
+            path: "CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Tests/CustomRulesTests",
         ),
     ],
 )

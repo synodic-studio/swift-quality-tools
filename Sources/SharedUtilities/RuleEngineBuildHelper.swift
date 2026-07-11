@@ -12,35 +12,40 @@ public enum RuleEngineBuildHelper {
         Console.warning("Rule engine not found at \(ruleEnginePath.path)")
         print("Building rule engine...")
 
-        let ruleEngineDir = ruleEnginePath.deletingLastPathComponent().deletingLastPathComponent()
-        try validateDirectory(ruleEngineDir)
-        try build(at: ruleEngineDir)
+        // Engine path is `<packageRoot>/.build/release/swiftskim-engine`; strip the
+        // three trailing components to recover the package root to build in.
+        let packageRoot = ruleEnginePath
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        try validateDirectory(packageRoot)
+        try build(at: packageRoot)
         try verifyBuild(ruleEnginePath)
 
         Console.success("Rule engine built successfully")
     }
 
-    /// Validate that the rule engine directory exists
+    /// Validate that the package root directory exists
     private static func validateDirectory(_ directory: URL) throws {
         guard FileManager.default.fileExists(atPath: directory.path) else {
             let errorMsg = ErrorFormatter.format(
                 tool: "SwiftLintCustomSmart",
-                errorType: "RuleEngineDirectoryNotFound",
-                problem: "Rule engine directory not found",
+                errorType: "PackageRootNotFound",
+                problem: "swiftskim package root not found",
                 context: "Expected at: \(directory.path)",
-                fix: "Verify swift-quality-tools CustomRules/swiftlint-swiftsyntax-integration/rule-engine/ directory exists",
+                fix: "Verify the swiftskim source checkout exists and contains Package.swift",
             )
             Console.error(errorMsg)
             throw ExitCode.failure
         }
     }
 
-    /// Build the rule engine using swift build
+    /// Build the rule engine binary (release) from the collapsed root package
     private static func build(at directory: URL) throws {
         do {
             let exitCode = try ProcessRunner.run(
                 "swift",
-                arguments: ["build"],
+                arguments: ["build", "-c", "release", "--product", "swiftskim-engine"],
                 workingDirectory: directory,
             )
             try throwIfBuildFailed(exitCode)
@@ -54,7 +59,7 @@ public enum RuleEngineBuildHelper {
         guard exitCode == 0 else {
             let errorMsg = ErrorFormatter.formatBuildError(
                 tool: "SwiftLintCustomSmart",
-                project: "rule-engine",
+                project: "swiftskim-engine",
                 exitCode: exitCode,
             )
             Console.error(errorMsg)
@@ -69,7 +74,7 @@ public enum RuleEngineBuildHelper {
             errorType: "ProcessError",
             problem: error.localizedDescription,
             context: "Building rule engine with swift build",
-            fix: "Ensure Swift toolchain is installed and rule-engine Package.swift is valid",
+            fix: "Ensure Swift toolchain is installed and Package.swift is valid",
         )
         Console.error(errorMsg)
         return ExitCode.failure
@@ -83,7 +88,7 @@ public enum RuleEngineBuildHelper {
                 errorType: "ExecutableNotFound",
                 problem: "Rule engine build succeeded but executable not found",
                 context: "Expected at: \(ruleEnginePath.path)",
-                fix: "Check if swift build created the executable in .build/debug/",
+                fix: "Check if swift build created the executable in .build/release/",
             )
             Console.error(errorMsg)
             throw ExitCode.failure

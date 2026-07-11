@@ -152,9 +152,6 @@ public enum ConfigDiscovery {
         }
 
         return resourcesRoot
-            .appendingPathComponent("CustomRules")
-            .appendingPathComponent("swiftlint-swiftsyntax-integration")
-            .appendingPathComponent("rule-engine")
             .appendingPathComponent(".build")
             .appendingPathComponent("release")
             .appendingPathComponent(engineBinaryName)
