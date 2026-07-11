@@ -215,6 +215,32 @@ public final class CustomRulesVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    /// Run consumer-supplied rules alongside the built-ins.
+    ///
+    /// Their structured violations are formatted into the same `⚠️  [id] Line N:`
+    /// shape and pass through the identical suppression path via `getViolations()`,
+    /// so external rules behave exactly like built-ins (including
+    /// `swiftlintcustom:disable`). The built-in dispatch is untouched.
+    public func run(externalRules rules: [Rule], on file: SourceFileSyntax) {
+        guard let locationConverter else { return }
+        let context = RuleContext(converter: locationConverter)
+        for rule in rules where shouldRun(rule.id) {
+            for violation in rule.check(file, context: context) {
+                appendExternalViolation(violation)
+            }
+        }
+    }
+
+    /// Format a structured violation into the shared string representation.
+    private func appendExternalViolation(_ violation: Violation) {
+        let prefix = "⚠️  [\(violation.ruleID)]"
+        violations.append(
+            violation.line > 0
+                ? "\(prefix) Line \(violation.line): \(violation.message)"
+                : "\(prefix) \(violation.message)",
+        )
+    }
+
     public func getViolations() -> [String] {
         // Filter out suppressed violations
         violations.filter { violation in

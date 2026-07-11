@@ -16,6 +16,7 @@ let package = Package(
             name: "CustomRules",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
             ],
             path: "Sources/CustomRules",
         ),
@@ -29,6 +30,12 @@ let package = Package(
             ],
             path: "Sources",
             sources: ["main.swift"],
+        ),
+        // Tests for the public Rule extensibility API.
+        .testTarget(
+            name: "CustomRulesTests",
+            dependencies: ["CustomRules"],
+            path: "Tests/CustomRulesTests",
         ),
     ],
 )

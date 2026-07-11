@@ -110,6 +110,32 @@ Run `swift-skim --list-rules` for the authoritative list with one-line summaries
 A conformance test asserts the documented lists match the registry, so the id is
 single-valued across the tool.
 
+### Bring your own rule
+
+The 16 built-ins are dispatched in one tree walk for speed. To add your *own* AST
+rule without forking, conform to the `Rule` protocol and hand it to the engine —
+your rule runs alongside the built-ins and gets the same suppression and output
+handling:
+
+```swift
+import CustomRules
+import SwiftSyntax
+
+struct NoStructNamedFoo: Rule {
+    let id = "no_struct_named_foo"
+    let summary = "A struct may not be named Foo"
+    func check(_ file: SourceFileSyntax, context: RuleContext) -> [Violation] {
+        // walk `file`, return Violation(ruleID:line:message:) for each hit
+    }
+}
+
+let violations = SwiftSkim.lint(source: source, externalRules: [NoStructNamedFoo()])
+```
+
+Your rule id participates in `swiftlintcustom:disable` exactly like a built-in.
+(The rule engine is currently a nested package; consuming it from another repo as a
+library needs it vended from the root manifest — a planned follow-up.)
+
 ### Suppressing a rule
 
 Custom rules use the `swiftlintcustom:` prefix — deliberately distinct from SwiftLint's
