@@ -7,6 +7,13 @@ executables (`swiftformat-smart`, `swiftlint-smart`, `swiftskim`) with smart
 config discovery, plus 16 custom SwiftSyntax-based rules for AST-accurate analysis
 (~two-thirds SwiftUI, one-third general Swift).
 
+**What makes it distinctive:** most linters stop at detection. swiftskim closes the
+loop — detection, explanation, and remediation are one system. Violations carry fix
+guidance in the message itself, `ErrorFormatter` emits Problem/Context/Fix errors an
+agent can act on, and the `swift-quality` skill maps each rule to a refactoring
+strategy. And the docs are generated from the same `RuleRegistry` the enforcer runs:
+one ruleset, one source of truth, every surface provably agrees.
+
 **Role:** Infrastructure — enforces code quality standards across Swift projects.
 
 ## Tech stack
