@@ -7,27 +7,13 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
-        This tool runs custom SwiftSyntax-based rules including:
-        • SwiftUI View body properties limited to 15 lines maximum
-        • SwiftUI View body properties must have exactly one top-level view (never Group)
-        • Indentation depth limited to 4 levels maximum for all functions, closures, and initializers
+        Runs custom SwiftSyntax-based rules that enforce SwiftUI structure and general
+        Swift hygiene text-pattern linters cannot express. Files are processed in parallel.
 
-        Performance: Files are processed in parallel using all available CPU cores for optimal speed.
-
-        Available rule IDs:
-        • skimmable_body
-        • no_group_body
-        • one_top_level_view
-        • no_if_modifier
-        • no_if_without_else
-        • excessive_nesting
-        • view_structure_order
-        • no_wrapper_body
-        • blank_line_import_separation
-        • preview_required
-        • stack_minimum_children
-        • prefer_zero_param_onchange
-        • single_modifier_per_line
+        For the authoritative list of rule IDs and summaries, run the rule engine's
+        --list-rules (the single source of truth is its RuleRegistry). Thresholds for
+        skimmable_body and excessive_nesting are configurable via a swift_skim: block
+        in .swiftlint.yml.
         """,
     )
 
