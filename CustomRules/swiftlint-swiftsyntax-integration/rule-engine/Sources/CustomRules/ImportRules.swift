@@ -16,6 +16,14 @@ public enum ImportRules {
         _ sourceFile: SourceFileSyntax,
         violations: inout [String],
     ) {
+        // XCUITest files must `import XCTest` — Swift Testing has no UI-testing
+        // API — so this rule must not fire on them. Any reference to the XCUI*
+        // API (XCUIApplication, XCUIElement, XCUIKeyboardKey, …) reliably marks
+        // a UI-test file.
+        if sourceFile.description.contains("XCUI") {
+            return
+        }
+
         for statement in sourceFile.statements {
             // Check for import XCTest
             if let importDecl = statement.item.as(ImportDeclSyntax.self) {
