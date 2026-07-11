@@ -10,20 +10,25 @@ config-discovering CLI wrappers (`swiftformat-smart`, `swiftlint-smart`,
 `swiftskim`) plus a SwiftSyntax rule engine enforcing 16 custom rules
 text-pattern linters cannot express (~two-thirds SwiftUI, one-third general Swift).
 
-Delivered as thin, skippable surfaces over one engine: CLI, Xcode build phase, and
-a Claude Code plugin/skill.
+Delivered as thin, skippable surfaces over one engine: CLI, Xcode build phase, a
+Claude Code / Codex plugin (shared skill + post-edit hook), a Cursor `afterFileEdit`
+hook, a pi extension, and an importable `SwiftSkim` SwiftPM library.
 
 ## Build in release mode — always
 
 ```bash
-swift build -c release
-cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c release
+swift build -c release   # one package, all four binaries
 ```
+
+The rule engine is no longer a separate nested SwiftPM package — it's a target in the
+root package, so a single build emits all four binaries (`swiftformat-smart`,
+`swiftlint-smart`, `swiftskim`, `swiftskim-engine`) into `.build/release/` and
+SwiftSyntax compiles once.
 
 Other projects' Xcode build phases reference `.build/release/` binaries. A debug-only
 build leaves those stale, so Xcode shows outdated or missing warnings. After any change:
-build **release** (both the main package and the rule engine), test with
-`swiftskim`, then commit. Never hand back control having built only debug.
+build **release**, test with `swiftskim`, then commit. Never hand back control having
+built only debug.
 
 ## Rule identity is single-sourced
 
@@ -84,9 +89,12 @@ the very next line) — use `:this`/`:previous` to disambiguate.
 
 - **Main tools:** `swiftformat-smart`, `swiftlint-smart`, `swiftskim`
   (`Sources/Swift*Smart/`), over a shared `Sources/SharedUtilities/`.
-- **Rule engine:** separate SwiftPM package in
-  `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/`. Rules live one-area-per-file
-  in `Sources/CustomRules/*.swift`; `RuleRegistry.swift` is canonical.
+- **Rule engine:** targets (`CustomRules` library, `swiftskim-engine` executable) in the
+  root package, sourced from
+  `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/`. Rules live
+  one-area-per-file in `Sources/CustomRules/*.swift`; `RuleRegistry.swift` is canonical.
+  (The engine was formerly its own nested package; it was collapsed into the root so
+  SwiftSyntax compiles once. The deep source path is a leftover from that layout.)
 - **Config discovery:** walk up for a project config, fall back to bundled `Configs/`.
 - **Self-healing errors:** fixed `Problem/Context/Fix` shape an automated caller can parse.
 
@@ -100,6 +108,32 @@ swift test               # unit only (Swift Testing)
 Fixtures (deliberately-broken sample inputs) live in `Fixtures/` and are excluded from
 linting. The tool passes its own rule set on its own source: `swiftskim .`
 must exit clean before committing.
+
+## Release gate — verify every delivery surface
+
+`Scripts/verify-all.sh` is the pre-release gate: it verifies the engine **and** every
+public surface, so a release can't ship a surface that silently broke. Each surface has
+its own re-runnable script; the orchestrator runs them all and prints a pass/fail summary.
+
+```bash
+./Scripts/verify-all.sh              # local stage — no network
+./Scripts/verify-all.sh --release    # local + release stage (needs pushed HEAD)
+```
+
+- **local stage** (no network): build, unit+integration tests, self-lint, agent
+  post-edit hooks (`verify-agent-hooks.sh` — the Claude Code / Codex / Cursor hook,
+  checked against each agent's documented payload shape), pi extension
+  (`verify-pi-extension.sh`), SPM library consumer against the working tree
+  (`verify-consumer-spm.sh`).
+- **release stage** (consumes the pushed `develop` HEAD, so push first): Homebrew
+  install (`verify-brew-install.sh`), SPM consumer against the remote URL
+  (`verify-consumer-spm.sh --remote`), Linux clean-room in an OrbStack/Docker Swift
+  container (`verify-consumer-linux.sh`), and the Tuist demo (`verify-tuist-demo.sh`,
+  project in `examples/tuist-demo/`).
+
+The two consumer surfaces share one scaffold (`Scripts/helpers/emit-spm-consumer.sh`) so the
+consumer code can't drift between the macOS and Linux checks. Each surface script also
+runs standalone for debugging a single surface.
 
 ## Build troubleshooting
 

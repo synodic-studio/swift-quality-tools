@@ -1,0 +1,8 @@
+# Tuist-generated artifacts
+*.xcodeproj
+*.xcworkspace
+Derived/
+.build/
+Tuist/.build/
+Tuist/ProjectDescriptionHelpers/
+graph.png

@@ -45,14 +45,16 @@ cd swiftskim
 ./Scripts/build-all.sh
 ```
 
-That builds all three binaries plus the rule engine. Binaries land in `.build/release/`.
-The rule engine also auto-builds on first run of `swiftskim`.
+That builds all four binaries (the three wrappers plus the `swiftskim-engine`) from the
+single package into `.build/release/`. The engine also auto-builds on first run of
+`swiftskim` if it's missing.
 
 ### Prerequisites
 
 - **SwiftFormat**: `brew install swiftformat`
 - **SwiftLint**: `brew install swiftlint`
-- **Swift 5.9+** to build the tools themselves
+- **Swift 6.1+** to build the tools or consume the library (the codebase uses SE-0439
+  trailing commas, which older toolchains can't parse)
 
 ## Usage
 
@@ -167,8 +169,16 @@ skip any:
 - **Xcode build phase** — add a "Run Script" phase calling `Scripts/xcode-lint.sh`.
   `swiftskim` auto-detects Xcode via `XCODE_VERSION_ACTUAL` and formats
   violations as clickable inline warnings.
-- **Claude Code** — the `swift-quality` plugin bundles the linting skill; the
-  formatter/linter runs on edit through the plugin's hook.
+- **Claude Code** — the `swift-quality` plugin (`.claude-plugin/`) bundles the linting
+  skill; the formatter/linter runs on edit through the plugin's PostToolUse hook.
+- **Codex CLI** — the same plugin, manifested at `.codex-plugin/`, reuses the shared
+  `hooks/hooks.json` + `skills/`; the hook fires on Codex's `apply_patch` PostToolUse.
+- **Cursor** — `.cursor/hooks.json` runs the same hook on Cursor's `afterFileEdit`.
+- **pi** — the extension in `pi/` exposes `swiftskim_lint` / `swiftskim_list_rules` tools.
+
+The Claude Code and Codex hooks share one `hooks/hooks.json` (its matcher covers
+`Edit|Write|MultiEdit|apply_patch`) and one `hooks/format-swift.py`, which recognizes
+all three agents' post-edit payload shapes and exits 2 with the violations on stderr.
 
 ## Development
 
@@ -179,6 +189,19 @@ swift test                 # unit tests only (Swift Testing)
 ```
 
 The tool passes its own rule set on its own source (`swiftskim .` exits clean).
+
+### Verifying the delivery surfaces
+
+`Scripts/verify-all.sh` is a release gate that checks every public surface — the CLI,
+the Claude Code plugin hook, the pi extension, the `SwiftSkim` SwiftPM library (via SPM,
+a Linux clean-room container, and a Tuist demo), and the Homebrew install:
+
+```bash
+./Scripts/verify-all.sh              # local surfaces (no network)
+./Scripts/verify-all.sh --release    # + surfaces that consume the pushed HEAD
+```
+
+Each surface also has its own `Scripts/verify-*.sh` for running one in isolation.
 
 ### Self-healing error format
 

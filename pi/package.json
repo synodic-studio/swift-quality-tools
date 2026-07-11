@@ -1,0 +1,7 @@
+{
+  "name": "swiftskim-pi-extension",
+  "version": "1.0.0",
+  "description": "pi coding-agent extension exposing swiftskim as agent tools",
+  "type": "module",
+  "private": true
+}

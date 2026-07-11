@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "python3 hooks/format-swift.py"
+      }
+    ]
+  }
+}
