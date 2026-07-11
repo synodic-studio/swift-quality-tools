@@ -9,7 +9,7 @@ let package = Package(
     products: [
         .executable(name: "swiftformat-smart", targets: ["SwiftFormatSmart"]),
         .executable(name: "swiftlint-smart", targets: ["SwiftLintSmart"]),
-        .executable(name: "swiftlintcustom-smart", targets: ["SwiftLintCustomSmart"]),
+        .executable(name: "swift-skim", targets: ["SwiftLintCustomSmart"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),

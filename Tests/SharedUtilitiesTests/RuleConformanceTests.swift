@@ -24,15 +24,24 @@ struct RuleConformanceTests {
         let regex = try NSRegularExpression(pattern: pattern)
 
         var found: Set<String> = []
-        for line in text.components(separatedBy: .newlines) {
-            if line.trimmingCharacters(in: .whitespaces).hasPrefix("//") { continue }
-            let range = NSRange(line.startIndex..., in: line)
-            regex.enumerateMatches(in: line, range: range) { match, _, _ in
-                guard let match, let idRange = Range(match.range(at: 1), in: line) else { return }
-                found.insert(String(line[idRange]))
-            }
+        for line in codeLines(of: text) {
+            found.formUnion(matches(of: regex, in: line))
         }
         return found
+    }
+
+    /// Non-comment lines of a Swift source file.
+    private func codeLines(of text: String) -> [String] {
+        text.components(separatedBy: .newlines)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+    }
+
+    /// Capture-group-1 values of `regex` in a single line.
+    private func matches(of regex: NSRegularExpression, in line: String) -> [String] {
+        let range = NSRange(line.startIndex..., in: line)
+        return regex.matches(in: line, range: range).compactMap { match in
+            Range(match.range(at: 1), in: line).map { String(line[$0]) }
+        }
     }
 
     @Test("Registry ids and dispatch sites agree in both directions")

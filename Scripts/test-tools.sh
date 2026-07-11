@@ -23,8 +23,8 @@ if [ ! -f "$TOOLS_DIR/swiftlint-smart" ]; then
     MISSING_TOOLS+=("swiftlint-smart")
 fi
 
-if [ ! -f "$TOOLS_DIR/swiftlintcustom-smart" ]; then
-    MISSING_TOOLS+=("swiftlintcustom-smart")
+if [ ! -f "$TOOLS_DIR/swift-skim" ]; then
+    MISSING_TOOLS+=("swift-skim")
 fi
 
 if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
@@ -59,11 +59,11 @@ else
     exit 1
 fi
 
-echo "  Testing swiftlintcustom-smart --help..."
-if "$TOOLS_DIR/swiftlintcustom-smart" --help > /dev/null 2>&1; then
-    echo "  ✅ swiftlintcustom-smart"
+echo "  Testing swift-skim --help..."
+if "$TOOLS_DIR/swift-skim" --help > /dev/null 2>&1; then
+    echo "  ✅ swift-skim"
 else
-    echo "  ❌ swiftlintcustom-smart --help failed"
+    echo "  ❌ swift-skim --help failed"
     exit 1
 fi
 
@@ -131,5 +131,5 @@ echo ""
 echo "Tools are ready to use:"
 echo "  • swiftformat-smart"
 echo "  • swiftlint-smart"
-echo "  • swiftlintcustom-smart"
+echo "  • swift-skim"
 echo ""

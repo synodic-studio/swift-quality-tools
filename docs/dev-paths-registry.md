@@ -98,7 +98,7 @@ compdef _dev_complete dev
 # =============================================================================
 alias swiftlint-smart="$DEV_SWIFT_QUALITY/swiftlint-smart"
 alias swiftformat-smart="$DEV_SWIFT_QUALITY/swiftformat-smart"
-alias swiftlintcustom-smart="$DEV_SWIFT_QUALITY/swiftlintcustom-smart"
+alias swift-skim="$DEV_SWIFT_QUALITY/swift-skim"
 
 # =============================================================================
 # Utility: Show all registered paths

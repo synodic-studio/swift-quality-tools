@@ -5,6 +5,7 @@ import SharedUtilities
 @main
 struct SwiftLintCustomSmart: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "swift-skim",
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
         Runs custom SwiftSyntax-based rules that enforce SwiftUI structure and general
@@ -26,7 +27,15 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
     @Option(name: .long, help: "Only run specified rules (comma-separated list of rule IDs)")
     var onlyRules: String?
 
+    @Flag(name: .long, help: "List all custom rule IDs and summaries, then exit")
+    var listRules = false
+
     mutating func run() async throws {
+        if listRules {
+            try printRuleList()
+            return
+        }
+
         let targetURL = URL(fileURLWithPath: target)
         try ConfigDiscovery.validateTarget(targetURL)
 
@@ -70,6 +79,17 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         if violationCount > 0 {
             throw ExitCode.failure
         }
+    }
+
+    /// Print the canonical rule list by delegating to the engine's --list-rules.
+    private func printRuleList() throws {
+        let enginePath = ConfigDiscovery.customRuleEnginePath
+        try RuleEngineBuildHelper.ensureBuilt(enginePath)
+        let process = Process()
+        process.executableURL = enginePath
+        process.arguments = ["--list-rules"]
+        try process.run()
+        process.waitUntilExit()
     }
 
     /// Run the rule engine over `files`, in parallel by default (sequential with `--sequential`).

@@ -3,7 +3,7 @@
 ## What it is
 
 A Swift AST-lint engine whose primary ruleset enforces SwiftUI structure. Three CLI
-executables (`swiftformat-smart`, `swiftlint-smart`, `swiftlintcustom-smart`) with smart
+executables (`swiftformat-smart`, `swiftlint-smart`, `swift-skim`) with smart
 config discovery, plus 16 custom SwiftSyntax-based rules for AST-accurate analysis
 (~two-thirds SwiftUI, one-third general Swift).
 
@@ -20,14 +20,14 @@ config discovery, plus 16 custom SwiftSyntax-based rules for AST-accurate analys
 
 **Status: Active.** Heavy daily use.
 
-- 16 custom rules, single-sourced in `RuleRegistry` (`swiftlintcustom-smart --list-rules`)
+- 16 custom rules, single-sourced in `RuleRegistry` (`swift-skim --list-rules`)
 - 101 unit tests (Swift Testing) + integration suite
 - Passes its own rule set on its own source
 - Two thresholds configurable per project via a `swift_skim:` block in `.swiftlint.yml`
 
 ## Rules
 
-The canonical list is in `RuleRegistry.all`; run `swiftlintcustom-smart --list-rules`.
+The canonical list is in `RuleRegistry.all`; run `swift-skim --list-rules`.
 Grouped: **View body** (5), **View structure** (4), **Code quality** (3),
 **Imports & framework** (4).
 

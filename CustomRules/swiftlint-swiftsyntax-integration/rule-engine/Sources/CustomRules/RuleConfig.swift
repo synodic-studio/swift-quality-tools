@@ -1,6 +1,6 @@
 /// Runtime-configurable rule thresholds.
 ///
-/// Set once per engine process from CLI flags, which the `swiftlintcustom-smart`
+/// Set once per engine process from CLI flags, which the `swift-skim`
 /// wrapper populates from the project's `.swiftlint.yml` (a `swift_skim:` block).
 /// Defaults match the long-standing built-in values, so a project with no config
 /// behaves exactly as before.

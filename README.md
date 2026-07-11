@@ -12,7 +12,7 @@ readable at a glance. The whole toolkit optimizes for code you can skim.
 
 - **`swiftformat-smart`** — SwiftFormat with project-aware config discovery
 - **`swiftlint-smart`** — SwiftLint with project-aware config discovery
-- **`swiftlintcustom-smart`** — the custom SwiftSyntax rule engine, run in parallel
+- **`swift-skim`** — the custom SwiftSyntax rule engine, run in parallel
 
 All three walk up the directory tree to find a project-specific config, falling back
 to the bundled configs in `Configs/` when none is present.
@@ -23,7 +23,7 @@ Every custom rule is defined once, as data, in `RuleRegistry` (in the rule engin
 The CLI prints straight from it:
 
 ```
-$ swiftlintcustom-smart --list-rules
+$ swift-skim --list-rules
 Custom SwiftSyntax rules (16 total):
   skimmable_body                     View/ViewModifier body capped at 15 lines
   one_top_level_view                 body must have exactly one top-level view
@@ -46,7 +46,7 @@ cd swift-skim
 ```
 
 That builds all three binaries plus the rule engine. Binaries land in `.build/release/`.
-The rule engine also auto-builds on first run of `swiftlintcustom-smart`.
+The rule engine also auto-builds on first run of `swift-skim`.
 
 ### Prerequisites
 
@@ -59,9 +59,9 @@ The rule engine also auto-builds on first run of `swiftlintcustom-smart`.
 ```bash
 swiftformat-smart Sources/                 # format
 swiftlint-smart Sources/                   # standard lint
-swiftlintcustom-smart Sources/             # custom AST rules (parallel by default)
-swiftlintcustom-smart --list-rules         # print the rule registry
-swiftlintcustom-smart --sequential Sources/  # deterministic output for debugging
+swift-skim Sources/             # custom AST rules (parallel by default)
+swift-skim --list-rules         # print the rule registry
+swift-skim --sequential Sources/  # deterministic output for debugging
 ```
 
 ### Config discovery order
@@ -99,7 +99,7 @@ one file per area. `RuleRegistry.swift` is the canonical list. The 16 rules, by 
 
 **Imports & framework** — `preview_required`, `prefer_swift_testing`, `no_exported_import`, `blank_line_import_separation`
 
-Run `swiftlintcustom-smart --list-rules` for the authoritative list with one-line summaries.
+Run `swift-skim --list-rules` for the authoritative list with one-line summaries.
 
 ### Adding a rule
 
@@ -133,7 +133,7 @@ skip any:
 
 - **Command line** — add `.build/release/` to your `PATH`.
 - **Xcode build phase** — add a "Run Script" phase calling `Scripts/xcode-lint.sh`.
-  `swiftlintcustom-smart` auto-detects Xcode via `XCODE_VERSION_ACTUAL` and formats
+  `swift-skim` auto-detects Xcode via `XCODE_VERSION_ACTUAL` and formats
   violations as clickable inline warnings.
 - **Claude Code** — the `swift-quality` plugin bundles the linting skill; the
   formatter/linter runs on edit through the plugin's hook.
@@ -146,7 +146,7 @@ skip any:
 swift test                 # unit tests only (Swift Testing)
 ```
 
-The tool passes its own rule set on its own source (`swiftlintcustom-smart .` exits clean).
+The tool passes its own rule set on its own source (`swift-skim .` exits clean).
 
 ### Self-healing error format
 

@@ -19,14 +19,14 @@ else
 fi
 
 # Custom SwiftLint Rules
-if [ -f "${TOOLS_DIR}/swiftlintcustom-smart" ]; then
+if [ -f "${TOOLS_DIR}/swift-skim" ]; then
     # Run WITHOUT XCODE_VERSION_ACTUAL to get terminal-format output
     # Then parse and re-echo in Xcode format
     TMPFILE="${TMPDIR:-/tmp}/swiftlint-custom-$$.txt"
 
     # Unset XCODE_VERSION_ACTUAL to force terminal output format
     # (Subprocess output is suppressed by Xcode sandbox, so we parse and re-echo)
-    (unset XCODE_VERSION_ACTUAL && "${TOOLS_DIR}/swiftlintcustom-smart" "${SRCROOT}" > "$TMPFILE" 2>&1)
+    (unset XCODE_VERSION_ACTUAL && "${TOOLS_DIR}/swift-skim" "${SRCROOT}" > "$TMPFILE" 2>&1)
 
     # Parse the terminal output and re-echo in Xcode format
     if [ -f "$TMPFILE" ]; then
@@ -69,5 +69,5 @@ if [ -f "${TOOLS_DIR}/swiftlintcustom-smart" ]; then
         rm -f "$TMPFILE"
     fi
 else
-    echo "warning: swiftlintcustom-smart not found at ${TOOLS_DIR}"
+    echo "warning: swift-skim not found at ${TOOLS_DIR}"
 fi
