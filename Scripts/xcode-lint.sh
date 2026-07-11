@@ -6,7 +6,7 @@
 # Note: SwiftFormat runs on edit via Claude Code hooks, not in build phase
 #
 # Usage: Add to Xcode Build Phase:
-#   "${HOME}/Developer/swift-quality-tools/Scripts/xcode-lint.sh"
+#   "${HOME}/Developer/swiftskim/Scripts/xcode-lint.sh"
 #
 
 TOOLS_DIR="${HOME}/Developer/swift-quality-tools/.build/release"

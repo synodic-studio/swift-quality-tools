@@ -1,7 +1,9 @@
 # AGENTS.md
 
 Canonical guidance for working in **swiftskim** (repo: `synodic-studio/swiftskim`;
-local dir is still `~/Developer/swift-quality-tools`). `CLAUDE.md` imports this file.
+local dir `~/Developer/swiftskim`, renamed from `swift-quality-tools`). `CLAUDE.md`
+imports this file. Nothing functional hardcodes the checkout path — config/engine
+resolution is binary-relative — so the local dir name is not load-bearing.
 
 ## What this is
 

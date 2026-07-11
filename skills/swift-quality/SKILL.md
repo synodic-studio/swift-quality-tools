@@ -58,7 +58,7 @@ When writing Swift and SwiftUI code, prioritize:
 1. Check for `--config` parameter (explicit override)
 2. Look in current directory for config
 3. Walk up directory tree to find config
-4. Fall back to shared config in `~/Developer/swift-quality-tools/Configs/`
+4. Fall back to the bundled `Configs/`, resolved relative to the binary (not a hardcoded path)
 5. Error if no config found (fail fast)
 
 ### Batch Editing for Performance

@@ -1,4 +1,4 @@
-# swift-quality-tools project-specific SwiftLint configuration
+# swiftskim project-specific SwiftLint configuration
 
 # Parent configuration
 parent_config: Configs/shared-swiftlint.yml

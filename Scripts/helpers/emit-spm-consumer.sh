@@ -8,11 +8,11 @@
 #   emit_spm_consumer <target_dir> <swiftskim_dependency_line> <package_identity>
 #
 # where <swiftskim_dependency_line> is a PackageDescription dependency, e.g.
-#   '.package(path: "/abs/path/to/swift-quality-tools")'
+#   '.package(path: "/abs/path/to/swiftskim")'
 #   '.package(url: "https://github.com/synodic-studio/swiftskim.git", branch: "develop")'
 # and <package_identity> is the SwiftPM identity of that dependency, used as the
 # `package:` label in `.product(...)`. For a path dependency this is the directory
-# basename (e.g. "swift-quality-tools"); for a URL dependency it is the URL's last
+# basename (e.g. "swiftskim"); for a URL dependency it is the URL's last
 # path component minus ".git" (e.g. "swiftskim").
 
 emit_spm_consumer() {

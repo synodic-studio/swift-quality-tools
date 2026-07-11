@@ -150,7 +150,8 @@ struct ConfigDiscoveryTests {
 
         // Collapsed layout: the engine is built by the root package, so its dev
         // fallback path lives in the root `.build/release/`, not a nested package.
-        #expect(path.path.contains("swift-quality-tools"))
+        // (Assert on the layout, not the repo directory name — that must survive a
+        // rename of the local checkout.)
         #expect(path.path.contains(".build/release"))
         #expect(path.path.contains("swiftskim-engine"))
     }

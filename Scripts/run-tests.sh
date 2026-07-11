@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run all tests for swift-quality-tools
+# Run all tests for swiftskim
 # Includes unit tests and end-to-end validation
 
 set -e  # Exit on error
@@ -7,7 +7,7 @@ set -e  # Exit on error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "🧪 Running swift-quality-tools Test Suite"
+echo "🧪 Running swiftskim Test Suite"
 echo ""
 
 # Run Swift unit tests

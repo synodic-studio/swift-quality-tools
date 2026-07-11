@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test script for swift-quality-tools
+# Test script for swiftskim
 # Validates that all tools are working correctly
 
 set -e  # Exit on error
@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TOOLS_DIR="$PROJECT_ROOT/.build/release"
 
-echo "🧪 Testing swift-quality-tools"
+echo "🧪 Testing swiftskim"
 echo ""
 
 # Check if tools exist
