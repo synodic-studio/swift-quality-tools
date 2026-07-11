@@ -11,10 +11,13 @@ RULE_ENGINE_DIR="$PROJECT_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rul
 echo "🔨 Building swift-quality-tools"
 echo ""
 
-# Build main package
+# Build main package. Build the wrapper executables explicitly so the on-demand
+# SwiftSkim library product (which pulls SwiftSyntax) isn't compiled here — the
+# rule engine below already builds SwiftSyntax.
 echo "📦 Building main package (release mode)..."
 cd "$PROJECT_ROOT"
-if swift build -c release; then
+if swift build -c release \
+    --product swiftformat-smart --product swiftlint-smart --product swiftskim; then
     echo "✅ Main package built successfully"
     echo "   Binaries: $PROJECT_ROOT/.build/release/"
 else

@@ -132,9 +132,15 @@ struct NoStructNamedFoo: Rule {
 let violations = SwiftSkim.lint(source: source, externalRules: [NoStructNamedFoo()])
 ```
 
-Your rule id participates in `swiftlintcustom:disable` exactly like a built-in.
-(The rule engine is currently a nested package; consuming it from another repo as a
-library needs it vended from the root manifest — a planned follow-up.)
+Your rule id participates in `swiftskim:disable` exactly like a built-in.
+
+The engine is vended as a `SwiftSkim` library product from the root manifest, so you
+can depend on it from another package:
+
+```swift
+.package(url: "https://github.com/synodic-studio/swiftskim.git", branch: "develop"),
+// then add "SwiftSkim" (product) to your target's dependencies
+```
 
 ### Suppressing a rule
 

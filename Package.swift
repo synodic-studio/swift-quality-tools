@@ -10,9 +10,13 @@ let package = Package(
         .executable(name: "swiftformat-smart", targets: ["SwiftFormatSmart"]),
         .executable(name: "swiftlint-smart", targets: ["SwiftLintSmart"]),
         .executable(name: "swiftskim", targets: ["SwiftLintCustomSmart"]),
+        // The rule engine as an importable library: conform to `Rule` in your own
+        // package and run it via `SwiftSkim.lint(externalRules:)`.
+        .library(name: "SwiftSkim", targets: ["CustomRules"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
         // Shared utilities library
@@ -48,6 +52,18 @@ let package = Package(
                 "SharedUtilities",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
+        ),
+
+        // Rule engine as a library, vended from the root so it is importable via
+        // .package(url:). Shares sources with the nested rule-engine package (which
+        // still builds the CLI engine binary).
+        .target(
+            name: "CustomRules",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+            ],
+            path: "CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules",
         ),
 
         // Tests
