@@ -184,7 +184,11 @@ skip any:
   skill; the formatter/linter runs on edit through the plugin's PostToolUse hook.
 - **Codex CLI** — the same plugin, manifested at `.codex-plugin/`, reuses the shared
   `hooks/hooks.json` + `skills/`; the hook fires on Codex's `apply_patch` PostToolUse.
+  _Best-effort: built to each agent's documented payload shape and checked with synthetic
+  events, but not verified against a live Codex session. Fails open (silent no-op) if the
+  real payload differs — it never emits false errors._
 - **Cursor** — `.cursor/hooks.json` runs the same hook on Cursor's `afterFileEdit`.
+  _Best-effort, same caveat as Codex above: not verified against a live Cursor session._
 - **pi** — the extension in `pi/` exposes `swiftskim_lint` / `swiftskim_list_rules` tools.
 
 The Claude Code and Codex hooks share one `hooks/hooks.json` (its matcher covers

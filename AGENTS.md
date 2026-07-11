@@ -14,6 +14,14 @@ Delivered as thin, skippable surfaces over one engine: CLI, Xcode build phase, a
 Claude Code / Codex plugin (shared skill + post-edit hook), a Cursor `afterFileEdit`
 hook, a pi extension, and an importable `SwiftSkim` SwiftPM library.
 
+**Codex and Cursor support is best-effort.** Both hooks are built to each agent's
+documented payload shape and checked with synthetic events (`verify-agent-hooks.sh`),
+but neither has been fired in a live Codex or Cursor session. `format-swift.py` fails
+open — an unrecognized payload is a silent no-op, never a false error. Claude Code and
+pi are the verified surfaces; treat Codex/Cursor as offered-not-guaranteed until someone
+smoke-tests them live. No MCP server is involved — the plugin hooks cover all three
+agents directly, and that's intentional.
+
 ## Build in release mode — always
 
 ```bash
