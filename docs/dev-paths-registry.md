@@ -8,7 +8,7 @@ As a developer accumulates multiple projects, packages, and tools, shell configu
 
 ```bash
 # Fragile - breaks if you reorganize
-alias swiftlint-smart="/Users/bryancostanza/Developer/swift-quality-tools/swiftlint-smart"
+alias swiftlint-smart="/Users/bryancostanza/Developer/swiftskim/swiftlint-smart"
 alias dev-gravity="cd /Users/bryancostanza/Developer/gravity-well"
 ```
 
@@ -37,7 +37,7 @@ export DEV_WORKTREES="$DEV_ROOT/worktrees"
 # =============================================================================
 # Infrastructure & Tooling
 # =============================================================================
-export DEV_SWIFT_QUALITY="$DEV_ROOT/swift-quality-tools"
+export DEV_SWIFT_QUALITY="$DEV_ROOT/swiftskim"
 export DEV_CC_CONFIG="$DEV_ROOT/synodic-cc-config"
 export DEV_HOOKS="$DEV_ROOT/synodic-hooks"
 
@@ -147,7 +147,7 @@ Add to `~/.zshrc`:
 ```bash
 # Quick navigation
 dev gravity-well          # cd to gravity-well
-dev swift-quality         # cd to swift-quality-tools
+dev swift-quality         # cd to swiftskim
 
 # List all registered paths
 dev-list
@@ -190,16 +190,16 @@ echo "Building at $DEV_GRAVITY_WELL"
 
 ## Relationship to This Repository
 
-This documentation lives in swift-quality-tools because the Swift quality tool aliases are a primary consumer of the registry pattern. However, the pattern itself is general-purpose and applies to any development environment with multiple repositories.
+This documentation lives in swiftskim because the Swift quality tool aliases are a primary consumer of the registry pattern. However, the pattern itself is general-purpose and applies to any development environment with multiple repositories.
 
-The swift-quality-tools project benefits from this pattern:
+The swiftskim project benefits from this pattern:
 
 ```bash
 # Before: fragile
-alias swiftlint-smart="/Users/username/Developer/swift-quality-tools/swiftlint-smart"
+alias swiftlint-smart="/Users/username/Developer/swiftskim/swiftlint-smart"
 
 # After: resilient
 alias swiftlint-smart="$DEV_SWIFT_QUALITY/swiftlint-smart"
 ```
 
-When swift-quality-tools moves (e.g., to a monorepo or different machine), only the registry entry needs updating.
+When swiftskim moves (e.g., to a monorepo or different machine), only the registry entry needs updating.
