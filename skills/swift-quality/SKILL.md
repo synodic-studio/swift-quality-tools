@@ -41,7 +41,7 @@ When writing Swift and SwiftUI code, prioritize:
 **ALWAYS use the -smart versions of Swift quality tools:**
 - ✅ `swiftformat-smart` - Auto-discovers project config
 - ✅ `swiftlint-smart` - Auto-discovers project config
-- ✅ `swift-skim` - Runs custom SwiftSyntax rules
+- ✅ `swiftskim` - Runs custom SwiftSyntax rules
 
 **NEVER use bare commands:**
 - ❌ `swiftformat` - Uses wrong/default config

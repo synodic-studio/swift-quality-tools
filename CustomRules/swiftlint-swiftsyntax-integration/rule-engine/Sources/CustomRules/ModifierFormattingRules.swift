@@ -3,7 +3,7 @@ import SwiftSyntax
 // Reason: the remaining tree-walk helpers (isInsideArgumentList/isDescendant) match
 // nested AST shapes where depth-4 traversal is intrinsic. excessive_nesting is a
 // SwiftUI view-code readability heuristic and does not fit traversal internals.
-// swiftlintcustom:disable excessive_nesting
+// swiftskim:disable excessive_nesting
 
 /// Rules related to modifier formatting and line structure
 /// - single_modifier_per_line: Each SwiftUI modifier should be on its own line for readability
@@ -133,7 +133,7 @@ private final class ModifierLineVisitor: SyntaxVisitor {
     private func isInsideArgumentList(_ node: FunctionCallExprSyntax) -> Bool {
         var current: Syntax? = node._syntaxNode.parent
         // Reason: Tree-walking pattern requires mutable outer var + immutable inner binding
-        // swiftlintcustom:disable:next prefer_shorthand_optional_binding
+        // swiftskim:disable:next prefer_shorthand_optional_binding
         while let parent = current {
             // If we hit a LabeledExprSyntax, we're inside an argument
             if parent.is(LabeledExprSyntax.self) {
@@ -157,7 +157,7 @@ private final class ModifierLineVisitor: SyntaxVisitor {
     private func isDescendant(_ child: FunctionCallExprSyntax, of parent: ExprSyntax) -> Bool {
         var current: Syntax? = child._syntaxNode
         // Reason: Tree-walking pattern requires mutable outer var + immutable inner binding
-        // swiftlintcustom:disable:next prefer_shorthand_optional_binding
+        // swiftskim:disable:next prefer_shorthand_optional_binding
         while let node = current {
             if node.id == parent.id {
                 return true

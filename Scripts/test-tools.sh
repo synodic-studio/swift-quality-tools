@@ -23,8 +23,8 @@ if [ ! -f "$TOOLS_DIR/swiftlint-smart" ]; then
     MISSING_TOOLS+=("swiftlint-smart")
 fi
 
-if [ ! -f "$TOOLS_DIR/swift-skim" ]; then
-    MISSING_TOOLS+=("swift-skim")
+if [ ! -f "$TOOLS_DIR/swiftskim" ]; then
+    MISSING_TOOLS+=("swiftskim")
 fi
 
 if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
@@ -59,11 +59,11 @@ else
     exit 1
 fi
 
-echo "  Testing swift-skim --help..."
-if "$TOOLS_DIR/swift-skim" --help > /dev/null 2>&1; then
-    echo "  ✅ swift-skim"
+echo "  Testing swiftskim --help..."
+if "$TOOLS_DIR/swiftskim" --help > /dev/null 2>&1; then
+    echo "  ✅ swiftskim"
 else
-    echo "  ❌ swift-skim --help failed"
+    echo "  ❌ swiftskim --help failed"
     exit 1
 fi
 
@@ -117,7 +117,7 @@ echo ""
 
 # Check custom rule engine
 echo "🔍 Checking custom rule engine..."
-RULE_ENGINE="$PROJECT_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build/release/swift-skim-engine"
+RULE_ENGINE="$PROJECT_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/.build/release/swiftskim-engine"
 
 if [ -f "$RULE_ENGINE" ]; then
     echo "  ✅ Custom rule engine built"
@@ -131,5 +131,5 @@ echo ""
 echo "Tools are ready to use:"
 echo "  • swiftformat-smart"
 echo "  • swiftlint-smart"
-echo "  • swift-skim"
+echo "  • swiftskim"
 echo ""

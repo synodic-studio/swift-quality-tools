@@ -1,4 +1,4 @@
-# Swift Skim
+# SwiftSkim
 
 A Swift AST-lint engine whose primary ruleset enforces SwiftUI structure. It pairs
 three config-discovering CLI wrappers around SwiftFormat/SwiftLint with a
@@ -12,7 +12,7 @@ readable at a glance. The whole toolkit optimizes for code you can skim.
 
 - **`swiftformat-smart`** — SwiftFormat with project-aware config discovery
 - **`swiftlint-smart`** — SwiftLint with project-aware config discovery
-- **`swift-skim`** — the custom SwiftSyntax rule engine, run in parallel
+- **`swiftskim`** — the custom SwiftSyntax rule engine, run in parallel
 
 All three walk up the directory tree to find a project-specific config, falling back
 to the bundled configs in `Configs/` when none is present.
@@ -23,7 +23,7 @@ Every custom rule is defined once, as data, in `RuleRegistry` (in the rule engin
 The CLI prints straight from it:
 
 ```
-$ swift-skim --list-rules
+$ swiftskim --list-rules
 Custom SwiftSyntax rules (16 total):
   skimmable_body                     View/ViewModifier body capped at 15 lines
   one_top_level_view                 body must have exactly one top-level view
@@ -40,13 +40,13 @@ list it *documents*.
 ### Build from source
 
 ```bash
-git clone git@github.com:synodic-studio/swift-skim.git
-cd swift-skim
+git clone git@github.com:synodic-studio/swiftskim.git
+cd swiftskim
 ./Scripts/build-all.sh
 ```
 
 That builds all three binaries plus the rule engine. Binaries land in `.build/release/`.
-The rule engine also auto-builds on first run of `swift-skim`.
+The rule engine also auto-builds on first run of `swiftskim`.
 
 ### Prerequisites
 
@@ -59,9 +59,9 @@ The rule engine also auto-builds on first run of `swift-skim`.
 ```bash
 swiftformat-smart Sources/                 # format
 swiftlint-smart Sources/                   # standard lint
-swift-skim Sources/             # custom AST rules (parallel by default)
-swift-skim --list-rules         # print the rule registry
-swift-skim --sequential Sources/  # deterministic output for debugging
+swiftskim Sources/             # custom AST rules (parallel by default)
+swiftskim --list-rules         # print the rule registry
+swiftskim --sequential Sources/  # deterministic output for debugging
 ```
 
 ### Config discovery order
@@ -75,11 +75,11 @@ For all three tools:
 
 ### Configurable thresholds
 
-Two rules take a threshold you can tune per project, in a `swift_skim:` block in
+Two rules take a threshold you can tune per project, in a `swiftskim:` block in
 `.swiftlint.yml` (no forking required):
 
 ```yaml
-swift_skim:
+swiftskim:
   skimmable_body_max_lines: 20      # default 15
   excessive_nesting_max_depth: 4    # default 3
 ```
@@ -99,7 +99,7 @@ one file per area. `RuleRegistry.swift` is the canonical list. The 16 rules, by 
 
 **Imports & framework** — `preview_required`, `prefer_swift_testing`, `no_exported_import`, `blank_line_import_separation`
 
-Run `swift-skim --list-rules` for the authoritative list with one-line summaries.
+Run `swiftskim --list-rules` for the authoritative list with one-line summaries.
 
 ### Adding a rule
 
@@ -154,12 +154,12 @@ var body: some View { ... }
 
 ## Integration
 
-Swift Skim is delivered as several thin surfaces over the same engine — use any,
+SwiftSkim is delivered as several thin surfaces over the same engine — use any,
 skip any:
 
 - **Command line** — add `.build/release/` to your `PATH`.
 - **Xcode build phase** — add a "Run Script" phase calling `Scripts/xcode-lint.sh`.
-  `swift-skim` auto-detects Xcode via `XCODE_VERSION_ACTUAL` and formats
+  `swiftskim` auto-detects Xcode via `XCODE_VERSION_ACTUAL` and formats
   violations as clickable inline warnings.
 - **Claude Code** — the `swift-quality` plugin bundles the linting skill; the
   formatter/linter runs on edit through the plugin's hook.
@@ -172,7 +172,7 @@ skip any:
 swift test                 # unit tests only (Swift Testing)
 ```
 
-The tool passes its own rule set on its own source (`swift-skim .` exits clean).
+The tool passes its own rule set on its own source (`swiftskim .` exits clean).
 
 ### Self-healing error format
 
@@ -187,4 +187,4 @@ Fix: [Concrete next step]
 
 ## License
 
-Swift Skim by Synodic Studio. MIT — see `LICENSE`.
+SwiftSkim by Synodic Studio. MIT — see `LICENSE`.

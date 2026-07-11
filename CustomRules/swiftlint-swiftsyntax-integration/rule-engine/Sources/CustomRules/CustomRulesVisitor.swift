@@ -4,7 +4,7 @@ import SwiftSyntax
 // Reason: SwiftSyntax visitors match nested tree shapes (decl → binding → type →
 // call → closure); depth-4 traversal is intrinsic to AST matching. excessive_nesting
 // is a SwiftUI view-code readability heuristic and does not fit traversal internals.
-// swiftlintcustom:disable excessive_nesting
+// swiftskim:disable excessive_nesting
 
 /// Main coordinator for all custom SwiftLint rules.
 ///
@@ -220,7 +220,7 @@ public final class CustomRulesVisitor: SyntaxVisitor {
     /// Their structured violations are formatted into the same `⚠️  [id] Line N:`
     /// shape and pass through the identical suppression path via `getViolations()`,
     /// so external rules behave exactly like built-ins (including
-    /// `swiftlintcustom:disable`). The built-in dispatch is untouched.
+    /// `swiftskim:disable`). The built-in dispatch is untouched.
     public func run(externalRules rules: [Rule], on file: SourceFileSyntax) {
         guard let locationConverter else { return }
         let context = RuleContext(converter: locationConverter)

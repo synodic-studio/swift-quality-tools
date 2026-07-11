@@ -12,7 +12,7 @@ import Foundation
 /// using the SAME `id`, and rebuild. Nothing else needs a manual edit.
 public struct RuleInfo: Sendable {
     /// Stable identifier: the string emitted in `⚠️  [id]` and matched by
-    /// `--only-rules` and `swiftlintcustom:disable` directives. These must agree.
+    /// `--only-rules` and `swiftskim:disable` directives. These must agree.
     public let id: String
     /// One-line summary of what the rule enforces.
     public let summary: String

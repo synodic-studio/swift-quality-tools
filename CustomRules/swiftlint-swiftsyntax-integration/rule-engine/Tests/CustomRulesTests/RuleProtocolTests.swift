@@ -44,10 +44,10 @@ struct RuleProtocolTests {
         #expect(output.contains { $0.contains("[no_struct_named_foo]") })
     }
 
-    @Test("An external rule honors swiftlintcustom:disable:next")
+    @Test("An external rule honors swiftskim:disable:next")
     func externalRuleIsSuppressible() {
         let source = """
-        // swiftlintcustom:disable:next no_struct_named_foo
+        // swiftskim:disable:next no_struct_named_foo
         struct Foo {}
         """
         let output = SwiftSkim.lint(

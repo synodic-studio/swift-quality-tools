@@ -3,7 +3,7 @@ import SwiftSyntax
 // Reason: SwiftSyntax visitors match nested tree shapes (decl → binding → type →
 // call → closure); depth-4 traversal is intrinsic to AST matching. excessive_nesting
 // is a SwiftUI view-code readability heuristic and does not fit traversal internals.
-// swiftlintcustom:disable excessive_nesting
+// swiftskim:disable excessive_nesting
 
 /// Rules related to SwiftUI View body properties
 /// - skimmable_body: Line count limit (15 max) - applies to View body and ViewModifier body

@@ -5,7 +5,7 @@ let package = Package(
     name: "SwiftLintCustomRules",
     platforms: [.macOS(.v12)],
     products: [
-        .executable(name: "swift-skim-engine", targets: ["swift-skim-engine"]),
+        .executable(name: "swiftskim-engine", targets: ["swiftskim-engine"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
@@ -22,7 +22,7 @@ let package = Package(
         ),
         // Executable target for CLI
         .executableTarget(
-            name: "swift-skim-engine",
+            name: "swiftskim-engine",
             dependencies: [
                 "CustomRules",
                 .product(name: "SwiftSyntax", package: "swift-syntax"),

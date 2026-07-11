@@ -4,16 +4,21 @@ import SwiftSyntax
 // Reason: SwiftSyntax visitors match nested tree shapes (decl → binding → type →
 // call → closure); depth-4 traversal is intrinsic to AST matching. excessive_nesting
 // is a SwiftUI view-code readability heuristic and does not fit traversal internals.
-// swiftlintcustom:disable excessive_nesting
+// swiftskim:disable excessive_nesting
 
-/// Handles parsing and tracking of swiftlintcustom directive comments
-/// Supports:
-/// - swiftlintcustom:disable:next rule_name - suppress next line
-/// - swiftlintcustom:disable:this rule_name - suppress current line
-/// - swiftlintcustom:disable:previous rule_name - suppress previous line
-/// - swiftlintcustom:disable rule_name - start disabled region (until enable or EOF)
-/// - swiftlintcustom:enable rule_name - end disabled region
+/// Handles parsing and tracking of swiftskim directive comments.
+///
+/// The primary prefix is `swiftskim:`; `swiftlintcustom:` is accepted as a legacy
+/// alias so existing directives keep working. Supports (with either prefix):
+/// - `<prefix>:disable:next rule_name` - suppress next line
+/// - `<prefix>:disable:this rule_name` - suppress current line
+/// - `<prefix>:disable:previous rule_name` - suppress previous line
+/// - `<prefix>:disable rule_name` - start disabled region (until enable or EOF)
+/// - `<prefix>:enable rule_name` - end disabled region
 public final class DirectiveParser {
+    /// Accepted directive prefixes; primary first, legacy alias second.
+    private static let prefixes = ["swiftskim", "swiftlintcustom"]
+
     private var disabledRulesForNextLine: [Int: Set<String>] = [:]
     private var disabledRulesForLine: [Int: Set<String>] = [:]
     private var disabledRulesForPreviousLine: [Int: Set<String>] = [:]
@@ -87,7 +92,7 @@ public final class DirectiveParser {
     /// Parse a single line for directives
     private func parseLine(_ line: String, lineNumber: Int) {
         // Check for inline comments (after code on same line)
-        // Example: Task { ... } // swiftlintcustom:disable:this rule_name
+        // Example: Task { ... } // swiftskim:disable:this rule_name
         if let commentStart = line.range(of: "//") {
             let comment = String(line[commentStart.upperBound...])
                 .trimmingCharacters(in: .whitespaces)
@@ -105,49 +110,38 @@ public final class DirectiveParser {
         _ = parseDirectiveComment(comment, lineNumber: lineNumber)
     }
 
-    /// Parse a directive comment and return true if it was a directive
+    /// Parse a directive comment and return true if it was a directive.
+    /// Tries each accepted prefix (primary `swiftskim:`, legacy `swiftlintcustom:`).
     private func parseDirectiveComment(_ comment: String, lineNumber: Int) -> Bool {
-        // Order matters: check more specific prefixes first
-
-        // swiftlintcustom:disable:next rule_name
-        if comment.hasPrefix("swiftlintcustom:disable:next") {
-            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:next")
-            disabledRulesForNextLine[lineNumber] = rules
+        for prefix in Self.prefixes where parseDirective(comment, prefix: prefix, lineNumber: lineNumber) {
             return true
         }
+        return false
+    }
 
-        // swiftlintcustom:disable:this rule_name
-        if comment.hasPrefix("swiftlintcustom:disable:this") {
-            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:this")
-            disabledRulesForLine[lineNumber] = rules
+    /// Parse a directive comment for one brand prefix. Order matters: check the
+    /// more specific `:disable:*` forms before the bare `:disable` region form.
+    private func parseDirective(_ comment: String, prefix: String, lineNumber: Int) -> Bool {
+        if comment.hasPrefix("\(prefix):disable:next") {
+            disabledRulesForNextLine[lineNumber] = extractRules(from: comment, prefix: "\(prefix):disable:next")
             return true
         }
-
-        // swiftlintcustom:disable:previous rule_name
-        if comment.hasPrefix("swiftlintcustom:disable:previous") {
-            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable:previous")
-            disabledRulesForPreviousLine[lineNumber] = rules
+        if comment.hasPrefix("\(prefix):disable:this") {
+            disabledRulesForLine[lineNumber] = extractRules(from: comment, prefix: "\(prefix):disable:this")
             return true
         }
-
-        // swiftlintcustom:enable rule_name (close block region)
-        if comment.hasPrefix("swiftlintcustom:enable") {
-            let rules = extractRules(from: comment, prefix: "swiftlintcustom:enable")
-            for rule in rules {
-                closeDisableRegion(for: rule, at: lineNumber)
-            }
+        if comment.hasPrefix("\(prefix):disable:previous") {
+            disabledRulesForPreviousLine[lineNumber] = extractRules(from: comment, prefix: "\(prefix):disable:previous")
             return true
         }
-
-        // swiftlintcustom:disable rule_name (start block region - check last to avoid matching :next/:this/:previous)
-        if comment.hasPrefix("swiftlintcustom:disable") {
-            let rules = extractRules(from: comment, prefix: "swiftlintcustom:disable")
-            for rule in rules {
-                openDisableRegion(for: rule, at: lineNumber)
-            }
+        if comment.hasPrefix("\(prefix):enable") {
+            extractRules(from: comment, prefix: "\(prefix):enable").forEach { closeDisableRegion(for: $0, at: lineNumber) }
             return true
         }
-
+        if comment.hasPrefix("\(prefix):disable") {
+            extractRules(from: comment, prefix: "\(prefix):disable").forEach { openDisableRegion(for: $0, at: lineNumber) }
+            return true
+        }
         return false
     }
 

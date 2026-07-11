@@ -37,7 +37,7 @@ public struct RuleContext {
 /// protocol and passing them to `SwiftSkim.lint(externalRules:)`; each is run over
 /// the parsed file and its structured violations join the built-ins' output.
 public protocol Rule {
-    /// Stable identifier. Also the token that `swiftlintcustom:disable` matches.
+    /// Stable identifier. Also the token that `swiftskim:disable` matches.
     var id: String { get }
     /// One-line summary.
     var summary: String { get }

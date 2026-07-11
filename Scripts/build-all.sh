@@ -46,7 +46,7 @@ fi
 cd "$RULE_ENGINE_DIR"
 if swift build -c release; then
     echo "✅ Custom rule engine built successfully"
-    echo "   Binary: $RULE_ENGINE_DIR/.build/release/swift-skim-engine"
+    echo "   Binary: $RULE_ENGINE_DIR/.build/release/swiftskim-engine"
 else
     EXIT_CODE=$?
     echo ""
@@ -65,6 +65,6 @@ echo ""
 echo "Available executables:"
 echo "  • swiftformat-smart:       $PROJECT_ROOT/.build/release/swiftformat-smart"
 echo "  • swiftlint-smart:         $PROJECT_ROOT/.build/release/swiftlint-smart"
-echo "  • swift-skim:   $PROJECT_ROOT/.build/release/swift-skim"
-echo "  • swift-skim-engine:       $RULE_ENGINE_DIR/.build/release/swift-skim-engine"
+echo "  • swiftskim:   $PROJECT_ROOT/.build/release/swiftskim"
+echo "  • swiftskim-engine:       $RULE_ENGINE_DIR/.build/release/swiftskim-engine"
 echo ""

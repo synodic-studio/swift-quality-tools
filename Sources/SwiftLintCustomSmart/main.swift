@@ -5,7 +5,7 @@ import SharedUtilities
 @main
 struct SwiftLintCustomSmart: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "swift-skim",
+        commandName: "swiftskim",
         abstract: "Run custom SwiftSyntax-based linting rules",
         discussion: """
         Runs custom SwiftSyntax-based rules that enforce SwiftUI structure and general
@@ -13,7 +13,7 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
 
         For the authoritative list of rule IDs and summaries, run the rule engine's
         --list-rules (the single source of truth is its RuleRegistry). Thresholds for
-        skimmable_body and excessive_nesting are configurable via a swift_skim: block
+        skimmable_body and excessive_nesting are configurable via a swiftskim: block
         in .swiftlint.yml.
         """,
     )
@@ -108,7 +108,7 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
 
         // Reason: structured-concurrency TaskGroup is irreducibly closure → for →
         // addTask; the per-file task body cannot be hoisted out of that shape.
-        // swiftlintcustom:disable excessive_nesting
+        // swiftskim:disable excessive_nesting
         return try await withThrowingTaskGroup(of: CheckResult.self) { group in
             for fileURL in files {
                 group.addTask {
@@ -121,6 +121,6 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
             }
             return results
         }
-        // swiftlintcustom:enable excessive_nesting
+        // swiftskim:enable excessive_nesting
     }
 }

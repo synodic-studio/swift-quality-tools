@@ -1,6 +1,6 @@
 import Foundation
 
-/// Configurable custom-rule thresholds, read from a `swift_skim:` block in
+/// Configurable custom-rule thresholds, read from a `swiftskim:` block in
 /// `.swiftlint.yml`. A `nil` field means "use the engine default".
 public struct RuleThresholds: Sendable, Equatable {
     public var skimmableBodyMaxLines: Int?
@@ -83,7 +83,7 @@ public enum SwiftLintConfigParser {
         return parseExclusions(from: config)
     }
 
-    /// Read custom-rule thresholds from a `swift_skim:` block in the config.
+    /// Read custom-rule thresholds from a `swiftskim:` block in the config.
     /// - Parameter configPath: Explicit config path, or nil to discover one.
     /// - Returns: Thresholds with only the overridden fields set.
     public static func readThresholds(configPath: URL? = nil) -> RuleThresholds {
@@ -98,7 +98,7 @@ public enum SwiftLintConfigParser {
         return parseThresholds(from: config)
     }
 
-    /// Parse the `swift_skim:` threshold block from a config file.
+    /// Parse the `swiftskim:` threshold block from a config file.
     private static func parseThresholds(from config: URL) -> RuleThresholds {
         guard let contents = try? String(contentsOf: config, encoding: .utf8) else {
             return RuleThresholds()
@@ -110,7 +110,7 @@ public enum SwiftLintConfigParser {
         for line in contents.components(separatedBy: .newlines) {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
 
-            if trimmed.hasPrefix("swift_skim:") {
+            if trimmed.hasPrefix("swiftskim:") {
                 inSection = true
                 continue
             }
@@ -126,7 +126,7 @@ public enum SwiftLintConfigParser {
         return thresholds
     }
 
-    /// Apply one `key: value` line from the `swift_skim:` block.
+    /// Apply one `key: value` line from the `swiftskim:` block.
     private static func applyThresholdLine(_ trimmed: String, to thresholds: inout RuleThresholds) {
         let parts = trimmed.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
         guard parts.count == 2, let value = Int(parts[1]) else { return }

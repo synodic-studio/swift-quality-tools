@@ -3,7 +3,7 @@ import Foundation
 /// Configuration discovery for Swift quality tools
 public enum ConfigDiscovery {
     /// Filename of the rule-engine executable.
-    static let engineBinaryName = "swift-skim-engine"
+    static let engineBinaryName = "swiftskim-engine"
 
     /// Directory containing the currently running executable (symlinks resolved).
     private static var executableDirectory: URL {
@@ -15,7 +15,7 @@ public enum ConfigDiscovery {
     ///
     /// Resolved without hardcoding any machine path, so the tool stands on its own
     /// wherever it is installed:
-    /// 1. `SWIFT_SKIM_HOME` if set (explicit override).
+    /// 1. `SWIFTSKIM_HOME` if set (explicit override).
     /// 2. Walk up from the executable to the nearest ancestor containing
     ///    `Configs/shared-swiftlint.yml` (covers dev `.build/release` and installs
     ///    that place `Configs/` relative to the binary).
@@ -23,7 +23,7 @@ public enum ConfigDiscovery {
     static var resourcesRoot: URL {
         let fileManager = FileManager.default
 
-        if let override = ProcessInfo.processInfo.environment["SWIFT_SKIM_HOME"], !override.isEmpty {
+        if let override = ProcessInfo.processInfo.environment["SWIFTSKIM_HOME"], !override.isEmpty {
             return URL(fileURLWithPath: override)
         }
 
@@ -138,11 +138,11 @@ public enum ConfigDiscovery {
 
     /// Get path to custom rule engine executable.
     ///
-    /// 1. `SWIFT_SKIM_ENGINE` if set (explicit override).
+    /// 1. `SWIFTSKIM_ENGINE` if set (explicit override).
     /// 2. Beside the running executable (installed layout).
     /// 3. The engine's own build dir under the resources root (dev layout).
     public static var customRuleEnginePath: URL {
-        if let override = ProcessInfo.processInfo.environment["SWIFT_SKIM_ENGINE"], !override.isEmpty {
+        if let override = ProcessInfo.processInfo.environment["SWIFTSKIM_ENGINE"], !override.isEmpty {
             return URL(fileURLWithPath: override)
         }
 
@@ -167,7 +167,7 @@ public enum ConfigDiscovery {
         SwiftLintConfigParser.readExclusions(configPath: configPath)
     }
 
-    /// Read custom-rule thresholds (`swift_skim:` block) from the SwiftLint config.
+    /// Read custom-rule thresholds (`swiftskim:` block) from the SwiftLint config.
     public static func readRuleThresholds(configPath: URL? = nil) -> RuleThresholds {
         SwiftLintConfigParser.readThresholds(configPath: configPath)
     }

@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Canonical guidance for working in **swift-skim** (repo: `synodic-studio/swift-skim`;
+Canonical guidance for working in **swiftskim** (repo: `synodic-studio/swiftskim`;
 local dir is still `~/Developer/swift-quality-tools`). `CLAUDE.md` imports this file.
 
 ## What this is
 
 A Swift AST-lint engine whose primary ruleset enforces SwiftUI structure. Three
 config-discovering CLI wrappers (`swiftformat-smart`, `swiftlint-smart`,
-`swift-skim`) plus a SwiftSyntax rule engine enforcing 16 custom rules
+`swiftskim`) plus a SwiftSyntax rule engine enforcing 16 custom rules
 text-pattern linters cannot express (~two-thirds SwiftUI, one-third general Swift).
 
 Delivered as thin, skippable surfaces over one engine: CLI, Xcode build phase, and
@@ -23,7 +23,7 @@ cd CustomRules/swiftlint-swiftsyntax-integration/rule-engine && swift build -c r
 Other projects' Xcode build phases reference `.build/release/` binaries. A debug-only
 build leaves those stale, so Xcode shows outdated or missing warnings. After any change:
 build **release** (both the main package and the rule engine), test with
-`swift-skim`, then commit. Never hand back control having built only debug.
+`swiftskim`, then commit. Never hand back control having built only debug.
 
 ## Rule identity is single-sourced
 
@@ -31,7 +31,7 @@ Every custom rule is defined once in `RuleRegistry.all` (in the rule engine). Th
 the source of truth. Do **not** re-copy the rule list into docs — point at it:
 
 ```bash
-swift-skim --list-rules   # authoritative list + one-line summaries
+swiftskim --list-rules   # authoritative list + one-line summaries
 ```
 
 Adding a rule: append to `RuleRegistry.all` (id + summary), dispatch it in
@@ -42,10 +42,10 @@ dispatched under `prefer_zero_param_onchange` but emitted `onchange_ignored_old_
 
 ## Configurable thresholds
 
-Two rules take a per-project threshold via a `swift_skim:` block in `.swiftlint.yml`:
+Two rules take a per-project threshold via a `swiftskim:` block in `.swiftlint.yml`:
 
 ```yaml
-swift_skim:
+swiftskim:
   skimmable_body_max_lines: 20      # default 15
   excessive_nesting_max_depth: 4    # default 3
 ```
@@ -82,7 +82,7 @@ the very next line) — use `:this`/`:previous` to disambiguate.
 
 ## Architecture
 
-- **Main tools:** `swiftformat-smart`, `swiftlint-smart`, `swift-skim`
+- **Main tools:** `swiftformat-smart`, `swiftlint-smart`, `swiftskim`
   (`Sources/Swift*Smart/`), over a shared `Sources/SharedUtilities/`.
 - **Rule engine:** separate SwiftPM package in
   `CustomRules/swiftlint-swiftsyntax-integration/rule-engine/`. Rules live one-area-per-file
@@ -98,7 +98,7 @@ swift test               # unit only (Swift Testing)
 ```
 
 Fixtures (deliberately-broken sample inputs) live in `Fixtures/` and are excluded from
-linting. The tool passes its own rule set on its own source: `swift-skim .`
+linting. The tool passes its own rule set on its own source: `swiftskim .`
 must exit clean before committing.
 
 ## Build troubleshooting
