@@ -2,11 +2,15 @@ import Foundation
 
 /// Canonical registry of every custom rule the engine enforces.
 ///
-/// This is the single source of truth for rule identity. The `--list-rules`
-/// output, the wrapper `--help` text, the README table, and the CLAUDE.md list
-/// are all expected to derive from (or be verified against) this array. A
-/// conformance test asserts the documented lists match these IDs, so the six
-/// hand-maintained copies that drifted historically cannot drift again silently.
+/// This is the single source of truth for rule identity. `--list-rules` prints
+/// straight from this array, and the wrapper `--help` points there rather than
+/// copying the list — so the authoritative rule list is always registry-derived.
+/// `RuleConformanceTests` asserts this registry and the engine's dispatch sites
+/// (`CustomRulesVisitor`) agree in both directions, which locks rule *identity*
+/// against the split-identity bug class (a rule gated under one id but emitted
+/// and suppressed under another). Prose lists elsewhere (the README grouping) are
+/// hand-maintained convenience indexes pointing at `--list-rules`; the test does
+/// not police those, so keep them honest by hand or lean on `--list-rules`.
 ///
 /// When adding a rule: append an entry here, dispatch it in `CustomRulesVisitor`
 /// using the SAME `id`, and rebuild. Nothing else needs a manual edit.

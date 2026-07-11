@@ -42,11 +42,24 @@ Custom SwiftSyntax rules (16 total):
   ...
 ```
 
-The help text and this README derive from that registry rather than maintaining
-their own copies, so the list of rules the tool *enforces* cannot drift from the
-list it *documents*.
+`swiftskim --list-rules` is therefore always authoritative, and the `--help` text
+points there rather than copying the list. A conformance test
+(`Tests/SharedUtilitiesTests/RuleConformanceTests.swift`) locks the registry against
+the engine's dispatch sites, so a rule can't be enforced under one id and emitted or
+suppressed under another. The rule names written out in prose below are a convenience
+index — when in doubt, `--list-rules` is the source of truth.
 
 ## Installation
+
+### Homebrew
+
+```bash
+brew install synodic-studio/synodic/swiftskim   # tagged release (v1.0.0)
+# add --HEAD to track the development branch instead
+```
+
+Installs the three wrappers plus the `swiftskim-engine`, and bundles the shared
+`Configs/` alongside them.
 
 ### Build from source
 
@@ -151,22 +164,23 @@ The engine is vended as a `SwiftSkim` library product from the root manifest, so
 can depend on it from another package:
 
 ```swift
-.package(url: "https://github.com/synodic-studio/swiftskim.git", branch: "develop"),
+.package(url: "https://github.com/synodic-studio/swiftskim.git", from: "1.0.0"),
 // then add "SwiftSkim" (product) to your target's dependencies
 ```
 
 ### Suppressing a rule
 
-Custom rules use the `swiftlintcustom:` prefix — deliberately distinct from SwiftLint's
-own `swiftlint:`, so SwiftLint's `superfluous_disable_command` check still works:
+Custom rules use the `swiftskim:` prefix — deliberately distinct from SwiftLint's
+own `swiftlint:`, so SwiftLint's `superfluous_disable_command` check still works. The
+older `swiftlintcustom:` prefix still works as a legacy alias:
 
 ```swift
-// swiftlintcustom:disable:next skimmable_body
+// swiftskim:disable:next skimmable_body
 var body: some View { ... }
 
-// swiftlintcustom:disable excessive_nesting
+// swiftskim:disable excessive_nesting
 // ... block region ...
-// swiftlintcustom:enable excessive_nesting
+// swiftskim:enable excessive_nesting
 ```
 
 `:this` and `:previous` suppress the current and preceding line respectively.

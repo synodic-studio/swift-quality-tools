@@ -5,7 +5,9 @@
 #
 # Usage:
 #   Scripts/verify-consumer-spm.sh            # depend on the local working tree (path)
-#   Scripts/verify-consumer-spm.sh --remote   # depend on the pushed git URL + branch
+#   Scripts/verify-consumer-spm.sh --remote   # depend on the pushed git URL at the
+#                                             # latest released tag (from: "X.Y.Z") —
+#                                             # exactly what an external consumer writes
 #
 # Exits non-zero on any mismatch. Builds in an isolated temp dir; leaves no trace.
 
@@ -17,13 +19,18 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$SCRIPT_DIR/helpers/emit-spm-consumer.sh"
 
 REMOTE_URL="https://github.com/synodic-studio/swiftskim.git"
-BRANCH="develop"
 
 MODE="path"
 [ "${1:-}" = "--remote" ] && MODE="remote"
 
 if [ "$MODE" = "remote" ]; then
-    DEP=".package(url: \"$REMOTE_URL\", branch: \"$BRANCH\")"
+    # Resolve the shipped artifact — the latest release tag — and consume it via a
+    # semver requirement, the way a public dependent pins it.
+    RELEASE_VERSION="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')"
+    if [ -z "$RELEASE_VERSION" ]; then
+        echo "FAIL: no release tag found (git describe --tags); cannot test the shipped artifact"; exit 1
+    fi
+    DEP=".package(url: \"$REMOTE_URL\", from: \"$RELEASE_VERSION\")"
     PKGID="swiftskim"
 else
     DEP=".package(path: \"$REPO_ROOT\")"

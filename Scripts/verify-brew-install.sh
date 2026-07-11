@@ -1,18 +1,28 @@
 #!/bin/bash
-# Verify the public CLI path: install swiftskim from the Homebrew tap (HEAD) and
-# exercise the installed binaries — list rules, lint a known-bad file, confirm the
-# engine and bundled Configs came along. Reinstalls from the pushed develop HEAD,
-# so push before running.
+# Verify the public CLI path: install swiftskim from the Homebrew tap and exercise the
+# installed binaries — list rules, lint a known-bad file, confirm the engine and bundled
+# Configs came along.
 #
-# Usage: Scripts/verify-brew-install.sh
+# By default this certifies the SHIPPED ARTIFACT — the tagged release the formula's
+# stable install builds (what an off-the-shelf `brew install` gets). Pass --head to
+# instead test the pushed develop HEAD (the next release candidate); push before that.
+#
+# Usage: Scripts/verify-brew-install.sh [--head]
 
 set -euo pipefail
 
-# `brew reinstall` doesn't take --HEAD, so uninstall then install --HEAD to force a
-# fresh build from the pushed develop HEAD.
-echo "🍺 installing --HEAD synodic-studio/synodic/swiftskim ..."
+MODE="stable"
+[ "${1:-}" = "--head" ] && MODE="head"
+
+# `brew reinstall` doesn't take --HEAD, so uninstall then install fresh.
 brew uninstall --force swiftskim >/dev/null 2>&1 || true
-brew install --HEAD synodic-studio/synodic/swiftskim
+if [ "$MODE" = "head" ]; then
+    echo "🍺 installing --HEAD (develop) synodic-studio/synodic/swiftskim ..."
+    brew install --HEAD synodic-studio/synodic/swiftskim
+else
+    echo "🍺 installing stable (tagged release) synodic-studio/synodic/swiftskim ..."
+    brew install synodic-studio/synodic/swiftskim
+fi
 
 BIN="$(command -v swiftskim)"
 echo "   installed at: $BIN"
