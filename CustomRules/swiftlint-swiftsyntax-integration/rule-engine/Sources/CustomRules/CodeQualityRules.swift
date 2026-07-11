@@ -35,7 +35,7 @@ public enum CodeQualityRules {
 /// Relaxes checking inside #Preview macros where setup code naturally nests deeper
 private final class NestingDepthVisitor: SyntaxVisitor {
     private var currentDepth = 0
-    private let maxDepth = 3 // Triggers at depth 4, matching ~16 spaces physical indentation
+    private let maxDepth = RuleConfig.excessiveNestingMaxDepth // default 3; triggers at depth+1
     private let converter: SourceLocationConverter
     fileprivate var violations: [String] = []
     private var isInPreviewMacro = false

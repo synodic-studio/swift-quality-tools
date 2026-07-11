@@ -65,11 +65,14 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
             Console.info("Running only: \(rulesToRun.joined(separator: ", "))")
         }
 
+        let thresholds = ConfigDiscovery.readRuleThresholds()
+
         let results = try await checkFiles(
             filesToCheck,
             ruleEngine: ruleEnginePath,
             isXcode: isXcode,
             onlyRules: rulesToRun,
+            thresholds: thresholds,
         )
 
         let violationCount = results.filter(\.hasViolations).count
@@ -89,10 +92,11 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         ruleEngine: URL,
         isXcode: Bool,
         onlyRules: [String]?,
+        thresholds: RuleThresholds,
     ) async throws -> [CheckResult] {
         if sequential {
             return try files.map {
-                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules)
+                try CustomRulesChecker.checkFile($0, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, thresholds: thresholds)
             }
         }
 
@@ -102,7 +106,7 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
         return try await withThrowingTaskGroup(of: CheckResult.self) { group in
             for fileURL in files {
                 group.addTask {
-                    try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules)
+                    try CustomRulesChecker.checkFile(fileURL, ruleEngine: ruleEngine, xcodeFormat: isXcode, onlyRules: onlyRules, thresholds: thresholds)
                 }
             }
             var results: [CheckResult] = []

@@ -117,4 +117,9 @@ public enum ConfigDiscovery {
     public static func readSwiftLintExclusions(configPath: URL? = nil) -> [String] {
         SwiftLintConfigParser.readExclusions(configPath: configPath)
     }
+
+    /// Read custom-rule thresholds (`swift_skim:` block) from the SwiftLint config.
+    public static func readRuleThresholds(configPath: URL? = nil) -> RuleThresholds {
+        SwiftLintConfigParser.readThresholds(configPath: configPath)
+    }
 }

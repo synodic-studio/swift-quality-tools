@@ -30,7 +30,7 @@ public enum ViewBodyRules {
         return -1
     }
 
-    private static let maxBodyLines = 15
+    private static var maxBodyLines: Int { RuleConfig.skimmableBodyMaxLines }
 
     public static func checkSkimmableBody(
         _ node: VariableDeclSyntax,

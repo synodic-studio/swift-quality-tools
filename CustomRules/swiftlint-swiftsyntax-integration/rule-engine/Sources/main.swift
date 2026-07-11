@@ -18,6 +18,12 @@ while i < args.count {
     } else if arg == "--only-rules", i + 1 < args.count {
         onlyRules = args[i + 1].split(separator: ",").map { String($0) }
         i += 2
+    } else if arg == "--skimmable-body-max", i + 1 < args.count {
+        if let value = Int(args[i + 1]) { RuleConfig.skimmableBodyMaxLines = value }
+        i += 2
+    } else if arg == "--nesting-max-depth", i + 1 < args.count {
+        if let value = Int(args[i + 1]) { RuleConfig.excessiveNestingMaxDepth = value }
+        i += 2
     } else if !arg.hasPrefix("-") {
         filePath = arg
         i += 1
