@@ -1,4 +1,7 @@
 // swift-tools-version: 5.9
+// Tooling version is 5.9 for SwiftPM compatibility, but the codebase uses Swift 6.1
+// syntax (SE-0439 trailing commas, enforced repo-wide by swiftformat), so a Swift
+// 6.1+ toolchain is required to build. swiftskim intentionally targets modern Swift.
 import PackageDescription
 
 let package = Package(

@@ -11,7 +11,7 @@ config discovery, plus 16 custom SwiftSyntax-based rules for AST-accurate analys
 
 ## Tech stack
 
-- **Swift 5.9+** — macOS 12.0+
+- **Swift 6.1+** — macOS 12.0+
 - **SwiftSyntax** — AST-based custom rule engine
 - **SwiftArgumentParser** — CLI interface
 - **Swift Package Manager** — build system
