@@ -73,4 +73,30 @@ struct RuleProtocolTests {
         let output = SwiftSkim.lint(source: source, externalRules: [NoStructNamedFoo()])
         #expect(output.contains { $0.contains("[onchange_ignored_old_value]") })
     }
+
+    @Test("disabled: filters an external rule by id")
+    func disabledFiltersExternalRule() {
+        let output = SwiftSkim.lint(
+            source: "struct Foo {}\n",
+            externalRules: [NoStructNamedFoo()],
+            disabled: ["no_struct_named_foo"],
+            runBuiltIns: false,
+        )
+        #expect(!output.contains { $0.contains("[no_struct_named_foo]") })
+    }
+
+    @Test("disabled: filters a built-in rule by id")
+    func disabledFiltersBuiltInRule() {
+        let source = """
+        import SwiftUI
+        struct Bar: View {
+            @State private var v = 0
+            var body: some View {
+                Text("x").onChange(of: v) { _, newValue in print(newValue) }
+            }
+        }
+        """
+        let output = SwiftSkim.lint(source: source, disabled: ["onchange_ignored_old_value"])
+        #expect(!output.contains { $0.contains("[onchange_ignored_old_value]") })
+    }
 }

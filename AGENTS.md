@@ -118,6 +118,13 @@ the very next line) — use `:this`/`:previous` to disambiguate.
   one-area-per-file in `Sources/CustomRules/*.swift`; `RuleRegistry.swift` is canonical.
   (The engine was formerly its own nested package; it was collapsed into the root so
   SwiftSyntax compiles once. The deep source path is a leftover from that layout.)
+- **Extension model:** the CLI takes no runtime rule plugins (no dynamic loading). Adding a
+  *new* rule off the shelf = compose your own linter against the `SwiftSkim` library:
+  conform to `Rule`, call `SwiftSkim.lint(source:externalRules:only:disabled:)`. External
+  rules run in the same walk as built-ins and share suppression/filtering/output. Runnable
+  example: `examples/custom-rule/` (built-ins + a custom `no_print_statements` rule). The
+  library API's `only:`/`disabled:` mirror the CLI flags. Adding a *built-in* still means
+  `RuleRegistry` + `CustomRulesVisitor` + rebuild.
 - **Config discovery:** walk up for a project config, fall back to bundled `Configs/`.
 - **Self-healing errors:** fixed `Problem/Context/Fix` shape an automated caller can parse.
 

@@ -49,22 +49,29 @@ public protocol Rule {
 public enum SwiftSkim {
     /// Lint `source` with the built-in rules and any `externalRules`.
     ///
+    /// `only` and `disabled` filter the combined set (built-ins *and* your external
+    /// rules) by id, mirroring the CLI's `--only-rules` / `--disable-rules`. `disabled`
+    /// wins over `only` for the same id.
+    ///
     /// - Parameters:
     ///   - source: Swift source text.
     ///   - externalRules: Consumer-supplied rules to run alongside the built-ins.
     ///   - only: If non-nil, only rules whose id is in this list run.
+    ///   - disabled: Rule ids that never run (a denylist).
     ///   - runBuiltIns: Set false to run only `externalRules`.
     /// - Returns: Formatted, suppression-filtered violation lines.
     public static func lint(
         source: String,
         externalRules: [Rule] = [],
         only: [String]? = nil,
+        disabled: [String]? = nil,
         runBuiltIns: Bool = true,
     ) -> [String] {
         let tree = Parser.parse(source: source)
         let visitor = CustomRulesVisitor(viewMode: .sourceAccurate)
         visitor.setSourceCode(source, sourceFile: tree)
         visitor.setEnabledRules(only)
+        visitor.setDisabledRules(disabled)
         if runBuiltIns {
             visitor.walk(tree)
         }

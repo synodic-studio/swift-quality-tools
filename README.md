@@ -151,15 +151,17 @@ Run `swiftskim --list-rules` for the authoritative list with one-line summaries.
 A conformance test asserts the documented lists match the registry, so the id is
 single-valued across the tool.
 
-### Bring your own rule
+### Writing your own rule
 
-The 16 built-ins are dispatched in one tree walk for speed. To add your *own* AST
-rule without forking, conform to the `Rule` protocol and hand it to the engine —
-your rule runs alongside the built-ins and gets the same suppression and output
-handling:
+swiftskim ships 16 opinionated rules and doesn't take runtime rule plugins — that keeps
+the CLI a single fast tree walk with no dynamic-loading fragility. When you need a rule
+of your *own*, the supported path is the one the swift-syntax ecosystem already uses:
+**compose your own linter against the `SwiftSkim` library.** Conform to the `Rule`
+protocol and your rule runs alongside the built-ins, with the same suppression, id
+filtering (`only:` / `disabled:`), and output handling:
 
 ```swift
-import CustomRules
+import CustomRules   // the SwiftSkim product's module
 import SwiftSyntax
 
 struct NoStructNamedFoo: Rule {
@@ -173,15 +175,17 @@ struct NoStructNamedFoo: Rule {
 let violations = SwiftSkim.lint(source: source, externalRules: [NoStructNamedFoo()])
 ```
 
-Your rule id participates in `swiftskim:disable` exactly like a built-in.
-
-The engine is vended as a `SwiftSkim` library product from the root manifest, so you
-can depend on it from another package:
+Your rule id participates in `swiftskim:disable` exactly like a built-in. Depend on the
+library from your own package:
 
 ```swift
 .package(url: "https://github.com/synodic-studio/swiftskim.git", from: "1.0.0"),
-// then add "SwiftSkim" (product) to your target's dependencies
+// then add the "SwiftSkim" product to your target (and swift-syntax, since Rule.check
+// takes a SourceFileSyntax)
 ```
+
+A complete, runnable ~60-line example linter — built-ins plus a custom
+`no_print_statements` rule — lives in [`examples/custom-rule/`](examples/custom-rule).
 
 ### Suppressing a rule
 

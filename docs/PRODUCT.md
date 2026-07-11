@@ -28,7 +28,7 @@ one ruleset, one source of truth, every surface provably agrees.
 **Status: Active.** Heavy daily use.
 
 - 16 custom rules, single-sourced in `RuleRegistry` (`swiftskim --list-rules`)
-- 110 unit tests (Swift Testing) + integration suite
+- 112 unit tests (Swift Testing) + integration suite
 - Passes its own rule set on its own source
 - Configured via a dedicated `.swiftskim.yml` (rule selection + two thresholds); rolls up
   separately from SwiftLint/SwiftFormat
