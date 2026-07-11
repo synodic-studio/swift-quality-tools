@@ -2,10 +2,46 @@ import Foundation
 
 /// Configuration discovery for Swift quality tools
 public enum ConfigDiscovery {
-    /// Path to swift-quality-tools directory
-    private static let toolsPath = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Developer")
-        .appendingPathComponent("swift-quality-tools")
+    /// Filename of the rule-engine executable.
+    static let engineBinaryName = "test-custom-rule"
+
+    /// Directory containing the currently running executable (symlinks resolved).
+    private static var executableDirectory: URL {
+        let path = Bundle.main.executablePath ?? CommandLine.arguments.first ?? ""
+        return URL(fileURLWithPath: path).resolvingSymlinksInPath().deletingLastPathComponent()
+    }
+
+    /// Root directory holding bundled resources (`Configs/`, the rule engine).
+    ///
+    /// Resolved without hardcoding any machine path, so the tool stands on its own
+    /// wherever it is installed:
+    /// 1. `SWIFT_SKIM_HOME` if set (explicit override).
+    /// 2. Walk up from the executable to the nearest ancestor containing
+    ///    `Configs/shared-swiftlint.yml` (covers dev `.build/release` and installs
+    ///    that place `Configs/` relative to the binary).
+    /// 3. Legacy fallback to the historical dev checkout.
+    static var resourcesRoot: URL {
+        let fileManager = FileManager.default
+
+        if let override = ProcessInfo.processInfo.environment["SWIFT_SKIM_HOME"], !override.isEmpty {
+            return URL(fileURLWithPath: override)
+        }
+
+        var directory = executableDirectory
+        for _ in 0 ..< 8 {
+            let marker = directory.appendingPathComponent("Configs/shared-swiftlint.yml")
+            if fileManager.fileExists(atPath: marker.path) {
+                return directory
+            }
+            let parent = directory.deletingLastPathComponent()
+            guard parent.path != directory.path else { break }
+            directory = parent
+        }
+
+        return fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Developer")
+            .appendingPathComponent("swift-quality-tools")
+    }
 
     /// Find config file with smart discovery
     ///
@@ -41,7 +77,7 @@ public enum ConfigDiscovery {
         }
 
         // Fall back to shared config
-        let sharedConfig = toolsPath
+        let sharedConfig = resourcesRoot
             .appendingPathComponent("Configs")
             .appendingPathComponent(sharedConfigName)
 
@@ -100,15 +136,28 @@ public enum ConfigDiscovery {
         }
     }
 
-    /// Get path to custom rule engine executable
+    /// Get path to custom rule engine executable.
+    ///
+    /// 1. `SWIFT_SKIM_ENGINE` if set (explicit override).
+    /// 2. Beside the running executable (installed layout).
+    /// 3. The engine's own build dir under the resources root (dev layout).
     public static var customRuleEnginePath: URL {
-        toolsPath
+        if let override = ProcessInfo.processInfo.environment["SWIFT_SKIM_ENGINE"], !override.isEmpty {
+            return URL(fileURLWithPath: override)
+        }
+
+        let sibling = executableDirectory.appendingPathComponent(engineBinaryName)
+        if FileManager.default.isExecutableFile(atPath: sibling.path) {
+            return sibling
+        }
+
+        return resourcesRoot
             .appendingPathComponent("CustomRules")
             .appendingPathComponent("swiftlint-swiftsyntax-integration")
             .appendingPathComponent("rule-engine")
             .appendingPathComponent(".build")
             .appendingPathComponent("release")
-            .appendingPathComponent("test-custom-rule")
+            .appendingPathComponent(engineBinaryName)
     }
 
     /// Read exclusion patterns from SwiftLint configuration file
