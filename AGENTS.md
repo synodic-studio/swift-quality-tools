@@ -148,11 +148,7 @@ must exit clean before committing.
 
 ## Demo
 
-`Scripts/demo.sh` is a four-beat live walkthrough for a screen share: the rule registry,
-a violation found in ordinary SwiftUI, grep-vs-AST on one file, and the post-edit hook
-returning exit 2 then exit 0 on the same event. Every number it prints is grepped back
-out of the run the audience just watched — nothing is hardcoded. It writes its Swift
-files to `$TMPDIR/swiftskim-demo` and never inside this repo.
+`Scripts/demo.sh` is a four-beat live walkthrough for a screen share: the rule registry, a violation found in ordinary SwiftUI, grep-vs-AST on one file, and the post-edit hook returning exit 2 then exit 0 on the same event. Every number it prints is grepped back out of the run the audience just watched — nothing is hardcoded. It writes its Swift files to `$TMPDIR/swiftskim-demo` and never inside this repo.
 
 ```bash
 ./Scripts/demo.sh            # live, one beat per keypress (refuses without a tty)
