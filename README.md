@@ -234,6 +234,7 @@ all three agents' post-edit payload shapes and exits 2 with the violations on st
 ./Scripts/build-all.sh     # build everything (release)
 ./Scripts/run-tests.sh     # full suite (unit + integration)
 swift test                 # unit tests only (Swift Testing)
+./Scripts/demo.sh --auto   # four-beat live walkthrough (drop --auto to run it by keypress)
 ```
 
 The tool passes its own rule set on its own source (`swiftskim .` exits clean).
