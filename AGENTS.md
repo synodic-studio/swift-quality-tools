@@ -138,9 +138,13 @@ the very next line) — use `:this`/`:previous` to disambiguate.
 ## Testing
 
 ```bash
-./Scripts/run-tests.sh   # full suite (unit + integration)
-swift test               # unit only (Swift Testing)
+./Scripts/run-tests.sh          # full suite (unit + integration)
+swift test --no-parallel        # unit only (Swift Testing)
 ```
+
+`--no-parallel` is required, not cosmetic: `ConfigDiscoveryTests` drives discovery by
+changing the process-wide current directory, which every suite in the target shares, so
+concurrent suites see each other's cwd (and spawn from one that is being deleted).
 
 Fixtures (deliberately-broken sample inputs) live in `Fixtures/` and are excluded from
 linting. The tool passes its own rule set on its own source: `swiftskim .`

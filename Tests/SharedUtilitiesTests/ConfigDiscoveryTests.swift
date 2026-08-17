@@ -5,6 +5,9 @@ import Testing
 
 @testable import SharedUtilities
 
+// Reason: these tests drive discovery by mutating the process-wide current directory.
+// That is shared state across every suite in the target, so the whole run is serialized
+// with `--no-parallel` (Scripts/run-tests.sh) rather than per-suite.
 @Suite("ConfigDiscovery Tests")
 struct ConfigDiscoveryTests {
     // MARK: - Test Fixtures

@@ -14,14 +14,16 @@ echo ""
 echo "📋 Running unit tests..."
 cd "$PROJECT_ROOT"
 
-if swift test; then
+# --no-parallel: ConfigDiscoveryTests drives discovery through the process-wide current
+# directory, which every other suite shares — concurrent suites see each other's cwd.
+if swift test --no-parallel; then
     echo "✅ All unit tests passed"
 else
     EXIT_CODE=$?
     echo ""
     echo "🚨 Test Error: UnitTestsFailed"
     echo "Problem: Swift unit tests failed with exit code $EXIT_CODE"
-    echo "Context: Running 'swift test' in $PROJECT_ROOT"
+    echo "Context: Running 'swift test --no-parallel' in $PROJECT_ROOT"
     echo "Fix: Review test failures above and fix failing tests"
     echo ""
     exit 1
