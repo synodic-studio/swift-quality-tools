@@ -7,6 +7,11 @@ import SwiftSyntax
 
 /// Rules related to modifier formatting and line structure
 /// - single_modifier_per_line: Each SwiftUI modifier should be on its own line for readability
+///
+/// Scope: two links of the *same* postfix chain sharing a line — `Text("a").bold().padding()`,
+/// or `.bold().padding()` on a continuation line. Two independent one-modifier chains on one
+/// line are a multi-statement line, not this rule's business, and a call written inside a
+/// modifier's trailing closure (`.errorAlert(msg) { model.clearError() }`) is its own chain.
 public enum ModifierFormattingRules {
     /// Check for multiple SwiftUI modifiers on the same line
     /// Only flags within View/ViewModifier body contexts
@@ -26,9 +31,17 @@ public enum ModifierFormattingRules {
 
 /// Visitor to detect multiple SwiftUI modifiers on the same line
 private final class ModifierLineVisitor: SyntaxVisitor {
+    /// One line of one modifier chain — the unit this rule counts. Counting per line
+    /// alone conflates a modifier with an unrelated call written inside its trailing
+    /// closure (`.errorAlert(msg) { model.clearError() }`), which is one modifier.
+    private struct ChainLine: Hashable {
+        let root: SyntaxIdentifier
+        let line: Int
+    }
+
     private let converter: SourceLocationConverter
     private var isInViewBody = false
-    private var modifierLineNumbers: [Int: Int] = [:] // line -> count of modifier chains on that line
+    private var chainLineCounts: [ChainLine: Int] = [:]
     private var reportedLines: Set<Int> = []
     fileprivate var violations: [String] = []
 
@@ -60,7 +73,7 @@ private final class ModifierLineVisitor: SyntaxVisitor {
             return
         }
         isInViewBody = false
-        modifierLineNumbers.removeAll()
+        chainLineCounts.removeAll()
         reportedLines.removeAll()
     }
 
@@ -85,7 +98,7 @@ private final class ModifierLineVisitor: SyntaxVisitor {
             return
         }
         isInViewBody = false
-        modifierLineNumbers.removeAll()
+        chainLineCounts.removeAll()
         reportedLines.removeAll()
     }
 
@@ -106,27 +119,47 @@ private final class ModifierLineVisitor: SyntaxVisitor {
             return .visitChildren
         }
 
-        // Get the line number of this modifier's period (the . in .modifier())
-        let thisModifierLine = converter.location(for: memberAccess.period.position).line
+        // Line of this modifier's period (the . in .modifier()). A token's `position` is
+        // where its leading trivia starts, and the newline before a continuation line
+        // lives in that trivia — so it would report the previous line. Skip the trivia to
+        // get the line the `.` character is actually on.
+        let thisModifierLine = converter.location(for: memberAccess.period.positionAfterSkippingLeadingTrivia).line
 
-        // Get the line of this call's closing paren
+        // Line of this call's closing paren — same trivia caveat: for a multi-line
+        // argument list the `)` token's leading trivia begins on the previous line.
         guard let rightParen = node.rightParen else { return .visitChildren }
-        let thisEndLine = converter.location(for: rightParen.position).line
+        let thisEndLine = converter.location(for: rightParen.positionAfterSkippingLeadingTrivia).line
 
-        // If the modifier starts and ends on the same line, count it as a chained modifier on that line
-        // This catches cases like .padding().background() where both are on same line
-        if thisModifierLine == thisEndLine {
-            modifierLineNumbers[thisModifierLine, default: 0] += 1
+        // A modifier that spans lines is not "on" one line, so it never counts.
+        guard thisModifierLine == thisEndLine else { return .visitChildren }
 
-            // Flag when we see 2+ modifiers on the same line
-            if (modifierLineNumbers[thisModifierLine] ?? 0) >= 2, !reportedLines.contains(thisModifierLine) {
-                reportedLines.insert(thisModifierLine)
-                let violation = "⚠️  [single_modifier_per_line] Line \(thisModifierLine): Multiple modifiers on same line - place each modifier on its own line for readability"
-                violations.append(violation)
+        // Count links of the same chain, so `.padding().background()` is two but
+        // `.errorAlert(msg) { model.clearError() }` is one modifier plus a call that
+        // belongs to its own chain inside the closure.
+        let key = ChainLine(root: Self.chainRoot(of: node), line: thisModifierLine)
+        chainLineCounts[key, default: 0] += 1
+
+        guard (chainLineCounts[key] ?? 0) >= 2, !reportedLines.contains(thisModifierLine) else {
+            return .visitChildren
+        }
+        reportedLines.insert(thisModifierLine)
+        violations.append("⚠️  [single_modifier_per_line] Line \(thisModifierLine): Multiple modifiers on same line - place each modifier on its own line for readability")
+        return .visitChildren
+    }
+
+    /// The expression a postfix chain hangs off — `Circle` in `Circle().fill(c).frame(w)`.
+    /// Every link of one chain walks down to the same node, so it identifies the chain.
+    private static func chainRoot(of expr: some ExprSyntaxProtocol) -> SyntaxIdentifier {
+        var current = ExprSyntax(expr)
+        while true {
+            if let call = current.as(FunctionCallExprSyntax.self) {
+                current = call.calledExpression
+            } else if let member = current.as(MemberAccessExprSyntax.self), let base = member.base {
+                current = base
+            } else {
+                return current.id
             }
         }
-
-        return .visitChildren
     }
 
     /// Check if this node is inside another function call's argument list
@@ -174,8 +207,9 @@ private final class ModifierLineVisitor: SyntaxVisitor {
         // Check if this member access follows a closing paren on a different line
         guard let base = node.base else { return .visitChildren }
 
-        // Get positions
-        let dotLocation = converter.location(for: node.period.position)
+        // Line the `.` character sits on — again skipping leading trivia, which for a
+        // continuation line starts back on the previous line.
+        let dotLocation = converter.location(for: node.period.positionAfterSkippingLeadingTrivia)
         let dotLine = dotLocation.line
 
         // Check if the base ends on a previous line (multiline expression)

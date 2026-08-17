@@ -1233,6 +1233,101 @@ struct CustomRulesTests {
         #expect(output.contains("[single_modifier_per_line]"))
     }
 
+    @Test("single_modifier_per_line: Detects chained modifiers on a continuation line")
+    func singleModifierPerLineContinuationLine() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Hello")
+                    .padding().background(.red)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("[single_modifier_per_line]"))
+        #expect(output.contains("Line 6"))
+    }
+
+    @Test("single_modifier_per_line: Accepts a long correctly-formatted multi-line chain")
+    func singleModifierPerLineLongCleanChain() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                Text("Hello")
+                    .padding()
+                    .background(.red)
+                    .frame(width: 10, height: 20)
+                    .opacity(0.5)
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[single_modifier_per_line]"))
+    }
+
+    /// A call inside a modifier's one-line trailing closure belongs to its own chain,
+    /// so the line still holds exactly one modifier.
+    @Test("single_modifier_per_line: Accepts a call inside a modifier's trailing closure")
+    func singleModifierPerLineTrailingClosureCall() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            @State private var count = 0
+
+            var body: some View {
+                Text("Hello")
+                    .errorAlert("boom") { clearError() }
+                    .onChange(of: count) { resetEngines() }
+            }
+
+            func clearError() {}
+            func resetEngines() {}
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(!output.contains("[single_modifier_per_line]"))
+    }
+
+    @Test("single_modifier_per_line: Detects chained modifiers inside a container closure")
+    func singleModifierPerLineInsideContainerClosure() throws {
+        let code = """
+        import SwiftUI
+
+        struct TestView: View {
+            var body: some View {
+                HStack(spacing: 8) {
+                    Circle().fill(.red).frame(width: 10, height: 10)
+                    Spacer()
+                }
+            }
+        }
+        """
+
+        let file = try createTempSwiftFile(content: code)
+        defer { cleanup(file) }
+
+        let output = try runRuleEngine(on: file)
+        #expect(output.contains("[single_modifier_per_line]"))
+        #expect(output.contains("Line 6"))
+    }
+
     @Test("Multiple rules: File with multiple different violations")
     func multipleRuleViolations() throws {
         let code = """
