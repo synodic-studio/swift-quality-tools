@@ -20,7 +20,7 @@ public enum ErrorFormatter {
         problem: String,
         context: String? = nil,
         file: String? = nil,
-        fix: String
+        fix: String,
     ) -> String {
         var lines: [String] = []
 
@@ -51,7 +51,7 @@ public enum ErrorFormatter {
         tool: String,
         searchPath: String,
         configName: String,
-        fix: String? = nil
+        fix: String? = nil,
     ) -> String {
         let defaultFix = "Create \(configName) in project root or use --config flag to specify location"
 
@@ -67,7 +67,7 @@ public enum ErrorFormatter {
     /// Format a command not found error
     public static func formatCommandError(
         tool: String,
-        command: String
+        command: String,
     ) -> String {
         format(
             tool: tool,
@@ -80,7 +80,7 @@ public enum ErrorFormatter {
     /// Format a target validation error
     public static func formatTargetError(
         tool: String,
-        target: String
+        target: String,
     ) -> String {
         format(
             tool: tool,
@@ -95,7 +95,7 @@ public enum ErrorFormatter {
         tool: String,
         project: String,
         exitCode: Int32,
-        output: String? = nil
+        output: String? = nil,
     ) -> String {
         var problem = "Build failed for \(project) with exit code \(exitCode)"
         if let output, !output.isEmpty {
@@ -114,7 +114,7 @@ public enum ErrorFormatter {
     public static func formatMultipleConfigsError(
         tool: String,
         configs: [String],
-        directory: String
+        directory: String,
     ) -> String {
         let configList = configs.map { "  - \($0)" }.joined(separator: "\n")
 
