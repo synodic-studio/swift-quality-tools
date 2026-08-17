@@ -67,6 +67,13 @@ swiftskim owns its own config file, discovered by walking up from the working di
 the two thresholds; it does not configure file selection (exclusions stay shared from
 `.swiftlint.yml`'s `excluded:`).
 
+File selection is a `LintScope`, built from `.swiftlint.yml` and applied to explicitly
+named paths as well as discovered ones — `swiftlint-smart` honors `included:` and
+`excluded:`, `swiftskim` honors `excluded:` only. That parity is the point: SwiftLint
+itself scopes only what it discovers, so a bare `swiftlint <path>` blocks on files a
+repo-wide run never checks, which is every edit the post-edit hook sees. A path outside
+the config's own directory stays in scope rather than being silently skipped.
+
 ```yaml
 # .swiftskim.yml
 disabled_rules:                     # never run these (unknown ids → hard error, exit 2)

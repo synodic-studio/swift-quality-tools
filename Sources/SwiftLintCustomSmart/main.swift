@@ -52,8 +52,12 @@ struct SwiftLintCustomSmart: AsyncParsableCommand {
             Console.section("🔍 Running Custom SwiftSyntax Rules on: \(target)")
         }
 
-        let exclusionPatterns = ConfigDiscovery.readSwiftLintExclusions()
-        let filesToCheck = SwiftFileCollector.collect(from: targetURL, excluding: exclusionPatterns)
+        // Reason: only `excluded:` is shared with SwiftLint. swiftskim's rule selection
+        // lives in .swiftskim.yml, and its directory scan has never honored SwiftLint's
+        // `included:`, so adopting it for named files would make a single-file run
+        // stricter than `swiftskim .` — the inconsistency this scoping exists to remove.
+        let scope = LintScope.discover().withoutInclusions
+        let filesToCheck = SwiftFileCollector.collect(from: targetURL, scope: scope)
 
         // Rule selection. A CLI --only-rules is a *full* override of config selection;
         // otherwise use .swiftskim.yml's only_rules / disabled_rules.

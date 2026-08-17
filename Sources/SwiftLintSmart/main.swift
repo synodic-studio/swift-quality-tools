@@ -60,6 +60,15 @@ struct SwiftLintSmart: ParsableCommand {
             throw ExitCode.failure
         }
 
+        // SwiftLint applies `included:`/`excluded:` only to files it discovers itself, so
+        // a path named on the command line is linted with default scope — a file a
+        // repo-wide run never looks at would block a single-file run (what a post-edit
+        // hook does on every edit). Skip out-of-scope files so one file gets one verdict.
+        if !isDirectory(targetURL), !LintScope.read(configPath: configURL).covers(targetURL) {
+            Console.info("Skipping \(target): outside the lint scope declared in \(configURL.lastPathComponent)")
+            return
+        }
+
         // Check if swiftlint is installed
         guard ProcessRunner.commandExists("swiftlint") else {
             let errorMsg = ErrorFormatter.formatCommandError(
@@ -96,5 +105,11 @@ struct SwiftLintSmart: ParsableCommand {
             Console.error(errorMsg)
             throw ExitCode.failure
         }
+    }
+
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        return exists && isDirectory.boolValue
     }
 }

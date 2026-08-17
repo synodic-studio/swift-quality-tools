@@ -1,10 +1,13 @@
 import Foundation
 
-/// Utility for collecting Swift files with exclusion pattern support
+/// Utility for collecting the Swift files a `LintScope` covers.
 public enum SwiftFileCollector {
-    /// Collect Swift files from the target URL, excluding specified patterns
-    public static func collect(from targetURL: URL, excluding patterns: [String]) -> [URL] {
-        var filesToCheck: [URL] = []
+    /// Collect the Swift files under `targetURL` that `scope` covers.
+    ///
+    /// The scope is applied to an explicitly named file exactly as it is to a discovered
+    /// one, so a file that a directory-wide run skips is also skipped when it is named on
+    /// the command line — one file, one verdict.
+    public static func collect(from targetURL: URL, scope: LintScope) -> [URL] {
         let fileManager = FileManager.default
 
         var isDirectory: ObjCBool = false
@@ -13,18 +16,24 @@ public enum SwiftFileCollector {
         }
 
         if isDirectory.boolValue {
-            filesToCheck = collectFromDirectory(targetURL, excluding: patterns)
-        } else if targetURL.pathExtension == "swift" {
-            filesToCheck.append(targetURL)
-        } else {
-            Console.warning("File '\(targetURL.path)' is not a Swift file")
+            return collectFromDirectory(targetURL, scope: scope)
         }
 
-        return filesToCheck
+        guard targetURL.pathExtension == "swift" else {
+            Console.warning("File '\(targetURL.path)' is not a Swift file")
+            return []
+        }
+
+        guard scope.covers(targetURL) else {
+            Console.info("Skipping '\(targetURL.path)': outside the configured lint scope")
+            return []
+        }
+
+        return [targetURL]
     }
 
     /// Collect Swift files from a directory recursively
-    private static func collectFromDirectory(_ directoryURL: URL, excluding patterns: [String]) -> [URL] {
+    private static func collectFromDirectory(_ directoryURL: URL, scope: LintScope) -> [URL] {
         var files: [URL] = []
         let fileManager = FileManager.default
 
@@ -33,41 +42,11 @@ public enum SwiftFileCollector {
         }
 
         for case let fileURL as URL in enumerator {
-            if fileURL.pathExtension == "swift", !shouldExclude(fileURL, patterns: patterns) {
+            if fileURL.pathExtension == "swift", scope.covers(fileURL) {
                 files.append(fileURL)
             }
         }
 
         return files.sorted { $0.path < $1.path }
-    }
-
-    /// Check if a file should be excluded from linting based on SwiftLint exclusion patterns
-    /// - Parameters:
-    ///   - fileURL: The file URL to check
-    ///   - patterns: Exclusion patterns from SwiftLint config
-    /// - Returns: True if the file should be excluded
-    private static func shouldExclude(_ fileURL: URL, patterns: [String]) -> Bool {
-        let path = fileURL.path
-        return patterns.contains { matchesPattern($0, in: path) }
-    }
-
-    /// Check if a path matches an exclusion pattern
-    private static func matchesPattern(_ pattern: String, in path: String) -> Bool {
-        if pattern.hasPrefix("**/") {
-            let suffix = String(pattern.dropFirst(3))
-            return path.contains("/\(suffix)")
-        }
-
-        if pattern.hasSuffix("/**") {
-            let prefix = String(pattern.dropLast(3))
-            return path.contains("/\(prefix)/")
-        }
-
-        if pattern.contains("*") {
-            let nonWildcard = pattern.replacingOccurrences(of: "*", with: "")
-            return path.contains(nonWildcard)
-        }
-
-        return path.contains("/\(pattern)/") || path.hasSuffix("/\(pattern)")
     }
 }

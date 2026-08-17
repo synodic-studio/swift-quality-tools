@@ -38,7 +38,7 @@ public enum SwiftLintConfigParser {
     }
 
     /// Search directory tree for SwiftLint config file
-    private static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
+    public static func searchDirectoryTreeForSwiftLintConfig() -> URL? {
         let fileManager = FileManager.default
         var currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
 
@@ -57,6 +57,14 @@ public enum SwiftLintConfigParser {
         return nil
     }
 
+    /// Exclusions applied when no config file can be found.
+    public static let defaultExclusions = [
+        ".build",
+        "build",
+        "Frameworks",
+        "DerivedData",
+    ]
+
     /// Read exclusion patterns from SwiftLint configuration file
     /// - Parameter configPath: Path to SwiftLint config file (optional)
     /// - Returns: Array of exclusion patterns found in the config
@@ -68,19 +76,24 @@ public enum SwiftLintConfigParser {
         } else {
             // Try to find SwiftLint config in current directory or parent directories
             if let foundConfig = searchDirectoryTreeForSwiftLintConfig() {
-                return parseExclusions(from: foundConfig)
+                return YAMLPathList.parse(section: "excluded:", from: foundConfig)
             }
 
-            // No config found, return default exclusions
-            return [
-                ".build",
-                "build",
-                "Frameworks",
-                "DerivedData",
-            ]
+            return defaultExclusions
         }
 
-        return parseExclusions(from: config)
+        return YAMLPathList.parse(section: "excluded:", from: config)
+    }
+
+    /// Read `included:` patterns from a SwiftLint configuration file.
+    ///
+    /// An empty result means the config places no inclusion filter on linting.
+    /// - Parameter configPath: Path to SwiftLint config file (optional)
+    public static func readInclusions(configPath: URL? = nil) -> [String] {
+        guard let config = configPath ?? searchDirectoryTreeForSwiftLintConfig() else {
+            return []
+        }
+        return YAMLPathList.parse(section: "included:", from: config)
     }
 
     /// Read custom-rule thresholds from a `swiftskim:` block in the config.
@@ -136,62 +149,5 @@ public enum SwiftLintConfigParser {
         case "excessive_nesting_max_depth": thresholds.excessiveNestingMaxDepth = value
         default: break
         }
-    }
-
-    /// Parse exclusion patterns from SwiftLint config file
-    private static func parseExclusions(from config: URL) -> [String] {
-        // Read and parse the YAML file
-        guard let contents = try? String(contentsOf: config, encoding: .utf8) else {
-            return []
-        }
-
-        var exclusions: [String] = []
-        var inExcludedSection = false
-
-        for line in contents.components(separatedBy: .newlines) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-
-            // Check if we're entering the excluded section
-            if trimmed.hasPrefix("excluded:") {
-                inExcludedSection = true
-                continue
-            }
-
-            // If we're in the excluded section
-            guard inExcludedSection else { continue }
-            inExcludedSection = handleExcludedSection(line: line, trimmed: trimmed, exclusions: &exclusions)
-        }
-
-        return exclusions
-    }
-
-    /// Handle a line in the excluded section of SwiftLint config
-    /// - Parameters:
-    ///   - line: The full line from the config file
-    ///   - trimmed: The trimmed version of the line
-    ///   - exclusions: Array to append exclusion patterns to
-    /// - Returns: True if still in excluded section, false if exited
-    private static func handleExcludedSection(
-        line: String,
-        trimmed: String,
-        exclusions: inout [String],
-    ) -> Bool {
-        // Check if this line starts a new top-level section
-        if !line.isEmpty, !line.first!.isWhitespace, trimmed.contains(":") {
-            return false // Exited excluded section
-        }
-
-        // Extract exclusion pattern (lines starting with - in the excluded section)
-        if trimmed.hasPrefix("- ") {
-            let pattern = trimmed
-                .dropFirst(2) // Remove "- "
-                .trimmingCharacters(in: .whitespaces)
-                .trimmingCharacters(in: CharacterSet(charactersIn: "\"'")) // Remove quotes
-            if !pattern.isEmpty {
-                exclusions.append(pattern)
-            }
-        }
-
-        return true // Still in excluded section
     }
 }

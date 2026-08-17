@@ -99,6 +99,10 @@ For all three tools:
 3. Walk up parent directories until a config is found
 4. Fall back to the bundled `Configs/shared-*.yml`
 
+### Lint scope
+
+`.swiftlint.yml`'s `included:` and `excluded:` apply to a file named on the command line exactly as they do to one the linter discovers itself, so a file gets the same verdict either way. `swiftlint-smart path/to/File.swift` skips the file and exits 0 when the project's config puts it out of scope; `swiftlint path/to/File.swift` would lint it with default scope instead, which is what makes a post-edit hook block on files a repo-wide run never checks. `swiftskim` shares `excluded:` only — its rule selection lives in `.swiftskim.yml`, and its directory scan does not read `included:`.
+
 ### Configuration (`.swiftskim.yml`)
 
 swiftskim's rules roll up **separately** from SwiftLint and SwiftFormat — each of those

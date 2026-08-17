@@ -87,6 +87,66 @@ expect_violation "Codex"       "$(printf '{"tool_name":"apply_patch","tool_input
 expect_clean "clean file"   "$(printf '{"tool_input":{"file_path":"%s"},"cwd":"%s"}' "$CLEAN" "$TMP")"
 expect_clean "non-Swift"    "$(printf '{"tool_input":{"file_path":"%s/notes.txt"},"cwd":"%s"}' "$TMP" "$TMP")"
 
+# ---------------------------------------------------------------- lint scope
+# A file the project's own `swiftlint-smart .` never looks at must not block an edit.
+# SwiftLint applies included:/excluded: only when discovering files itself, so without
+# scoping the hook — which always names a path — lints out-of-scope files with default
+# scope and blocks on violations no repo-wide run would ever report.
+PROJ="$TMP/scoped"
+mkdir -p "$PROJ/Sources" "$PROJ/Vendor" "$PROJ/Engine"
+cat > "$PROJ/.swiftlint.yml" <<'EOF'
+included:
+  - Sources
+excluded:
+  - Vendor
+file_length:
+  warning: 5
+  error: 10
+EOF
+
+# 40 lines of plain Swift: a serious file_length violation under that config, and
+# nothing any swiftskim rule objects to.
+make_long_file() {
+    {
+        echo "struct Long$2 {"
+        for i in $(seq 1 18); do
+            printf '    let field%d: Int\n    // filler %d\n' "$i" "$i"
+        done
+        echo "}"
+    } > "$1"
+}
+make_long_file "$PROJ/Sources/Long.swift" Included
+make_long_file "$PROJ/Engine/Long.swift" Engine
+make_long_file "$PROJ/Vendor/Long.swift" Vendor
+
+scope_event() { printf '{"tool_input":{"file_path":"%s"},"cwd":"%s"}' "$1" "$PROJ"; }
+
+feed_hook "$(scope_event "$PROJ/Sources/Long.swift")"
+if [ "$HOOK_CODE" = "2" ] && printf '%s' "$HOOK_STDERR" | grep -q "file_length"; then
+    echo "✅ in-scope violation: exit 2, file_length reported"
+else
+    echo "❌ in-scope violation: expected exit 2 + file_length, got code=$HOOK_CODE"
+    printf '%s\n' "$HOOK_STDERR"
+    FAILED=1
+fi
+
+expect_clean "outside included:" "$(scope_event "$PROJ/Engine/Long.swift")"
+expect_clean "inside excluded:"  "$(scope_event "$PROJ/Vendor/Long.swift")"
+
+# The same rule against this repo's real config: the rule-engine sources sit outside
+# `included: [Sources, Tests]`, so an explicit-path lint must agree with `swiftlint-smart .`
+# and report nothing. Run the linter directly — it does not touch the files.
+ENGINE_DIR="$REPO_ROOT/CustomRules/swiftlint-swiftsyntax-integration/rule-engine/Sources/CustomRules"
+SCOPE_FAILED=0
+for engine_file in "$ENGINE_DIR"/*.swift; do
+    if ! (cd "$REPO_ROOT" && swiftlint-smart "$engine_file" >/dev/null 2>&1); then
+        echo "❌ repo engine source blocks an explicit-path lint: ${engine_file#"$REPO_ROOT"/}"
+        SCOPE_FAILED=1
+        FAILED=1
+    fi
+done
+[ "$SCOPE_FAILED" = "0" ] && echo "✅ repo rule-engine sources: out of scope, explicit-path lint reports nothing"
+
 if [ "$FAILED" = "1" ]; then
     echo "🚨 Agent hook verification FAILED"; exit 1
 fi
